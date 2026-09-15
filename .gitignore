@@ -1,0 +1,24 @@
+# Visual Studio build output
+obj/
+bin/
+Debug/
+Release/
+x64/
+x86/
+*.ilk
+*.pdb
+*.idb
+*.log
+*.tlog
+*.recipe
+
+# Visual Studio user-specific / cache files
+*.vcxproj.user
+*.aps
+*.suo
+*.user
+.vs/
+
+# Misc
+*.diff
+*.patch
