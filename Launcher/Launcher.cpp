@@ -961,7 +961,13 @@ static void DrawIconOnly(Graphics& gfx, POINT center, int r, HICON icon, const s
     if (icon) {
         Bitmap iconBmp(icon);
         int isz = (int)(r * 1.05);
+        // ✅ قصّ دائري صارم يضمن عدم خروج الأيقونة عن حدود الدائرة إطلاقًا
+        GraphicsPath iconClip;
+        iconClip.AddEllipse((REAL)(center.x - r), (REAL)(center.y - r), (REAL)(r * 2), (REAL)(r * 2));
+        GraphicsState clipState = gfx.Save();
+        gfx.SetClip(&iconClip);
         gfx.DrawImage(&iconBmp, center.x - isz / 2, center.y - isz / 2, isz, isz);
+        gfx.Restore(clipState);
     } else if (!fallbackText.empty()) {
         FontFamily ff(L"Segoe UI");
         Font font(&ff, (REAL)(r * 0.9f), FontStyleBold, UnitPixel);
@@ -1009,6 +1015,12 @@ static void DrawIconBackdrop(Graphics& gfx, POINT center, int r, const std::wstr
     REAL br = (REAL)(r * 0.62);
     SolidBrush plate(Color(215, 15, 12, 29));
     gfx.FillEllipse(&plate, (REAL)center.x - br, (REAL)center.y - br, br * 2, br * 2);
+}
+// ✅ حافة احتواء موحّدة تُرسم فوق كل الأنماط لضمان بقاء الصورة/الأيقونة محصورة بصريًا
+// بشكل متسق داخل حدود الدائرة، بصرف النظر عن نمط الرسم المختار.
+static void DrawContainmentEdge(Graphics& gfx, POINT center, int r) {
+    Pen edge(Color(70, 255, 255, 255), 1.0f);
+    gfx.DrawEllipse(&edge, (REAL)(center.x - r), (REAL)(center.y - r), (REAL)(r * 2), (REAL)(r * 2));
 }
 
 // الأنماط القديمة
@@ -1207,6 +1219,60 @@ static void StyleVortex(Graphics& gfx, POINT c, int r, COLORREF color, bool hove
     gfx.FillEllipse(&center, (REAL)((REAL)c.x - 2.5f), (REAL)((REAL)c.y - 2.5f), (REAL)5.0f, (REAL)5.0f);
 }
 
+// ✅ نمط جديد 5: بسيط — حلقة نظيفة واحدة بدون أي ظل أو توهّج إطلاقًا
+static void StyleSimple(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
+    Pen pen(Color(255, GetRValue(color), GetGValue(color), GetBValue(color)), hover ? 3.0f : 2.0f);
+    gfx.DrawEllipse(&pen, c.x - r, c.y - r, r * 2, r * 2);
+}
+
+// ✅ نمط جديد 6: توهّج الشفق — حلقة بتدرج متعدد الألوان مستوحى من لون المستخدم، مع توهّج ناعم خفيف (وليس ظل داكن)
+static void StyleAurora(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
+    int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
+    BYTE r2 = (BYTE)min(255, R + 90);
+    BYTE g2 = (BYTE)min(255, G + 50);
+    BYTE b2 = (BYTE)min(255, B + 160);
+
+    // توهّج خارجي لطيف متعدد الطبقات (خفيف جدًا وملوّن، ليس ظلًا داكنًا)
+    for (int i = 3; i >= 1; i--) {
+        Pen glow(Color((BYTE)(18 * i), r2, g2, b2), (REAL)(i * 2));
+        int rr = r + i * 2;
+        gfx.DrawEllipse(&glow, c.x - rr, c.y - rr, rr * 2, rr * 2);
+    }
+
+    Color stops[3] = { Color(255, R, G, B), Color(255, r2, g2, b2), Color(255, B, R, G) };
+    REAL positions[3] = { 0.0f, 0.5f, 1.0f };
+    RectF rect((REAL)(c.x - r), (REAL)(c.y - r), (REAL)(r * 2), (REAL)(r * 2));
+    LinearGradientBrush grad(rect, Color(255, R, G, B), Color(255, b2, r2, g2), LinearGradientModeForwardDiagonal);
+    grad.SetInterpolationColors(stops, positions, 3);
+    Pen ring(&grad, hover ? 4.5f : 3.5f);
+    gfx.DrawEllipse(&ring, c.x - r, c.y - r, r * 2, r * 2);
+}
+
+// ✅ نمط جديد 7: هالة تقنية (HUD) — حلقة رفيعة منقّطة مع علامات تجزئة، بإحساس واجهة سايبر
+static void StyleHalo(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
+    int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
+
+    Pen base(Color(110, R, G, B), 1.2f);
+    gfx.DrawEllipse(&base, c.x - r, c.y - r, r * 2, r * 2);
+
+    const int DOTS = 16;
+    REAL dotR = (REAL)(hover ? r + 6 : r + 3);
+    for (int i = 0; i < DOTS; i++) {
+        double ang = (PI_CONST * 2.0 * i / DOTS);
+        REAL px = (REAL)c.x + dotR * (REAL)cos(ang);
+        REAL py = (REAL)c.y + dotR * (REAL)sin(ang);
+        bool major = (i % 4 == 0);
+        int alpha = major ? 255 : 110;
+        REAL sz = major ? 4.0f : 2.0f;
+        SolidBrush dot(Color((BYTE)alpha, R, G, B));
+        gfx.FillEllipse(&dot, px - sz / 2.0f, py - sz / 2.0f, sz, sz);
+    }
+
+    Pen tick(Color(200, R, G, B), 2.0f);
+    gfx.DrawLine(&tick, (REAL)c.x, (REAL)(c.y - r - 8), (REAL)c.x, (REAL)(c.y - r - 2));
+    gfx.DrawLine(&tick, (REAL)c.x, (REAL)(c.y + r + 2), (REAL)c.x, (REAL)(c.y + r + 8));
+}
+
 typedef void (*RadialStyleFn)(Graphics&, POINT, int, COLORREF, bool);
 static RadialStyleFn GetStyleFn(RadialStyle style) {
     switch (style) {
@@ -1219,6 +1285,9 @@ static RadialStyleFn GetStyleFn(RadialStyle style) {
         case RadialStyle::Sakura:   return StyleSakura;
         case RadialStyle::Glass:    return StyleGlass;
         case RadialStyle::Vortex:   return StyleVortex;
+        case RadialStyle::Simple:   return StyleSimple;
+        case RadialStyle::Aurora:   return StyleAurora;
+        case RadialStyle::Halo:     return StyleHalo;
         case RadialStyle::Outline:
         default:                    return StyleOutline;
     }
@@ -1268,6 +1337,7 @@ static void DrawCircleIcon(Graphics& gfx, POINT center, int radius,
         DrawIconBackdrop(gfx, center, r, game.radialBgPath);
         DrawIconOnly(gfx, center, r, icon, game.name);
     }
+    DrawContainmentEdge(gfx, center, r);
     if (game.favorite) DrawFavoriteBadge(gfx, center, r);
     if (isMuted) DrawMuteBadge(gfx, center, r);
 }

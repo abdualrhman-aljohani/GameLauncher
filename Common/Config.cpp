@@ -840,8 +840,8 @@ FolderExeSuggestion FindBestExeInFolder(const std::wstring& folderPath) {
     return result;
 }
 
-// ✅ 10 أنماط
-int RadialStyleCount() { return 10; }
+// ✅ 13 نمط
+int RadialStyleCount() { return 13; }
 RadialStyle LoadRadialStyle() {
     std::wifstream f(ThemePath().c_str());
     if (!f.is_open()) return RadialStyle::Outline;
@@ -872,6 +872,9 @@ std::wstring RadialStyleName(RadialStyle style, Lang lang) {
         case RadialStyle::Sakura:   return en ? L"Sakura (Anime)"          : L"ساكورا (أنمي)";
         case RadialStyle::Glass:    return en ? L"Frosted Glass"           : L"زجاج مصنفر";
         case RadialStyle::Vortex:   return en ? L"Vortex"                  : L"دوامة";
+        case RadialStyle::Simple:   return en ? L"Clean Ring"              : L"حلقة نظيفة";
+        case RadialStyle::Aurora:   return en ? L"Aurora Glow"             : L"توهّج الشفق";
+        case RadialStyle::Halo:     return en ? L"HUD Halo"                : L"هالة تقنية";
         default: return L"";
     }
 }

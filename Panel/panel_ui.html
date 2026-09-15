@@ -15,7 +15,7 @@
 </script>
 <style>
   :root {
-    --glass-opacity: 0.45;
+    --glass-opacity: 0.32;
     --accent-1: #7c3aed; --accent-2: #a855f7; --accent-3: #8b5cf6;
     --bg-1: #150f2c; --bg-2: #0d0b18; --bg-3: #150f26;
     --accent-rgb: 139, 92, 246; --accent-hi-rgb: 168, 85, 247;
@@ -37,6 +37,11 @@
   html[data-preset="gruvbox"] { --accent-1: #d79921; --accent-2: #b8bb26; --accent-3: #fabd2f; --bg-1: #282828; --bg-2: #1d2021; --bg-3: #232323; --accent-rgb: 215, 153, 33; --accent-hi-rgb: 184, 187, 38; --panel-tint: 40, 40, 40; --card-tint: 60, 56, 54; }
   html[data-preset="rosepine"] { --accent-1: #ebbcba; --accent-2: #c4a7e7; --accent-3: #9ccfd8; --bg-1: #191724; --bg-2: #1f1d2e; --bg-3: #1c1a27; --accent-rgb: 235, 188, 186; --accent-hi-rgb: 196, 167, 231; --panel-tint: 25, 23, 36; --card-tint: 31, 29, 46; }
   html[data-preset="solarized"] { --accent-1: #268bd2; --accent-2: #2aa198; --accent-3: #b58900; --bg-1: #fdf6e3; --bg-2: #eee8d5; --bg-3: #f5efdc; --accent-rgb: 38, 139, 210; --accent-hi-rgb: 42, 161, 152; --text-1: #073642; --text-2: #586e75; --text-3: #839496; --shadow-color: 7, 54, 66; --panel-tint: 253, 246, 227; --card-tint: 238, 232, 213; --card-border: 7, 54, 66; }
+  html[data-preset="obsidian"] { --accent-1: #6366f1; --accent-2: #818cf8; --accent-3: #a5b4fc; --bg-1: #0e0e1a; --bg-2: #08080f; --bg-3: #0c0c16; --accent-rgb: 129, 140, 248; --accent-hi-rgb: 165, 180, 252; --panel-tint: 14, 14, 26; --card-tint: 22, 22, 40; }
+  html[data-preset="sunset"] { --accent-1: #fb923c; --accent-2: #f472b6; --accent-3: #fbbf24; --bg-1: #2a1220; --bg-2: #170a12; --bg-3: #24101c; --accent-rgb: 244, 114, 182; --accent-hi-rgb: 251, 191, 36; --panel-tint: 42, 18, 32; --card-tint: 56, 26, 44; }
+  html[data-preset="ocean"] { --accent-1: #0891b2; --accent-2: #3b82f6; --accent-3: #67e8f9; --bg-1: #071a2e; --bg-2: #030f1d; --bg-3: #061627; --accent-rgb: 59, 130, 246; --accent-hi-rgb: 103, 232, 249; --panel-tint: 7, 26, 46; --card-tint: 12, 38, 64; }
+  html[data-preset="royal"] { --accent-1: #a855f7; --accent-2: #eab308; --accent-3: #fbbf24; --bg-1: #150c26; --bg-2: #0a0614; --bg-3: #130a20; --accent-rgb: 234, 179, 8; --accent-hi-rgb: 250, 204, 21; --panel-tint: 21, 12, 38; --card-tint: 32, 19, 56; }
+  html[data-preset="blossom"] { --accent-1: #fb7185; --accent-2: #fda4af; --accent-3: #fecdd3; --bg-1: #24121b; --bg-2: #150a10; --bg-3: #200f17; --accent-rgb: 251, 113, 133; --accent-hi-rgb: 253, 164, 175; --panel-tint: 36, 18, 27; --card-tint: 50, 26, 38; }
 
   html, body { height: 100%; }
   body {
@@ -51,14 +56,15 @@
 
   .glass-panel {
     background: rgba(var(--panel-tint), var(--glass-opacity));
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(var(--card-border), 0.10);
-    box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.20), 0 20px 50px rgba(var(--shadow-color), 0.35);
+    backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
+    border: 1px solid rgba(var(--card-border), 0.14);
+    border-top-color: rgba(var(--card-border), 0.22);
+    box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.20), 0 20px 50px rgba(var(--shadow-color), 0.35), inset 0 1px 0 rgba(var(--card-border), 0.08);
   }
   .glass-card {
-    background: rgba(var(--card-tint), calc(var(--glass-opacity) * 0.9));
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(var(--card-border), 0.06);
+    background: rgba(var(--card-tint), calc(var(--glass-opacity) * 0.85));
+    backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(var(--card-border), 0.08);
     box-shadow: 0 2px 8px rgba(var(--shadow-color), 0.12);
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -555,7 +561,7 @@
             <i class="fa-solid fa-swatchbook" style="color: var(--accent-2);"></i>
             <span data-t="presetsTitle">ثيم اللوحة</span>
           </h3>
-          <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من 13 ثيمًا جاهزًا.</p>
+          <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من 18 ثيمًا جاهزًا.</p>
           <div id="presetsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3"></div>
         </div>
 
@@ -601,9 +607,9 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs text-gray-200" data-t="uiOpacityTitle">شفافية لوحة التحكم</span>
-              <span class="text-xs font-mono" style="color: var(--accent-2);" id="opacityVal">45%</span>
+              <span class="text-xs font-mono" style="color: var(--accent-2);" id="opacityVal">32%</span>
             </div>
-            <input type="range" id="opacitySlider" min="0.15" max="0.85" step="0.05" value="0.45" oninput="changeGlassOpacity(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
+            <input type="range" id="opacitySlider" min="0.10" max="0.85" step="0.05" value="0.32" oninput="changeGlassOpacity(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
           </div>
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -821,6 +827,9 @@ const RADIAL_META = [
   { icon: 'fa-spa',            descAr: 'ساكورا — بتلات وردية (أنمي).',               descEn: 'Sakura — pink petals (anime).' },
   { icon: 'fa-cube',           descAr: 'زجاج مصنفر — لمعة وملمس شفاف.',              descEn: 'Frosted glass — glossy finish.' },
   { icon: 'fa-hurricane',      descAr: 'دوامة — أقواس دوّارة.',                       descEn: 'Vortex — swirling arcs.' },
+  { icon: 'fa-circle',         descAr: 'حلقة نظيفة واحدة — بدون أي ظل أو توهّج.',    descEn: 'One clean ring — zero shadow, zero glow.' },
+  { icon: 'fa-rainbow',        descAr: 'توهّج شفقي بتدرج متعدد الألوان.',            descEn: 'Aurora — flowing multicolor gradient glow.' },
+  { icon: 'fa-satellite-dish', descAr: 'هالة تقنية منقّطة بإحساس واجهة سايبر.',      descEn: 'HUD halo — dotted sci-fi ring with tick marks.' },
 ];
 
 const PANEL_PRESETS = [
@@ -837,6 +846,11 @@ const PANEL_PRESETS = [
   { id: 'gruvbox',    nameAr: 'غروب',      nameEn: 'Gruvbox',    colors: ['#d79921', '#b8bb26'], icon: 'fa-wheat-awn' },
   { id: 'rosepine',   nameAr: 'وردة',      nameEn: 'Rosé Pine',  colors: ['#ebbcba', '#c4a7e7'], icon: 'fa-rose' },
   { id: 'solarized',  nameAr: 'مشمس',      nameEn: 'Solarized',  colors: ['#268bd2', '#2aa198'], icon: 'fa-sun' },
+  { id: 'obsidian',   nameAr: 'أوبسيديان', nameEn: 'Obsidian',   colors: ['#6366f1', '#818cf8'], icon: 'fa-gem' },
+  { id: 'sunset',     nameAr: 'غروب',      nameEn: 'Sunset',     colors: ['#fb923c', '#f472b6'], icon: 'fa-cloud-sun' },
+  { id: 'ocean',      nameAr: 'محيط',      nameEn: 'Ocean',      colors: ['#0891b2', '#3b82f6'], icon: 'fa-water' },
+  { id: 'royal',      nameAr: 'ملكي',      nameEn: 'Royal',      colors: ['#a855f7', '#eab308'], icon: 'fa-crown' },
+  { id: 'blossom',    nameAr: 'إزهار',     nameEn: 'Blossom',    colors: ['#fb7185', '#fda4af'], icon: 'fa-heart' },
 ];
 
 const I18N = {
@@ -850,7 +864,7 @@ const I18N = {
     gamesListTitle: 'الألعاب', companionsTitle: 'البرامج المرافقة',
     selectGameHint: 'اختر لعبةً من القائمة أولًا.', addCompanionBtn: 'إضافة برنامج مرافق',
     designTitle: 'تخصيص التصميم والنمط', presetsTitle: 'ثيم اللوحة',
-    presetsDesc: 'اختر من 13 ثيمًا جاهزًا.',
+    presetsDesc: 'اختر من 18 ثيمًا جاهزًا.',
     radialTitle: 'نمط رسم الدائرة', backgroundsTitle: 'الخلفيات العامة',
     transparencyTitle: 'الشفافية',
     uiOpacityTitle: 'شفافية لوحة التحكم',
@@ -959,7 +973,7 @@ const I18N = {
     gamesListTitle: 'Games', companionsTitle: 'Companion Programs',
     selectGameHint: 'Select a game first.', addCompanionBtn: 'Add Companion',
     designTitle: 'Design & Style', presetsTitle: 'Panel Theme',
-    presetsDesc: 'Choose from 13 ready themes.',
+    presetsDesc: 'Choose from 18 ready themes.',
     radialTitle: 'Radial Drawing Style', backgroundsTitle: 'Global Backgrounds',
     transparencyTitle: 'Transparency',
     uiOpacityTitle: 'Control panel transparency',
@@ -1250,7 +1264,7 @@ function applyPanelBackground(path) {
   const root = document.getElementById('bodyRoot');
   if (!path) { root.style.backgroundImage = ''; return; }
   const url = 'file:///' + path.replace(/\\/g, '/');
-  root.style.backgroundImage = `linear-gradient(rgba(13,11,24,0.55), rgba(13,11,24,0.75)), url("${url.replace(/"/g, '\\"')}")`;
+  root.style.backgroundImage = `linear-gradient(rgba(13,11,24,0.30), rgba(13,11,24,0.48)), url("${url.replace(/"/g, '\\"')}")`;
   root.style.backgroundSize = 'cover';
   root.style.backgroundPosition = 'center';
   root.style.backgroundAttachment = 'fixed';
@@ -1922,7 +1936,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 switchTab('dashboard');
-changeGlassOpacity(0.45);
+changeGlassOpacity(0.32);
 nativeAction('ready');
 </script>
 </body>

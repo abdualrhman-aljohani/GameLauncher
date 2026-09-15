@@ -147,6 +147,8 @@ ResolvedDrop ResolveDroppedPath(const std::wstring& path);
 enum class RadialStyle {
     Outline = 0, Neon = 1, Gradient = 2, Minimal = 3, Hex = 4, Comet = 5,
     Burst = 6, Sakura = 7, Glass = 8, Vortex = 9,
+    // ✅ أنماط جديدة
+    Simple = 10, Aurora = 11, Halo = 12,
 };
 
 std::wstring ThemePath();
