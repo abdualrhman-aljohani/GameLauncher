@@ -19,13 +19,25 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR lpCmdLine, int) {
         return RunPanelApp(hInst);
     }
 
-    // 2) هل Engine شغال مسبقًا؟ لو نعم → افتح Panel
+    // ✅ 2) إعادة تشغيل كمسؤول — ننتظر حتى يتحرر الـ mutex
+    //    (النسخة القديمة من Engine قد تكون ما زالت تُغلق نفسها)
+    if (lpCmdLine && wcsstr(lpCmdLine, L"--restart-admin")) {
+        for (int i = 0; i < 50; i++) {  // 50 × 200ms = 10 ثوانٍ كحد أقصى
+            HANDLE hEngine = OpenMutexW(SYNCHRONIZE, FALSE, SINGLE_INSTANCE_MUTEX_NAME);
+            if (!hEngine) break;  // تحرر — نستطيع البدء
+            CloseHandle(hEngine);
+            Sleep(200);
+        }
+        return RunEngineApp(hInst);
+    }
+
+    // 3) هل Engine شغال مسبقًا؟ لو نعم → افتح Panel
     HANDLE hEngine = OpenMutexW(SYNCHRONIZE, FALSE, SINGLE_INSTANCE_MUTEX_NAME);
     if (hEngine) {
         CloseHandle(hEngine);
         return RunPanelApp(hInst);
     }
 
-    // 3) الافتراضي: شغّل Engine
+    // 4) الافتراضي: شغّل Engine
     return RunEngineApp(hInst);
 }

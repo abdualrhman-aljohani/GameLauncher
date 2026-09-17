@@ -44,7 +44,7 @@ struct GameEntry {
     COLORREF color = RGB(46, 166, 218);
     std::wstring iconPath;
     int iconIndex = 0;
-    bool autoLangSwitch = true;
+    bool autoLangSwitch = true;  // legacy — غير مستخدم
     bool runAsAdmin = false;
     std::wstring launchArgs;
     bool showInRadial = true;
@@ -54,9 +54,18 @@ struct GameEntry {
     unsigned int playCount = 0;
     std::wstring radialBgPath;
     bool hideOriginalIcon = false;
+    bool transparentIcon = false;
     ProcessPriority processPriority = ProcessPriority::Normal;
     bool applyAffinity = false;
     unsigned long long affinityMask = 0;
+    int quickSlot = 0;
+
+    // ✅ مراقبة الأداء (Performance Black Box)
+    bool performanceMonitor = false;
+    bool performanceCpuTemp = false;
+
+    // ✅ لغة اللعبة: 0 = بدون تبديل، 1 = عربي، 2 = إنجليزي
+    int gameLanguage = 0;
 };
 
 struct HotkeySettings {
@@ -73,6 +82,18 @@ struct MuteSettings {
 struct ControllerSettings {
     bool enabled = false;
     DWORD openRadialButton = 0x0010;
+    bool toggleMode = true;
+    bool allowControllerDuringGame = false;
+};
+
+struct OverlaySettings {
+    bool enabled = false;
+    UINT hotkeyModifiers = MOD_CONTROL | MOD_SHIFT;
+    UINT hotkeyVk = 'O';
+    bool showOnGameLaunch = false;
+    int posX = 20;
+    int posY = 20;
+    float opacity = 0.85f;
 };
 
 enum class Lang { AR, EN };
@@ -82,6 +103,8 @@ static const wchar_t* const HIDDEN_WINDOW_CLASS_NAME = L"GameLauncherHiddenWnd";
 static const UINT WM_APP_RELOAD_HOTKEY = WM_APP + 200;
 static const UINT WM_APP_RELOAD_MUTE_HOTKEY = WM_APP + 201;
 static const UINT WM_APP_RELOAD_CONTROLLER = WM_APP + 202;
+static const UINT WM_APP_RELOAD_OVERLAY = WM_APP + 203;
+static const UINT WM_APP_RESTART_AS_ADMIN = WM_APP + 204;
 
 static const wchar_t* const MUTE_REQUEST_EVENT_NAME = L"GameLauncher_MuteRequest_Event_v1";
 
@@ -107,6 +130,11 @@ std::wstring ControllerSettingsPath();
 ControllerSettings LoadControllerSettings();
 void SaveControllerSettings(const ControllerSettings& cs);
 std::wstring ControllerButtonName(DWORD button, Lang lang);
+
+std::wstring OverlaySettingsPath();
+OverlaySettings LoadOverlaySettings();
+void SaveOverlaySettings(const OverlaySettings& os);
+std::wstring OverlayHotkeyToString(const OverlaySettings& os);
 
 std::wstring ProcessPriorityName(ProcessPriority p, Lang lang);
 int ProcessPriorityCount();
@@ -144,11 +172,13 @@ struct ResolvedDrop {
 };
 ResolvedDrop ResolveDroppedPath(const std::wstring& path);
 
+// ✅ 20 نمط رسم (13 قديمة + 7 جديدة)
 enum class RadialStyle {
     Outline = 0, Neon = 1, Gradient = 2, Minimal = 3, Hex = 4, Comet = 5,
     Burst = 6, Sakura = 7, Glass = 8, Vortex = 9,
-    // ✅ أنماط جديدة
     Simple = 10, Aurora = 11, Halo = 12,
+    Ripple = 13, Crystal = 14, Plasma = 15, Orbit = 16,
+    Pixel = 17, Circuit = 18, Flame = 19,
 };
 
 std::wstring ThemePath();
@@ -171,6 +201,7 @@ bool PathExistsOnDisk(const std::wstring& path);
 
 bool IsAutoStartEnabled();
 void SetAutoStartEnabled(bool enabled);
+bool TestAutoStart(std::wstring& outDiagnostic);
 
 std::wstring AutoLayoutSwitchPath();
 bool LoadAutoLayoutSwitch();
@@ -206,7 +237,6 @@ std::wstring LoadRadialBackground();
 void SavePanelBackground(const std::wstring& path);
 void SaveRadialBackground(const std::wstring& path);
 
-// ✅ جديد: تجربة المستخدم الجديد
 std::wstring FirstRunDonePath();
 bool IsFirstRun();
 void MarkFirstRunDone();
@@ -214,3 +244,22 @@ void MarkFirstRunDone();
 std::wstring HubAlwaysVisiblePath();
 bool LoadHubAlwaysVisible();
 void SaveHubAlwaysVisible(bool enabled);
+
+std::wstring PanelGlassEffectPath();
+bool LoadPanelGlassEffect();
+void SavePanelGlassEffect(bool enabled);
+
+std::wstring PerformanceStorageDir();
+std::wstring PerformanceGameDir(const std::wstring& gamePath);
+std::wstring ComputeGameStorageHash(const std::wstring& gamePath);
+
+std::wstring RadialNoGlowPath();
+bool LoadRadialNoGlow();
+void SaveRadialNoGlow(bool enabled);
+
+std::wstring PerformanceSettingsPath();
+bool LoadPerformanceGlobalEnabled();
+void SavePerformanceGlobalEnabled(bool enabled);
+
+// ✅ اسم اللغة داخل اللعبة (0=بدون، 1=AR، 2=EN)
+std::wstring LangCodeToLayoutName(int gameLanguage);

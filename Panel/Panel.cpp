@@ -12,11 +12,13 @@
 #include "../Common/Config.h"
 #include "../Common/Resource.h"
 #include "../Common/MuteAudio.h"
+#include "../Common/PerformanceMonitor.h"
 #include <commdlg.h>
 #include <shellapi.h>
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <oleidl.h>
+#include <dwmapi.h>
 #include <wrl.h>
 #include <WebView2.h>
 #include <gdiplus.h>
@@ -37,6 +39,7 @@
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "uuid.lib")
 #pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "dwmapi.lib")
 
 using namespace Microsoft::WRL;
 using namespace Gdiplus;
@@ -55,6 +58,7 @@ static const UINT_PTR PUSH_STATE_TIMER_ID = 2;
 static bool g_lastEngineStatus = false;
 static bool g_firstStatusCheck = true;
 static bool g_wasMinimized = false;
+static bool g_glassEffectActive = false;
 
 static ComPtr<ICoreWebView2Controller> g_controller;
 static ComPtr<ICoreWebView2> g_webview;
@@ -68,9 +72,80 @@ static std::set<std::wstring> g_muteStateCache;
 static std::wstring g_runningGamesCacheStamp;
 static std::wstring g_muteStateCacheStamp;
 
-// ----------------------------- استخراج HTML المُدمج -----------------------------
-static bool ExtractEmbeddedHtml(std::wstring& outPath) {
-    HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(IDR_PANEL_HTML), RT_RCDATA);
+// ============================================================
+// المظهر الزجاجي الحقيقي (Acrylic Blur)
+// ============================================================
+typedef enum _ACCENT_STATE_LOCAL {
+    ACCENT_DISABLED_LOCAL                    = 0,
+    ACCENT_ENABLE_GRADIENT_LOCAL             = 1,
+    ACCENT_ENABLE_TRANSPARENTGRADIENT_LOCAL  = 2,
+    ACCENT_ENABLE_BLURBEHIND_LOCAL           = 3,
+    ACCENT_ENABLE_ACRYLICBLURBEHIND_LOCAL    = 4,
+    ACCENT_ENABLE_HOSTBACKDROP_LOCAL         = 5,
+} ACCENT_STATE_LOCAL;
+
+typedef struct _ACCENT_POLICY_LOCAL {
+    ACCENT_STATE_LOCAL AccentState;
+    DWORD AccentFlags;
+    DWORD GradientColor;
+    DWORD AnimationId;
+} ACCENT_POLICY_LOCAL;
+
+typedef struct _WINDOWCOMPOSITIONATTRIBDATA_LOCAL {
+    DWORD Attrib;
+    PVOID pvData;
+    SIZE_T cbData;
+} WINDOWCOMPOSITIONATTRIBDATA_LOCAL;
+
+typedef BOOL (WINAPI *pfnSetWindowCompositionAttribute)(HWND, WINDOWCOMPOSITIONATTRIBDATA_LOCAL*);
+
+static const DWORD WCA_ACCENT_POLICY_LOCAL = 19;
+
+static bool SetWindowGlass(HWND hwnd, bool enabled) {
+    HMODULE hUser = GetModuleHandleW(L"user32.dll");
+    if (!hUser) return false;
+    auto fn = (pfnSetWindowCompositionAttribute)GetProcAddress(hUser, "SetWindowCompositionAttribute");
+    if (!fn) return false;
+
+    ACCENT_POLICY_LOCAL accent = {};
+    if (enabled) {
+        accent.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND_LOCAL;
+        accent.GradientColor = 0x99201A30;
+        accent.AccentFlags = 0;
+    } else {
+        accent.AccentState = ACCENT_DISABLED_LOCAL;
+    }
+    WINDOWCOMPOSITIONATTRIBDATA_LOCAL data = {};
+    data.Attrib = WCA_ACCENT_POLICY_LOCAL;
+    data.pvData = &accent;
+    data.cbData = sizeof(accent);
+    return fn(hwnd, &data) != FALSE;
+}
+
+static void SetWebViewTransparent(bool transparent) {
+    if (!g_controller) return;
+    ComPtr<ICoreWebView2Controller2> ctrl2;
+    if (SUCCEEDED(g_controller.As(&ctrl2)) && ctrl2) {
+        COREWEBVIEW2_COLOR bg;
+        if (transparent) {
+            bg.A = 0; bg.R = 0; bg.G = 0; bg.B = 0;
+        } else {
+            bg.A = 255; bg.R = 0x0d; bg.G = 0x0b; bg.B = 0x18;
+        }
+        ctrl2->put_DefaultBackgroundColor(bg);
+    }
+}
+
+static void ApplyGlassMode(bool enabled) {
+    g_glassEffectActive = enabled;
+    SetWindowGlass(g_hwnd, enabled);
+    SetWebViewTransparent(enabled);
+}
+
+// ----------------------------- استخراج الملفات المُدمجة -----------------------------
+static bool ExtractResourceToFile(int resId, const std::wstring& outPath,
+                                   const std::string& buildSigUtf8) {
+    HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(resId), RT_RCDATA);
     if (!hRes) return false;
     HGLOBAL hData = LoadResource(nullptr, hRes);
     if (!hData) return false;
@@ -78,12 +153,43 @@ static bool ExtractEmbeddedHtml(std::wstring& outPath) {
     const char* data = (const char*)LockResource(hData);
     if (!data || size == 0) return false;
 
-    outPath = GetAppDataDir() + L"\\panel_ui.html";
+    std::string content(data, size);
+
+    const std::string placeholder = "__GL_BUILD_SIG__";
+    size_t pos = 0;
+    while ((pos = content.find(placeholder, pos)) != std::string::npos) {
+        content.replace(pos, placeholder.length(), buildSigUtf8);
+        pos += buildSigUtf8.length();
+    }
+
     std::ofstream f(outPath.c_str(), std::ios::binary | std::ios::trunc);
     if (!f.is_open()) return false;
-    f.write(data, (std::streamsize)size);
+    f.write(content.data(), (std::streamsize)content.size());
     f.close();
     return true;
+}
+
+static bool ExtractEmbeddedFiles(std::wstring& outHtmlPath, const std::wstring& buildSig) {
+    std::wstring dir = GetAppDataDir();
+    outHtmlPath = dir + L"\\panel_ui.html";
+    std::wstring cssPath = dir + L"\\panel_ui.css";
+    std::wstring jsPath  = dir + L"\\panel_ui.js";
+
+    std::string sigUtf8;
+    if (!buildSig.empty()) {
+        int wlen = (int)buildSig.size();
+        int u8len = WideCharToMultiByte(CP_UTF8, 0, buildSig.c_str(), wlen, nullptr, 0, nullptr, nullptr);
+        if (u8len > 0) {
+            sigUtf8.resize(u8len);
+            WideCharToMultiByte(CP_UTF8, 0, buildSig.c_str(), wlen, &sigUtf8[0], u8len, nullptr, nullptr);
+        }
+    }
+
+    bool okHtml = ExtractResourceToFile(IDR_PANEL_HTML, outHtmlPath, sigUtf8);
+    bool okCss  = ExtractResourceToFile(IDR_PANEL_CSS,  cssPath,      sigUtf8);
+    bool okJs   = ExtractResourceToFile(IDR_PANEL_JS,   jsPath,       sigUtf8);
+
+    return okHtml && okCss && okJs;
 }
 
 static void SignalMuteRequestToLauncher() {
@@ -91,7 +197,15 @@ static void SignalMuteRequestToLauncher() {
     if (hEvent) { SetEvent(hEvent); CloseHandle(hEvent); }
 }
 
-// ----------------------------- أدوات -----------------------------
+static bool IsEngineElevated() {
+    std::wstring adminFile = GetAppDataDir() + L"\\engine_admin.txt";
+    std::wifstream f(adminFile.c_str());
+    if (!f.is_open()) return false;
+    std::wstring line;
+    std::getline(f, line);
+    return TrimString(line) == L"1";
+}
+
 static std::wstring MakeGameNameFromPath(const std::wstring& path) {
     if (IsUwpPath(path)) return DefaultUwpName(GetUwpAumid(path));
     if (IsUriLike(path)) {
@@ -151,7 +265,6 @@ static bool BrowseForImage(std::wstring& outPath, const wchar_t* title) {
     return ok;
 }
 
-// ✅ لون مخصص عبر ChooseColor
 static bool BrowseForCustomColor(COLORREF initial, COLORREF& outColor) {
     CHOOSECOLORW cc = { sizeof(cc) };
     static COLORREF customColors[16] = {};
@@ -577,7 +690,6 @@ static void EnsureIconCache() {
     for (auto& g : g_games) {
         key << g.exePath << L'|' << g.iconPath << L'|' << g.iconIndex
             << L'|' << g.radialBgPath;
-        // ✅ نضيف المرافقين للمفتاح — يضمن إعادة البناء عند أي تغيير
         for (auto& c : g.companions) {
             key << L'#' << c.path;
         }
@@ -632,6 +744,7 @@ static std::wstring BuildStateJson() {
     EnsureIconCache();
 
     ControllerSettings cs = LoadControllerSettings();
+    OverlaySettings os = LoadOverlaySettings();
     SYSTEM_INFO si = {};
     GetSystemInfo(&si);
 
@@ -643,7 +756,8 @@ static std::wstring BuildStateJson() {
     j << L"\"autoStart\":" << (IsAutoStartEnabled() ? L"true" : L"false") << L",";
     j << L"\"autoLayoutSwitch\":" << (LoadAutoLayoutSwitch() ? L"true" : L"false") << L",";
     j << L"\"radialStyle\":" << (int)LoadRadialStyle() << L",";
-    j << L"\"radialTransparency\":" << LoadRadialTransparency() << L",";  // ✅ جديد
+    j << L"\"radialTransparency\":" << LoadRadialTransparency() << L",";
+    j << L"\"radialNoGlow\":" << (LoadRadialNoGlow() ? L"true" : L"false") << L",";
     j << L"\"panelBackground\":\"" << JsonEscape(LoadPanelBackground()) << L"\",";
     j << L"\"radialBackground\":\"" << JsonEscape(LoadRadialBackground()) << L"\",";
     j << L"\"panelPreset\":\"" << JsonEscape(LoadPanelPreset()) << L"\",";
@@ -653,6 +767,14 @@ static std::wstring BuildStateJson() {
     j << L"\"controllerEnabled\":" << (cs.enabled ? L"true" : L"false") << L",";
     j << L"\"controllerButton\":" << (unsigned long)cs.openRadialButton << L",";
     j << L"\"controllerButtonName\":\"" << JsonEscape(ControllerButtonName(cs.openRadialButton, g_lang)) << L"\",";
+    j << L"\"controllerToggleMode\":" << (cs.toggleMode ? L"true" : L"false") << L",";
+    j << L"\"allowControllerDuringGame\":" << (cs.allowControllerDuringGame ? L"true" : L"false") << L",";
+    j << L"\"panelGlassEffect\":" << (LoadPanelGlassEffect() ? L"true" : L"false") << L",";
+    j << L"\"overlayEnabled\":" << (os.enabled ? L"true" : L"false") << L",";
+    j << L"\"overlayHotkey\":\"" << JsonEscape(OverlayHotkeyToString(os)) << L"\",";
+    j << L"\"overlayShowOnGameLaunch\":" << (os.showOnGameLaunch ? L"true" : L"false") << L",";
+    j << L"\"overlayOpacity\":" << os.opacity << L",";
+    j << L"\"isAdmin\":" << (IsEngineElevated() ? L"true" : L"false") << L",";
     j << L"\"cpuCoreCount\":" << si.dwNumberOfProcessors << L",";
     j << L"\"processPriorityNames\":[";
     for (int i = 0; i < ProcessPriorityCount(); i++) {
@@ -678,7 +800,6 @@ static std::wstring BuildStateJson() {
           << L"\",\"path\":\"" << JsonEscape(g.exePath)
           << L"\",\"icon\":\"" << iconUri
           << L"\",\"missing\":" << (PathExistsOnDisk(g.exePath) ? L"false" : L"true")
-          << L",\"autoLangSwitch\":" << (g.autoLangSwitch ? L"true" : L"false")
           << L",\"runAsAdmin\":" << (g.runAsAdmin ? L"true" : L"false")
           << L",\"launchArgs\":\"" << JsonEscape(g.launchArgs) << L"\""
           << L",\"showInRadial\":" << (g.showInRadial ? L"true" : L"false")
@@ -694,9 +815,14 @@ static std::wstring BuildStateJson() {
           << L",\"radialBgPath\":\"" << JsonEscape(g.radialBgPath) << L"\""
           << L",\"radialBgPreview\":\"" << radialBgUri << L"\""
           << L",\"hideOriginalIcon\":" << (g.hideOriginalIcon ? L"true" : L"false")
+          << L",\"quickSlot\":" << g.quickSlot
+          << L",\"gameLanguage\":" << g.gameLanguage
           << L",\"processPriority\":" << (int)g.processPriority
           << L",\"applyAffinity\":" << (g.applyAffinity ? L"true" : L"false")
           << L",\"affinityMask\":" << g.affinityMask
+          << L",\"performanceMonitor\":" << (g.performanceMonitor ? L"true" : L"false")
+          << L",\"performanceCpuTemp\":" << (g.performanceCpuTemp ? L"true" : L"false")
+          << L",\"perfSessionCount\":0"
           << L",\"companions\":[";
         for (size_t k = 0; k < g.companions.size(); k++) {
             if (k) j << L",";
@@ -717,10 +843,35 @@ static std::wstring BuildStateJson() {
     return j.str();
 }
 
+static std::wstring BuildStatsUpdateJson() {
+    RefreshSharedCaches();
+    std::wstringstream j;
+    j << L"{\"type\":\"statsUpdate\",\"games\":[";
+    for (size_t i = 0; i < g_games.size(); i++) {
+        if (i) j << L",";
+        auto& g = g_games[i];
+        j << L"{\"index\":" << i
+          << L",\"totalPlaySeconds\":" << g.totalPlaySeconds
+          << L",\"lastPlayedUnix\":" << (unsigned long)g.lastPlayedUnix
+          << L",\"playCount\":" << g.playCount
+          << L",\"isRunning\":" << (IsGameRunningCached(g.exePath) ? L"true" : L"false")
+          << L",\"muted\":" << (IsGameMutedCached(g.exePath) ? L"true" : L"false")
+          << L"}";
+    }
+    j << L"]}";
+    return j.str();
+}
+
 static void PushStateToJs() {
     if (!g_webview) return;
     LoadGames(g_games);
     g_webview->PostWebMessageAsString(BuildStateJson().c_str());
+}
+
+static void PushStatsUpdateToJs() {
+    if (!g_webview) return;
+    LoadGames(g_games);
+    g_webview->PostWebMessageAsString(BuildStatsUpdateJson().c_str());
 }
 
 static void PushStatus(const std::wstring& text, const wchar_t* kind = L"info") {
@@ -765,7 +916,7 @@ static bool ExportBackupToFile(const std::wstring& path) {
     std::wstring tmp = path + L".tmp";
     std::wofstream f(tmp.c_str(), std::ios::trunc);
     if (!f.is_open()) return false;
-    f << L"{\n  \"version\": 3,\n  \"exportedAt\": " << (unsigned long)time(nullptr) << L",\n";
+    f << L"{\n  \"version\": 5,\n  \"exportedAt\": " << (unsigned long)time(nullptr) << L",\n";
     f << L"  \"games\": [\n";
     for (size_t i = 0; i < g_games.size(); i++) {
         auto& g = g_games[i];
@@ -775,7 +926,6 @@ static bool ExportBackupToFile(const std::wstring& path) {
         f << L"      \"color\": " << (unsigned long)g.color << L",\n";
         f << L"      \"iconPath\": \"" << JsonEscape(g.iconPath) << L"\",\n";
         f << L"      \"iconIndex\": " << g.iconIndex << L",\n";
-        f << L"      \"autoLangSwitch\": " << (g.autoLangSwitch ? L"true" : L"false") << L",\n";
         f << L"      \"runAsAdmin\": " << (g.runAsAdmin ? L"true" : L"false") << L",\n";
         f << L"      \"launchArgs\": \"" << JsonEscape(g.launchArgs) << L"\",\n";
         f << L"      \"showInRadial\": " << (g.showInRadial ? L"true" : L"false") << L",\n";
@@ -785,9 +935,13 @@ static bool ExportBackupToFile(const std::wstring& path) {
         f << L"      \"playCount\": " << g.playCount << L",\n";
         f << L"      \"radialBgPath\": \"" << JsonEscape(g.radialBgPath) << L"\",\n";
         f << L"      \"hideOriginalIcon\": " << (g.hideOriginalIcon ? L"true" : L"false") << L",\n";
+        f << L"      \"quickSlot\": " << g.quickSlot << L",\n";
+        f << L"      \"gameLanguage\": " << g.gameLanguage << L",\n";
         f << L"      \"processPriority\": " << (int)g.processPriority << L",\n";
         f << L"      \"applyAffinity\": " << (g.applyAffinity ? L"true" : L"false") << L",\n";
         f << L"      \"affinityMask\": " << g.affinityMask << L",\n";
+        f << L"      \"performanceMonitor\": " << (g.performanceMonitor ? L"true" : L"false") << L",\n";
+        f << L"      \"performanceCpuTemp\": " << (g.performanceCpuTemp ? L"true" : L"false") << L",\n";
         f << L"      \"companions\": [\n";
         for (size_t k = 0; k < g.companions.size(); k++) {
             auto& c = g.companions[k];
@@ -853,7 +1007,6 @@ static bool ImportBackupFromFile(const std::wstring& path) {
         g.color = (COLORREF)JsonGetNumber(obj, L"color", 0x2EA6DA);
         g.iconPath = JsonGetString(obj, L"iconPath");
         g.iconIndex = (int)JsonGetNumber(obj, L"iconIndex", 0);
-        g.autoLangSwitch = JsonGetBool(obj, L"autoLangSwitch", true);
         g.runAsAdmin = JsonGetBool(obj, L"runAsAdmin", false);
         g.launchArgs = JsonGetString(obj, L"launchArgs");
         g.showInRadial = JsonGetBool(obj, L"showInRadial", true);
@@ -863,9 +1016,16 @@ static bool ImportBackupFromFile(const std::wstring& path) {
         g.playCount = (unsigned int)JsonGetLongLong(obj, L"playCount", 0);
         g.radialBgPath = JsonGetString(obj, L"radialBgPath");
         g.hideOriginalIcon = JsonGetBool(obj, L"hideOriginalIcon", false);
+        g.quickSlot = (int)JsonGetNumber(obj, L"quickSlot", 0);
+        if (g.quickSlot < 0 || g.quickSlot > 9) g.quickSlot = 0;
+        int gl = (int)JsonGetNumber(obj, L"gameLanguage", 0);
+        if (gl < 0 || gl > 2) gl = 0;
+        g.gameLanguage = gl;
         g.processPriority = ProcessPriorityFromIndex((int)JsonGetNumber(obj, L"processPriority", 0));
         g.applyAffinity = JsonGetBool(obj, L"applyAffinity", false);
         g.affinityMask = (unsigned long long)JsonGetLongLong(obj, L"affinityMask", 0);
+        g.performanceMonitor = JsonGetBool(obj, L"performanceMonitor", false);
+        g.performanceCpuTemp = JsonGetBool(obj, L"performanceCpuTemp", false);
 
         size_t cpos = obj.find(L"\"companions\"");
         if (cpos != std::wstring::npos) {
@@ -1013,6 +1173,10 @@ static void NotifyLauncherControllerChanged() {
     HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
     if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
 }
+static void NotifyLauncherOverlayChanged() {
+    HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+    if (h) PostMessageW(h, WM_APP_RELOAD_OVERLAY, 0, 0);
+}
 
 static void OpenGameFolder(int idx) {
     if (idx < 0 || idx >= (int)g_games.size()) return;
@@ -1133,9 +1297,14 @@ static void HandleWebMessage(const std::wstring& json) {
         if (s >= 0 && s < RadialStyleCount()) SaveRadialStyle((RadialStyle)s);
         PushStateToJs();
     }
-    // ✅ شفافية الدائرة
+    else if (action == L"setRadialNoGlow") {
+        bool enabled = JsonGetNumber(json, L"enabled", 0) != 0;
+        SaveRadialNoGlow(enabled);
+        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+        if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
+        PushStateToJs();
+    }
     else if (action == L"setRadialTransparency") {
-        // نحصل على القيمة كنص عشري
         std::wstring vstr = JsonGetString(json, L"value");
         float v = 0.72f;
         if (!vstr.empty()) {
@@ -1187,13 +1356,6 @@ static void HandleWebMessage(const std::wstring& json) {
         SaveAutoLayoutSwitch(JsonGetNumber(json, L"enabled", 0) != 0);
         PushStateToJs();
     }
-    else if (action == L"setGameAutoLangSwitch") {
-        int idx = (int)JsonGetNumber(json, L"index");
-        if (idx >= 0 && idx < (int)g_games.size()) {
-            g_games[idx].autoLangSwitch = JsonGetNumber(json, L"enabled", 0) != 0;
-            SaveGames(g_games); PushStateToJs();
-        }
-    }
     else if (action == L"changeHotkey") {
         UINT mods = (UINT)JsonGetNumber(json, L"modifiers", 0);
         UINT vk = (UINT)JsonGetNumber(json, L"vk", 0);
@@ -1228,7 +1390,6 @@ static void HandleWebMessage(const std::wstring& json) {
             SaveGames(g_games); PushStateToJs();
         }
     }
-    // ✅ لون مخصص عبر نافذة ويندوز
     else if (action == L"browseGameCustomColor") {
         int idx = (int)JsonGetNumber(json, L"index");
         if (idx >= 0 && idx < (int)g_games.size()) {
@@ -1243,6 +1404,25 @@ static void HandleWebMessage(const std::wstring& json) {
         int idx = (int)JsonGetNumber(json, L"index");
         if (idx >= 0 && idx < (int)g_games.size()) {
             g_games[idx].favorite = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameQuickSlot") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        int slot = (int)JsonGetNumber(json, L"slot", 0);
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            if (slot < 0 || slot > 9) slot = 0;
+            g_games[idx].quickSlot = slot;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    // ✅ جديد: تعيين لغة اللعبة (0=بدون، 1=عربي، 2=إنجليزي)
+    else if (action == L"setGameLanguage") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        int lang = (int)JsonGetNumber(json, L"language", 0);
+        if (lang < 0 || lang > 2) lang = 0;
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].gameLanguage = lang;
             SaveGames(g_games); PushStateToJs();
         }
     }
@@ -1305,7 +1485,6 @@ static void HandleWebMessage(const std::wstring& json) {
         SaveHubAlwaysVisible(JsonGetNumber(json, L"enabled", 0) != 0);
         PushStateToJs();
     }
-
     else if (action == L"setControllerEnabled") {
         ControllerSettings cs = LoadControllerSettings();
         cs.enabled = JsonGetNumber(json, L"enabled", 0) != 0;
@@ -1319,6 +1498,64 @@ static void HandleWebMessage(const std::wstring& json) {
         cs.openRadialButton = (DWORD)btn;
         SaveControllerSettings(cs);
         NotifyLauncherControllerChanged();
+        PushStateToJs();
+    }
+    else if (action == L"setControllerToggleMode") {
+        ControllerSettings cs = LoadControllerSettings();
+        cs.toggleMode = JsonGetNumber(json, L"enabled", 0) != 0;
+        SaveControllerSettings(cs);
+        NotifyLauncherControllerChanged();
+        PushStateToJs();
+    }
+    else if (action == L"setAllowControllerDuringGame") {
+        ControllerSettings cs = LoadControllerSettings();
+        cs.allowControllerDuringGame = JsonGetNumber(json, L"enabled", 0) != 0;
+        SaveControllerSettings(cs);
+        NotifyLauncherControllerChanged();
+        PushStateToJs();
+    }
+    else if (action == L"setPanelGlassEffect") {
+        bool enabled = JsonGetNumber(json, L"enabled", 0) != 0;
+        SavePanelGlassEffect(enabled);
+        ApplyGlassMode(enabled);
+        PushStateToJs();
+    }
+    else if (action == L"setOverlayEnabled") {
+        OverlaySettings os = LoadOverlaySettings();
+        os.enabled = JsonGetNumber(json, L"enabled", 0) != 0;
+        SaveOverlaySettings(os);
+        NotifyLauncherOverlayChanged();
+        PushStateToJs();
+    }
+    else if (action == L"changeOverlayHotkey") {
+        UINT mods = (UINT)JsonGetNumber(json, L"modifiers", 0);
+        UINT vk = (UINT)JsonGetNumber(json, L"vk", 0);
+        if (vk != 0) {
+            OverlaySettings os = LoadOverlaySettings();
+            os.hotkeyModifiers = mods;
+            os.hotkeyVk = vk;
+            SaveOverlaySettings(os);
+            NotifyLauncherOverlayChanged();
+            PushStateToJs();
+        }
+    }
+    else if (action == L"setOverlayShowOnGameLaunch") {
+        OverlaySettings os = LoadOverlaySettings();
+        os.showOnGameLaunch = JsonGetNumber(json, L"enabled", 0) != 0;
+        SaveOverlaySettings(os);
+        NotifyLauncherOverlayChanged();
+        PushStateToJs();
+    }
+    else if (action == L"setOverlayOpacity") {
+        std::wstring vstr = JsonGetString(json, L"value");
+        float v = 0.85f;
+        if (!vstr.empty()) {
+            try { v = std::stof(vstr); } catch (...) { v = 0.85f; }
+        }
+        OverlaySettings os = LoadOverlaySettings();
+        os.opacity = v;
+        SaveOverlaySettings(os);
+        NotifyLauncherOverlayChanged();
         PushStateToJs();
     }
     else if (action == L"changeMuteHotkey") {
@@ -1454,6 +1691,219 @@ static void HandleWebMessage(const std::wstring& json) {
     else if (action == L"openGameFolder") {
         OpenGameFolder((int)JsonGetNumber(json, L"index"));
     }
+    else if (action == L"setGamePerformanceMonitor") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            bool enabled = JsonGetNumber(json, L"enabled", 0) != 0;
+            g_games[idx].performanceMonitor = enabled;
+            if (!enabled) g_games[idx].performanceCpuTemp = false;
+            SaveGames(g_games);
+            PushStateToJs();
+        }
+    }
+    else if (action == L"setPerformanceGlobalEnabled") {
+        bool enabled = JsonGetNumber(json, L"enabled", 0) != 0;
+        SavePerformanceGlobalEnabled(enabled);
+        PushStateToJs();
+    }
+    else if (action == L"restartAsAdmin") {
+        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+        if (h) {
+            PostMessageW(h, WM_APP_RESTART_AS_ADMIN, 0, 0);
+            PushStatus(g_lang == Lang::EN
+                ? L"Restarting GameLauncher as Administrator..."
+                : L"جاري إعادة تشغيل GameLauncher كمسؤول...", L"info");
+        } else {
+            wchar_t exePath[MAX_PATH];
+            if (GetModuleFileNameW(nullptr, exePath, MAX_PATH)) {
+                SHELLEXECUTEINFOW sei = { sizeof(sei) };
+                sei.fMask = SEE_MASK_NOASYNC;
+                sei.lpVerb = L"runas";
+                sei.lpFile = exePath;
+                sei.lpParameters = L"--restart-admin";
+                sei.nShow = SW_SHOWNORMAL;
+                if (ShellExecuteExW(&sei)) {
+                    PushStatus(g_lang == Lang::EN
+                        ? L"Engine launching as Administrator..."
+                        : L"جاري تشغيل المحرك كمسؤول...", L"info");
+                } else {
+                    DWORD err = GetLastError();
+                    if (err == ERROR_CANCELLED) {
+                        PushStatus(g_lang == Lang::EN
+                            ? L"UAC prompt was cancelled."
+                            : L"تم إلغاء نافذة الصلاحيات.", L"warn");
+                    } else {
+                        PushStatus(g_lang == Lang::EN
+                            ? L"Failed to restart as Administrator."
+                            : L"فشل إعادة التشغيل كمسؤول.", L"error");
+                    }
+                }
+            }
+        }
+    }
+    else if (action == L"getPerformanceSessions") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+            auto sessions = pm.ListSessions(g_games[idx].exePath);
+            std::wstringstream j;
+            j << L"{\"type\":\"perfSessions\",\"sessions\":[";
+            for (size_t i = 0; i < sessions.size(); i++) {
+                if (i) j << L",";
+                auto& s = sessions[i];
+                j << L"{\"filePath\":\"" << JsonEscape(s.filePath) << L"\""
+                  << L",\"sessionStartUnix\":" << s.sessionStartUnix
+                  << L",\"sessionDurationSec\":" << s.sessionDurationSec
+                  << L",\"avgFps\":" << s.avgFps
+                  << L",\"avgGpuTemp\":" << s.avgGpuTemp
+                  << L",\"avgCpuTemp\":" << s.avgCpuTemp
+                  << L",\"stutterCount\":" << s.stutterCount
+                  << L"}";
+            }
+            j << L"]}";
+            if (g_webview) g_webview->PostWebMessageAsString(j.str().c_str());
+        }
+    }
+    else if (action == L"getPerformanceReport") {
+        std::wstring file = JsonGetString(json, L"file");
+        if (!file.empty()) {
+            auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+            PerfBlackBox::PerformanceReport rep;
+            if (pm.LoadReport(file, rep)) {
+                std::wstringstream j;
+                j << L"{\"type\":\"perfReport\",\"report\":{"
+                    << L"\"gameName\":\"" << JsonEscape(rep.gameName) << L"\""
+                    << L",\"sessionStartUnix\":" << rep.sessionStartUnix
+                    << L",\"sessionDurationSec\":" << rep.sessionDurationSec
+                    << L",\"avgFps\":" << rep.avgFps
+                    << L",\"minFps\":" << rep.minFps
+                    << L",\"maxFps\":" << rep.maxFps
+                    << L",\"fps1PercentLow\":" << rep.fps1PercentLow
+                    << L",\"fps01PercentLow\":" << rep.fps01PercentLow
+                    << L",\"avgCpuUsage\":" << rep.avgCpuUsage
+                    << L",\"maxCpuUsage\":" << rep.maxCpuUsage
+                    << L",\"minCpuUsage\":" << rep.minCpuUsage
+                    << L",\"avgCpuTemp\":" << rep.avgCpuTemp
+                    << L",\"maxCpuTemp\":" << rep.maxCpuTemp
+                    << L",\"minCpuTemp\":" << rep.minCpuTemp
+                    << L",\"avgGpuUsage\":" << rep.avgGpuUsage
+                    << L",\"maxGpuUsage\":" << rep.maxGpuUsage
+                    << L",\"minGpuUsage\":" << rep.minGpuUsage
+                    << L",\"avgGpuTemp\":" << rep.avgGpuTemp
+                    << L",\"maxGpuTemp\":" << rep.maxGpuTemp
+                    << L",\"minGpuTemp\":" << rep.minGpuTemp
+                    << L",\"avgCpuPower\":" << rep.avgCpuPower
+                    << L",\"maxCpuPower\":" << rep.maxCpuPower
+                    << L",\"avgGpuPower\":" << rep.avgGpuPower
+                    << L",\"maxGpuPower\":" << rep.maxGpuPower
+                    << L",\"avgRamMB\":" << rep.avgRamMB
+                    << L",\"maxRamMB\":" << rep.maxRamMB
+                    << L",\"minRamMB\":" << rep.minRamMB
+                    << L",\"avgVramMB\":" << rep.avgVramMB
+                    << L",\"maxVramMB\":" << rep.maxVramMB
+                    << L",\"stutterCount\":" << rep.stutterCount;
+
+                j << L",\"samples\":[";
+                const size_t MAX_SEND = 3600;
+                size_t total = rep.samples.size();
+                size_t step = (total > MAX_SEND) ? (total / MAX_SEND) : 1;
+                bool first = true;
+                for (size_t i = 0; i < total; i += step) {
+                    if (!first) j << L",";
+                    first = false;
+                    auto& s = rep.samples[i];
+                    j << L"[" << s.timestampMs;
+                    wchar_t buf[32];
+                    if (s.fps < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.1f", s.fps); j << buf; }
+                    if (s.frameTimeMs < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.2f", s.frameTimeMs); j << buf; }
+                    if (s.cpuUsage < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.1f", s.cpuUsage); j << buf; }
+                    if (s.gpuUsage < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.0f", s.gpuUsage); j << buf; }
+                    if (s.cpuTempC < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.0f", s.cpuTempC); j << buf; }
+                    if (s.gpuTempC < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.0f", s.gpuTempC); j << buf; }
+                    if (s.cpuPowerW < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.0f", s.cpuPowerW); j << buf; }
+                    if (s.gpuPowerW < 0) j << L",-1";
+                    else { swprintf_s(buf, 32, L",%.0f", s.gpuPowerW); j << buf; }
+                    j << L"," << s.ramUsedMB << L"," << s.vramUsedMB;
+                    j << L"]";
+                }
+                j << L"]";
+                j << L"}}";
+                if (g_webview) g_webview->PostWebMessageAsString(j.str().c_str());
+            }
+            else {
+                if (g_webview) g_webview->PostWebMessageAsString(L"{\"type\":\"perfReport\",\"report\":null}");
+            }
+        }
+    }
+    else if (action == L"exportPerformanceCsv") {
+        std::wstring file = JsonGetString(json, L"file");
+        if (!file.empty()) {
+            auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+            PerfBlackBox::PerformanceReport rep;
+            if (pm.LoadReport(file, rep)) {
+                std::wstring defaultName = rep.gameName + L"-perf.csv";
+                std::wstring savePath;
+                if (BrowseForJsonSave(savePath,
+                        g_lang == Lang::EN ? L"Save performance CSV" : L"حفظ تقرير الأداء CSV",
+                        defaultName.c_str())) {
+                    if (savePath.size() < 4 ||
+                        _wcsicmp(savePath.c_str() + savePath.size() - 4, L".csv") != 0) {
+                        savePath += L".csv";
+                    }
+                    if (pm.ExportCsv(rep, savePath)) {
+                        PushStatus(g_lang == Lang::EN ? L"CSV exported successfully." : L"تم تصدير CSV بنجاح.", L"info");
+                    } else {
+                        PushStatus(g_lang == Lang::EN ? L"Failed to export CSV." : L"فشل تصدير CSV.", L"error");
+                    }
+                }
+            }
+        }
+    }
+    else if (action == L"deletePerformanceSession") {
+        std::wstring file = JsonGetString(json, L"file");
+        int gi = (int)JsonGetNumber(json, L"gameIndex", -1);
+        if (!file.empty()) {
+            auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+            if (pm.DeleteSession(file)) {
+                PushStatus(g_lang == Lang::EN ? L"Session deleted." : L"تم حذف الجلسة.", L"info");
+                if (gi >= 0 && gi < (int)g_games.size()) {
+                    auto sessions = pm.ListSessions(g_games[gi].exePath);
+                    std::wstringstream j;
+                    j << L"{\"type\":\"perfSessions\",\"sessions\":[";
+                    for (size_t i = 0; i < sessions.size(); i++) {
+                        if (i) j << L",";
+                        auto& s = sessions[i];
+                        j << L"{\"filePath\":\"" << JsonEscape(s.filePath) << L"\""
+                          << L",\"sessionStartUnix\":" << s.sessionStartUnix
+                          << L",\"sessionDurationSec\":" << s.sessionDurationSec
+                          << L",\"avgFps\":" << s.avgFps
+                          << L",\"avgGpuTemp\":" << s.avgGpuTemp
+                          << L",\"avgCpuTemp\":" << s.avgCpuTemp
+                          << L",\"stutterCount\":" << s.stutterCount
+                          << L"}";
+                    }
+                    j << L"]}";
+                    if (g_webview) g_webview->PostWebMessageAsString(j.str().c_str());
+                }
+            }
+        }
+    }
+    else if (action == L"deleteAllPerformanceSessions") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+            if (pm.DeleteAllSessions(g_games[idx].exePath)) {
+                PushStatus(g_lang == Lang::EN ? L"All sessions deleted." : L"تم حذف كل الجلسات.", L"info");
+            }
+        }
+    }
 }
 
 // ----------------------------- WebView2 -----------------------------
@@ -1497,8 +1947,11 @@ static void InitWebView(HWND hwnd) {
                             ResizeWebView();
                             g_controller->put_IsVisible(TRUE);
 
+                            if (LoadPanelGlassEffect()) {
+                                SetWebViewTransparent(true);
+                            }
+
                             std::wstring uiPath;
-                            // ✅ cache-busting ببصمة الـ EXE
                             wchar_t selfPath[MAX_PATH];
                             GetModuleFileNameW(nullptr, selfPath, MAX_PATH);
                             WIN32_FILE_ATTRIBUTE_DATA fad;
@@ -1511,12 +1964,12 @@ static void InitWebView(HWND hwnd) {
                             wchar_t sigStr[32];
                             wsprintfW(sigStr, L"%llX", sig);
 
-                            if (ExtractEmbeddedHtml(uiPath)) {
-                                std::wstring url = L"file:///" + uiPath + L"?v=" + sigStr;
-                                for (auto& c : url) if (c == L'\\') c = L'/';
-                                if (g_webview) g_webview->Navigate(url.c_str());
-                            } else {
+                            bool extractOk = ExtractEmbeddedFiles(uiPath, sigStr);
+                            if (!extractOk) {
                                 uiPath = GetExeDir() + L"\\panel_ui.html";
+                                OutputDebugStringW(L"[GameLauncher] ExtractEmbeddedFiles failed - falling back to external files.\n");
+                            }
+                            {
                                 std::wstring url = L"file:///" + uiPath + L"?v=" + sigStr;
                                 for (auto& c : url) if (c == L'\\') c = L'/';
                                 if (g_webview) g_webview->Navigate(url.c_str());
@@ -1554,6 +2007,10 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         g_lang = LoadLanguage();
         LoadGames(g_games);
         g_hotkey = LoadHotkey();
+        if (LoadPanelGlassEffect()) {
+            g_glassEffectActive = true;
+            SetWindowGlass(hwnd, true);
+        }
         InitWebView(hwnd);
         SetTimer(hwnd, g_engineStatusTimerId, 5000, nullptr);
         return 0;
@@ -1570,6 +2027,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_ERASEBKGND: {
         HDC hdc = (HDC)wp;
         RECT rc; GetClientRect(hwnd, &rc);
+        if (g_glassEffectActive) {
+            return 1;
+        }
         HBRUSH dark = CreateSolidBrush(RGB(0x0d, 0x0b, 0x18));
         FillRect(hdc, &rc, dark); DeleteObject(dark);
         return 1;
@@ -1578,10 +2038,26 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         if (wp == (WPARAM)g_engineStatusTimerId) {
             if (IsIconic(hwnd)) return 0;
             bool current = IsEngineRunning();
-            if (g_firstStatusCheck || current != g_lastEngineStatus) {
+            bool changed = (g_firstStatusCheck || current != g_lastEngineStatus);
+            if (changed) {
                 g_lastEngineStatus = current;
                 g_firstStatusCheck = false;
                 PushStateToJs();
+            }
+            else {
+                static bool lastAdminState = false;
+                bool currentAdmin = IsEngineElevated();
+                bool adminChanged = (currentAdmin != lastAdminState);
+                if (adminChanged) {
+                    lastAdminState = currentAdmin;
+                    PushStateToJs();
+                }
+                else {
+                    RefreshSharedCaches();
+                    if (!g_runningGamesCache.empty()) {
+                        PushStatsUpdateToJs();
+                    }
+                }
             }
         }
         else if (wp == (WPARAM)PUSH_STATE_TIMER_ID) {
@@ -1589,6 +2065,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             PushStateToJs();
         }
         return 0;
+
     case WM_DROPFILES: HandleDropOnPanel((HDROP)wp); return 0;
     case WM_SETFOCUS:
         if (g_controller) g_controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);

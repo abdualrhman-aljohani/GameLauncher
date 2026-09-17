@@ -20,13 +20,17 @@
 #include <propsys.h>
 #include <propkey.h>
 #include <propvarutil.h>
+#include <taskschd.h>
+#include <comdef.h>
 
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "oleaut32.lib")
 #pragma comment(lib, "uuid.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "propsys.lib")
+#pragma comment(lib, "taskschd.lib")
 
 static const wchar_t* GAMES_FILE        = L"games.cfg";
 static const wchar_t* SETTINGS_FILE     = L"hotkey.cfg";
@@ -40,10 +44,18 @@ static const wchar_t* CONTROLLER_FILE   = L"controller.cfg";
 static const wchar_t* RADIAL_TRANSP_FILE = L"radial_transparency.cfg";
 static const wchar_t* FIRST_RUN_FILE    = L"first_run_done.txt";
 static const wchar_t* HUB_VISIBLE_FILE  = L"hub_always_visible.cfg";
+static const wchar_t* PANEL_GLASS_FILE  = L"panel_glass.cfg";
+static const wchar_t* OVERLAY_FILE      = L"overlay.cfg";
+static const wchar_t* PERFORMANCE_GLOBAL_FILE = L"performance_global.cfg";
+static const wchar_t* RADIAL_NOGLOW_FILE = L"radial_noglow.cfg";
 
 static const wchar_t FIELD_SEP = L'\x1F';
 static const wchar_t ITEM_SEP  = L'\x1E';
 static const wchar_t SUB_SEP   = L'\x1D';
+
+static const wchar_t* TASK_FOLDER   = L"\\GameLauncher";
+static const wchar_t* TASK_NAME     = L"GameLauncher_AutoStart";
+static const wchar_t* TASK_AUTHOR   = L"GameLauncher";
 
 static HANDLE g_gamesCfgMutex = nullptr;
 static void EnsureGamesCfgMutex() {
@@ -130,6 +142,10 @@ std::wstring HubAlwaysVisiblePath()   { return GetAppDataDir() + L"\\" + HUB_VIS
 std::wstring PanelPresetPath() { return GetAppDataDir() + L"\\" + PRESET_FILE; }
 std::wstring PanelBackgroundPath()  { return GetAppDataDir() + L"\\" + PANEL_BG_FILE; }
 std::wstring RadialBackgroundPath() { return GetAppDataDir() + L"\\" + RADIAL_BG_FILE; }
+std::wstring PanelGlassEffectPath() { return GetAppDataDir() + L"\\" + PANEL_GLASS_FILE; }
+std::wstring OverlaySettingsPath()  { return GetAppDataDir() + L"\\" + OVERLAY_FILE; }
+std::wstring PerformanceSettingsPath() { return GetAppDataDir() + L"\\" + PERFORMANCE_GLOBAL_FILE; }
+std::wstring RadialNoGlowPath() { return GetAppDataDir() + L"\\" + RADIAL_NOGLOW_FILE; }
 
 static std::wstring ToLowerCopy(const std::wstring& in) {
     std::wstring s = in;
@@ -206,12 +222,25 @@ void LoadGames(std::vector<GameEntry>& games) {
         if (fields.size() >= 14 && !fields[13].empty()) g.playCount = (unsigned int)wcstoul(fields[13].c_str(), nullptr, 10);
         if (fields.size() >= 15) g.radialBgPath = fields[14];
         if (fields.size() >= 16 && !fields[15].empty()) g.hideOriginalIcon = (fields[15] != L"0");
-        if (fields.size() >= 17 && !fields[16].empty()) {
-            int prio = _wtoi(fields[16].c_str());
+        if (fields.size() >= 17 && !fields[16].empty()) g.transparentIcon = (fields[16] != L"0");
+        if (fields.size() >= 18 && !fields[17].empty()) {
+            int prio = _wtoi(fields[17].c_str());
             if (prio >= 0 && prio <= 5) g.processPriority = (ProcessPriority)prio;
         }
-        if (fields.size() >= 18 && !fields[17].empty()) g.applyAffinity = (fields[17] != L"0");
-        if (fields.size() >= 19 && !fields[18].empty()) g.affinityMask = _wcstoui64(fields[18].c_str(), nullptr, 10);
+        if (fields.size() >= 19 && !fields[18].empty()) g.applyAffinity = (fields[18] != L"0");
+        if (fields.size() >= 20 && !fields[19].empty()) g.affinityMask = _wcstoui64(fields[19].c_str(), nullptr, 10);
+        if (fields.size() >= 21 && !fields[20].empty()) {
+            int slot = _wtoi(fields[20].c_str());
+            if (slot >= 0 && slot <= 9) g.quickSlot = slot;
+        }
+        if (fields.size() >= 22 && !fields[21].empty()) g.performanceMonitor = (fields[21] != L"0");
+        if (fields.size() >= 23 && !fields[22].empty()) g.performanceCpuTemp = (fields[22] != L"0");
+        // ✅ gameLanguage (0=بدون، 1=AR، 2=EN)
+        if (fields.size() >= 24 && !fields[23].empty()) {
+            int gl = _wtoi(fields[23].c_str());
+            if (gl >= 0 && gl <= 2) g.gameLanguage = gl;
+        }
+
         games.push_back(g);
     }
     f.close();
@@ -244,9 +273,14 @@ void SaveGames(const std::vector<GameEntry>& games) {
               << g.playCount << FIELD_SEP
               << g.radialBgPath << FIELD_SEP
               << (g.hideOriginalIcon ? 1 : 0) << FIELD_SEP
+              << (g.transparentIcon ? 1 : 0) << FIELD_SEP
               << (int)g.processPriority << FIELD_SEP
               << (g.applyAffinity ? 1 : 0) << FIELD_SEP
-              << g.affinityMask << L"\n";
+              << g.affinityMask << FIELD_SEP
+              << g.quickSlot << FIELD_SEP
+              << (g.performanceMonitor ? 1 : 0) << FIELD_SEP
+              << (g.performanceCpuTemp ? 1 : 0) << FIELD_SEP
+              << g.gameLanguage << L"\n";
         }
         f.flush();
     }
@@ -319,10 +353,15 @@ ControllerSettings LoadControllerSettings() {
     ControllerSettings cs;
     std::wifstream f(ControllerSettingsPath().c_str());
     if (!f.is_open()) return cs;
-    unsigned long enabled = 0, btn = 0;
-    if (f >> enabled >> btn) {
+    unsigned long enabled = 0, btn = 0, toggle = 1;
+    if (f >> enabled >> btn >> toggle) {
         cs.enabled = (enabled != 0);
         if (btn != 0) cs.openRadialButton = (DWORD)btn;
+        cs.toggleMode = (toggle != 0);
+        unsigned long allowDuringGame = 0;
+        if (f >> allowDuringGame) {
+            cs.allowControllerDuringGame = (allowDuringGame != 0);
+        }
     }
     return cs;
 }
@@ -333,7 +372,9 @@ void SaveControllerSettings(const ControllerSettings& cs) {
         std::wofstream f(tmp.c_str(), std::ios::trunc);
         if (!f.is_open()) return;
         f << (cs.enabled ? 1 : 0) << L" "
-          << (unsigned long)cs.openRadialButton << L"\n";
+          << (unsigned long)cs.openRadialButton << L" "
+          << (cs.toggleMode ? 1 : 0) << L" "
+          << (cs.allowControllerDuringGame ? 1 : 0) << L"\n";
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
@@ -357,6 +398,91 @@ std::wstring ControllerButtonName(DWORD button, Lang lang) {
         case 0x0400: return en ? L"Xbox (Guide)"   : L"زر Xbox (الشعار)";
         default:     return L"?";
     }
+}
+
+OverlaySettings LoadOverlaySettings() {
+    OverlaySettings os;
+    std::wifstream f(OverlaySettingsPath().c_str());
+    if (!f.is_open()) return os;
+    unsigned long enabled = 0, mods = 0, vk = 0, showOnLaunch = 0, px = 20, py = 20;
+    float op = 0.85f;
+    if (f >> enabled >> mods >> vk >> showOnLaunch >> px >> py >> op) {
+        os.enabled = (enabled != 0);
+        if (mods != 0 || vk != 0) { os.hotkeyModifiers = (UINT)mods; os.hotkeyVk = (UINT)vk; }
+        os.showOnGameLaunch = (showOnLaunch != 0);
+        os.posX = (int)px;
+        os.posY = (int)py;
+        if (op < 0.2f) op = 0.2f;
+        if (op > 1.0f) op = 1.0f;
+        os.opacity = op;
+    }
+    return os;
+}
+void SaveOverlaySettings(const OverlaySettings& os) {
+    std::wstring target = OverlaySettingsPath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << (os.enabled ? 1 : 0) << L" "
+          << (unsigned long)os.hotkeyModifiers << L" "
+          << (unsigned long)os.hotkeyVk << L" "
+          << (os.showOnGameLaunch ? 1 : 0) << L" "
+          << os.posX << L" "
+          << os.posY << L" "
+          << os.opacity << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+std::wstring OverlayHotkeyToString(const OverlaySettings& os) {
+    HotkeySettings hk;
+    hk.modifiers = os.hotkeyModifiers;
+    hk.vk = os.hotkeyVk;
+    return HotkeyToString(hk);
+}
+
+std::wstring PerformanceStorageDir() {
+    std::wstring dir = GetAppDataDir() + L"\\performance";
+    CreateDirectoryW(dir.c_str(), nullptr);
+    return dir;
+}
+
+std::wstring ComputeGameStorageHash(const std::wstring& gamePath) {
+    ULONGLONG hash = 14695981039346656037ULL;
+    for (wchar_t c : gamePath) {
+        wchar_t lc = (wchar_t)towlower(c);
+        hash ^= (ULONGLONG)(lc & 0xFF);
+        hash *= 1099511628211ULL;
+        hash ^= (ULONGLONG)((lc >> 8) & 0xFF);
+        hash *= 1099511628211ULL;
+    }
+    wchar_t buf[32];
+    wsprintfW(buf, L"%016llX", hash);
+    return buf;
+}
+
+std::wstring PerformanceGameDir(const std::wstring& gamePath) {
+    std::wstring dir = PerformanceStorageDir() + L"\\" + ComputeGameStorageHash(gamePath);
+    CreateDirectoryW(dir.c_str(), nullptr);
+    return dir;
+}
+
+bool LoadPerformanceGlobalEnabled() {
+    std::wifstream f(PerformanceSettingsPath().c_str());
+    if (!f.is_open()) return false;
+    std::wstring line; std::getline(f, line);
+    return TrimString(line) == L"1";
+}
+
+void SavePerformanceGlobalEnabled(bool enabled) {
+    std::wstring target = PerformanceSettingsPath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << (enabled ? L"1" : L"0") << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 
 int ProcessPriorityCount() { return 6; }
@@ -840,8 +966,8 @@ FolderExeSuggestion FindBestExeInFolder(const std::wstring& folderPath) {
     return result;
 }
 
-// ✅ 13 نمط
-int RadialStyleCount() { return 13; }
+// ✅ 20 نمط رسم
+int RadialStyleCount() { return 20; }
 RadialStyle LoadRadialStyle() {
     std::wifstream f(ThemePath().c_str());
     if (!f.is_open()) return RadialStyle::Outline;
@@ -862,24 +988,30 @@ void SaveRadialStyle(RadialStyle style) {
 std::wstring RadialStyleName(RadialStyle style, Lang lang) {
     bool en = (lang == Lang::EN);
     switch (style) {
-        case RadialStyle::Outline:  return en ? L"Outline Ring"           : L"حلقة محيطية";
-        case RadialStyle::Neon:     return en ? L"Neon Glow"               : L"توهّج نيون";
-        case RadialStyle::Gradient: return en ? L"Gradient Ring"           : L"حلقة متدرجة";
-        case RadialStyle::Minimal:  return en ? L"Minimal"                 : L"بسيط";
-        case RadialStyle::Hex:      return en ? L"Hex Frame"               : L"إطار سداسي";
-        case RadialStyle::Comet:    return en ? L"Comet Arc"               : L"قوس مذنّب";
-        case RadialStyle::Burst:    return en ? L"Burst (Action)"          : L"انفجاري (أكشن)";
-        case RadialStyle::Sakura:   return en ? L"Sakura (Anime)"          : L"ساكورا (أنمي)";
-        case RadialStyle::Glass:    return en ? L"Frosted Glass"           : L"زجاج مصنفر";
-        case RadialStyle::Vortex:   return en ? L"Vortex"                  : L"دوامة";
-        case RadialStyle::Simple:   return en ? L"Clean Ring"              : L"حلقة نظيفة";
-        case RadialStyle::Aurora:   return en ? L"Aurora Glow"             : L"توهّج الشفق";
-        case RadialStyle::Halo:     return en ? L"HUD Halo"                : L"هالة تقنية";
+        case RadialStyle::Outline:  return en ? L"Outline Ring"     : L"حلقة محيطية";
+        case RadialStyle::Neon:     return en ? L"Neon Glow"        : L"توهّج نيون";
+        case RadialStyle::Gradient: return en ? L"Gradient Ring"    : L"حلقة متدرجة";
+        case RadialStyle::Minimal:  return en ? L"Minimal"          : L"بسيط";
+        case RadialStyle::Hex:      return en ? L"Hex Frame"        : L"إطار سداسي";
+        case RadialStyle::Comet:    return en ? L"Comet Arc"        : L"قوس مذنّب";
+        case RadialStyle::Burst:    return en ? L"Burst (Action)"   : L"انفجاري (أكشن)";
+        case RadialStyle::Sakura:   return en ? L"Sakura (Anime)"   : L"ساكورا (أنمي)";
+        case RadialStyle::Glass:    return en ? L"Frosted Glass"    : L"زجاج مصنفر";
+        case RadialStyle::Vortex:   return en ? L"Vortex"           : L"دوامة";
+        case RadialStyle::Simple:   return en ? L"Clean Ring"       : L"حلقة نظيفة";
+        case RadialStyle::Aurora:   return en ? L"Aurora Glow"      : L"توهّج الشفق";
+        case RadialStyle::Halo:     return en ? L"HUD Halo"         : L"هالة تقنية";
+        case RadialStyle::Ripple:   return en ? L"Ripple Waves"     : L"موجات متداخلة";
+        case RadialStyle::Crystal:  return en ? L"Crystal Facet"    : L"بلّورة";
+        case RadialStyle::Plasma:   return en ? L"Plasma Field"     : L"حقل بلازما";
+        case RadialStyle::Orbit:    return en ? L"Orbit Ring"       : L"حلقة مدارية";
+        case RadialStyle::Pixel:    return en ? L"Pixel Frame"      : L"إطار بكسل";
+        case RadialStyle::Circuit:  return en ? L"Circuit Board"    : L"لوحة إلكترونية";
+        case RadialStyle::Flame:    return en ? L"Flame"            : L"لهب";
         default: return L"";
     }
 }
 
-// ✅ شفافية الدائرة
 float LoadRadialTransparency() {
     std::wifstream f(RadialTransparencyPath().c_str());
     if (!f.is_open()) return 0.72f;
@@ -925,7 +1057,7 @@ void SavePanelPreset(const std::wstring& preset) {
 static const wchar_t* AUTOSTART_RUN_KEY = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 static const wchar_t* AUTOSTART_VALUE_NAME = L"GameLauncher";
 
-bool IsAutoStartEnabled() {
+static bool RunKeyIsEnabled() {
     HKEY hKey;
     if (RegOpenKeyExW(HKEY_CURRENT_USER, AUTOSTART_RUN_KEY, 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS) return false;
     DWORD type = 0;
@@ -933,22 +1065,258 @@ bool IsAutoStartEnabled() {
     RegCloseKey(hKey);
     return res == ERROR_SUCCESS && type == REG_SZ;
 }
-
-void SetAutoStartEnabled(bool enabled) {
+static bool RunKeyEnable() {
+    HKEY hKey;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, AUTOSTART_RUN_KEY, 0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS) return false;
+    wchar_t exePath[MAX_PATH];
+    if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH)) { RegCloseKey(hKey); return false; }
+    std::wstring quoted = L"\"" + std::wstring(exePath) + L"\"";
+    LONG res = RegSetValueExW(hKey, AUTOSTART_VALUE_NAME, 0, REG_SZ,
+        (const BYTE*)quoted.c_str(), (DWORD)((quoted.size() + 1) * sizeof(wchar_t)));
+    RegCloseKey(hKey);
+    return res == ERROR_SUCCESS;
+}
+static void RunKeyDisable() {
     HKEY hKey;
     if (RegOpenKeyExW(HKEY_CURRENT_USER, AUTOSTART_RUN_KEY, 0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS) return;
-    if (enabled) {
-        // ✅ استخدم مسار الـ EXE الحالي — مع علامات اقتباس صحيحة
+    RegDeleteValueW(hKey, AUTOSTART_VALUE_NAME);
+    RegCloseKey(hKey);
+}
+
+static HRESULT TaskSchedulerEnable() {
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    HRESULT hr = S_OK;
+    ITaskService* pService = nullptr;
+    hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
+                          IID_ITaskService, (void**)&pService);
+    if (FAILED(hr) || !pService) return hr;
+
+    hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+    if (FAILED(hr)) { pService->Release(); return hr; }
+
+    ITaskFolder* pRootFolder = nullptr;
+    hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+    if (FAILED(hr)) { pService->Release(); return hr; }
+
+    {
+        ITaskFolder* pSubFolder = nullptr;
+        hr = pRootFolder->GetFolder(_bstr_t(TASK_FOLDER), &pSubFolder);
+        if (FAILED(hr) || !pSubFolder) {
+            VARIANT vEmpty;
+            VariantInit(&vEmpty);
+            hr = pRootFolder->CreateFolder(_bstr_t(TASK_FOLDER), vEmpty, &pSubFolder);
+            if (FAILED(hr)) { pRootFolder->Release(); pService->Release(); return hr; }
+        }
+        if (pSubFolder) pSubFolder->Release();
+    }
+
+    {
+        ITaskFolder* pSubFolder = nullptr;
+        hr = pRootFolder->GetFolder(_bstr_t(TASK_FOLDER), &pSubFolder);
+        if (SUCCEEDED(hr) && pSubFolder) {
+            pSubFolder->DeleteTask(_bstr_t(TASK_NAME), 0);
+            pSubFolder->Release();
+        }
+    }
+
+    ITaskDefinition* pTask = nullptr;
+    hr = pService->NewTask(0, &pTask);
+    if (FAILED(hr)) { pRootFolder->Release(); pService->Release(); return hr; }
+
+    IRegistrationInfo* pRegInfo = nullptr;
+    if (SUCCEEDED(pTask->get_RegistrationInfo(&pRegInfo)) && pRegInfo) {
+        pRegInfo->put_Author(_bstr_t(TASK_AUTHOR));
+        pRegInfo->put_Description(_bstr_t(L"Auto-start GameLauncher on user logon."));
+        pRegInfo->Release();
+    }
+
+    ITaskSettings* pSettings = nullptr;
+    if (SUCCEEDED(pTask->get_Settings(&pSettings)) && pSettings) {
+        pSettings->put_StartWhenAvailable(VARIANT_TRUE);
+        pSettings->put_DisallowStartIfOnBatteries(VARIANT_FALSE);
+        pSettings->put_StopIfGoingOnBatteries(VARIANT_FALSE);
+        pSettings->put_ExecutionTimeLimit(_bstr_t(L"PT0S"));
+        pSettings->put_MultipleInstances(TASK_INSTANCES_IGNORE_NEW);
+        pSettings->Release();
+    }
+
+    ITriggerCollection* pTriggers = nullptr;
+    hr = pTask->get_Triggers(&pTriggers);
+    if (FAILED(hr)) { pTask->Release(); pRootFolder->Release(); pService->Release(); return hr; }
+
+    ITrigger* pTrigger = nullptr;
+    hr = pTriggers->Create(TASK_TRIGGER_LOGON, &pTrigger);
+    if (FAILED(hr)) { pTriggers->Release(); pTask->Release(); pRootFolder->Release(); pService->Release(); return hr; }
+
+    ILogonTrigger* pLogonTrigger = nullptr;
+    if (SUCCEEDED(pTrigger->QueryInterface(IID_ILogonTrigger, (void**)&pLogonTrigger)) && pLogonTrigger) {
+        pLogonTrigger->put_Id(_bstr_t(L"LogonTrigger"));
+        pLogonTrigger->put_Delay(_bstr_t(L"PT15S"));
+        pLogonTrigger->Release();
+    }
+    pTrigger->Release();
+    pTriggers->Release();
+
+    IActionCollection* pActions = nullptr;
+    hr = pTask->get_Actions(&pActions);
+    if (FAILED(hr)) { pTask->Release(); pRootFolder->Release(); pService->Release(); return hr; }
+
+    IAction* pAction = nullptr;
+    hr = pActions->Create(TASK_ACTION_EXEC, &pAction);
+    if (FAILED(hr)) { pActions->Release(); pTask->Release(); pRootFolder->Release(); pService->Release(); return hr; }
+
+    IExecAction* pExecAction = nullptr;
+    if (SUCCEEDED(pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction)) && pExecAction) {
         wchar_t exePath[MAX_PATH];
-        if (GetModuleFileNameW(nullptr, exePath, MAX_PATH)) {
-            std::wstring quoted = L"\"" + std::wstring(exePath) + L"\"";
-            RegSetValueExW(hKey, AUTOSTART_VALUE_NAME, 0, REG_SZ,
-                (const BYTE*)quoted.c_str(), (DWORD)((quoted.size() + 1) * sizeof(wchar_t)));
+        GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+        pExecAction->put_Path(_bstr_t(exePath));
+        pExecAction->Release();
+    }
+    pAction->Release();
+    pActions->Release();
+
+    ITaskFolder* pSubFolder = nullptr;
+    hr = pRootFolder->GetFolder(_bstr_t(TASK_FOLDER), &pSubFolder);
+    if (FAILED(hr)) { pTask->Release(); pRootFolder->Release(); pService->Release(); return hr; }
+
+    IRegisteredTask* pRegistered = nullptr;
+    VARIANT vEmpty; VariantInit(&vEmpty);
+    hr = pSubFolder->RegisterTaskDefinition(
+        _bstr_t(TASK_NAME),
+        pTask,
+        TASK_CREATE_OR_UPDATE,
+        _variant_t(),
+        _variant_t(),
+        TASK_LOGON_INTERACTIVE_TOKEN,
+        vEmpty,
+        &pRegistered);
+
+    if (pRegistered) pRegistered->Release();
+    pSubFolder->Release();
+    pTask->Release();
+    pRootFolder->Release();
+    pService->Release();
+    return hr;
+}
+
+static bool TaskSchedulerDisable() {
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    ITaskService* pService = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
+                                  IID_ITaskService, (void**)&pService);
+    if (FAILED(hr) || !pService) return false;
+
+    hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+    if (FAILED(hr)) { pService->Release(); return false; }
+
+    ITaskFolder* pRootFolder = nullptr;
+    hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+    if (FAILED(hr)) { pService->Release(); return false; }
+
+    ITaskFolder* pSubFolder = nullptr;
+    hr = pRootFolder->GetFolder(_bstr_t(TASK_FOLDER), &pSubFolder);
+    if (SUCCEEDED(hr) && pSubFolder) {
+        pSubFolder->DeleteTask(_bstr_t(TASK_NAME), 0);
+        pSubFolder->Release();
+    }
+    pRootFolder->Release();
+    pService->Release();
+    return true;
+}
+
+static bool TaskSchedulerIsEnabled() {
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    ITaskService* pService = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
+                                  IID_ITaskService, (void**)&pService);
+    if (FAILED(hr) || !pService) return false;
+    hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+    if (FAILED(hr)) { pService->Release(); return false; }
+    ITaskFolder* pRootFolder = nullptr;
+    hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+    if (FAILED(hr)) { pService->Release(); return false; }
+    ITaskFolder* pSubFolder = nullptr;
+    hr = pRootFolder->GetFolder(_bstr_t(TASK_FOLDER), &pSubFolder);
+    if (FAILED(hr) || !pSubFolder) { pRootFolder->Release(); pService->Release(); return false; }
+    IRegisteredTask* pTask = nullptr;
+    hr = pSubFolder->GetTask(_bstr_t(TASK_NAME), &pTask);
+    bool exists = SUCCEEDED(hr) && pTask != nullptr;
+    if (pTask) pTask->Release();
+    pSubFolder->Release();
+    pRootFolder->Release();
+    pService->Release();
+    return exists;
+}
+
+bool IsAutoStartEnabled() {
+    if (TaskSchedulerIsEnabled()) return true;
+    return RunKeyIsEnabled();
+}
+
+void SetAutoStartEnabled(bool enabled) {
+    if (enabled) {
+        HRESULT hr = TaskSchedulerEnable();
+        if (SUCCEEDED(hr)) {
+            RunKeyDisable();
+        } else {
+            RunKeyEnable();
         }
     } else {
-        RegDeleteValueW(hKey, AUTOSTART_VALUE_NAME);
+        TaskSchedulerDisable();
+        RunKeyDisable();
     }
-    RegCloseKey(hKey);
+}
+
+bool TestAutoStart(std::wstring& outDiagnostic) {
+    std::wstring exePath;
+    {
+        wchar_t buf[MAX_PATH];
+        if (!GetModuleFileNameW(nullptr, buf, MAX_PATH)) {
+            outDiagnostic = L"تعذر قراءة مسار البرنامج.";
+            return false;
+        }
+        exePath = buf;
+    }
+    if (GetFileAttributesW(exePath.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        outDiagnostic = L"ملف البرنامج غير موجود على القرص!";
+        return false;
+    }
+
+    bool taskExists = TaskSchedulerIsEnabled();
+    bool runKeyExists = RunKeyIsEnabled();
+
+    if (!taskExists && !runKeyExists) {
+        outDiagnostic = L"الإعداد غير مُفعّل. فعّله أولاً.";
+        return false;
+    }
+
+    if (taskExists) {
+        outDiagnostic = L"✅ الإعداد سليم عبر Task Scheduler — سيعمل عند تسجيل الدخول التالي.";
+        return true;
+    }
+    if (runKeyExists) {
+        HKEY hKey;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, AUTOSTART_RUN_KEY, 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+            wchar_t value[MAX_PATH * 2] = L"";
+            DWORD size = sizeof(value);
+            DWORD type = 0;
+            LONG res = RegQueryValueExW(hKey, AUTOSTART_VALUE_NAME, nullptr, &type, (LPBYTE)value, &size);
+            RegCloseKey(hKey);
+            if (res != ERROR_SUCCESS) {
+                outDiagnostic = L"⚠️ Run key موجود لكن قراءته فشلت.";
+                return false;
+            }
+            std::wstring val = value;
+            if (val.find(exePath) == std::wstring::npos) {
+                outDiagnostic = L"⚠️ Run key موجود لكن المسار غير صحيح! فعّل الإعداد من جديد.";
+                return false;
+            }
+            outDiagnostic = L"✅ الإعداد سليم عبر Run key (لكن قد يحجبه ويندوز أحياناً).";
+            return true;
+        }
+    }
+    outDiagnostic = L"غير معروف — حاول تفعيل/إلغاء الإعداد.";
+    return false;
 }
 
 bool PathExistsOnDisk(const std::wstring& path) {
@@ -998,9 +1366,7 @@ std::wstring LoadRadialBackground() {
 }
 void SavePanelBackground(const std::wstring& path)  { SaveSingleLineFile(PanelBackgroundPath(), path); }
 void SaveRadialBackground(const std::wstring& path) { SaveSingleLineFile(RadialBackgroundPath(), path); }
-// ============================================================
-// ✅ تتبع أول تشغيل + خيار إظهار الـ Hub دائمًا
-// ============================================================
+
 bool IsFirstRun() {
     return GetFileAttributesW(FirstRunDonePath().c_str()) == INVALID_FILE_ATTRIBUTES;
 }
@@ -1031,4 +1397,49 @@ void SaveHubAlwaysVisible(bool enabled) {
         f << (enabled ? L"1" : L"0") << L"\n";
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+bool LoadPanelGlassEffect() {
+    std::wifstream f(PanelGlassEffectPath().c_str());
+    if (!f.is_open()) return false;
+    std::wstring line; std::getline(f, line);
+    return TrimString(line) == L"1";
+}
+
+void SavePanelGlassEffect(bool enabled) {
+    std::wstring target = PanelGlassEffectPath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << (enabled ? L"1" : L"0") << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+bool LoadRadialNoGlow() {
+    std::wifstream f(RadialNoGlowPath().c_str());
+    if (!f.is_open()) return false;
+    std::wstring line; std::getline(f, line);
+    return TrimString(line) == L"1";
+}
+
+void SaveRadialNoGlow(bool enabled) {
+    std::wstring target = RadialNoGlowPath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << (enabled ? L"1" : L"0") << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+// ✅ اسم اللغة داخل اللعبة
+std::wstring LangCodeToLayoutName(int gameLanguage) {
+    switch (gameLanguage) {
+        case 1: return L"ar";  // العربية
+        case 2: return L"en";  // English
+        default: return L"";    // بدون
+    }
 }

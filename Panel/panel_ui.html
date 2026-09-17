@@ -1,221 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" class="dark" data-preset="purple">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameLauncher Control Panel</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>
-  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { cairo: ['Cairo','sans-serif'], tajawal: ['Tajawal','sans-serif'] } } } }
-</script>
-<style>
-  :root {
-    --glass-opacity: 0.32;
-    --accent-1: #7c3aed; --accent-2: #a855f7; --accent-3: #8b5cf6;
-    --bg-1: #150f2c; --bg-2: #0d0b18; --bg-3: #150f26;
-    --accent-rgb: 139, 92, 246; --accent-hi-rgb: 168, 85, 247;
-    --text-1: #f1f5f9; --text-2: #cbd5e1; --text-3: #94a3b8;
-    --shadow-color: 0, 0, 0;
-    --panel-tint: 20, 15, 38;
-    --card-tint: 30, 22, 54;
-    --card-border: 255, 255, 255;
-  }
-  html[data-preset="cyber"] { --accent-1: #0ea5e9; --accent-2: #22d3ee; --accent-3: #38bdf8; --bg-1: #082032; --bg-2: #041219; --bg-3: #071f30; --accent-rgb: 56, 189, 248; --accent-hi-rgb: 34, 211, 238; }
-  html[data-preset="ember"] { --accent-1: #dc2626; --accent-2: #f97316; --accent-3: #ef4444; --bg-1: #1c0d0a; --bg-2: #0d0605; --bg-3: #1a0a07; --accent-rgb: 239, 68, 68; --accent-hi-rgb: 249, 115, 22; }
-  html[data-preset="forest"] { --accent-1: #059669; --accent-2: #10b981; --accent-3: #34d399; --bg-1: #0a1f18; --bg-2: #051410; --bg-3: #0a1c15; --accent-rgb: 16, 185, 129; --accent-hi-rgb: 52, 211, 153; }
-  html[data-preset="gray"] { --accent-1: #64748b; --accent-2: #94a3b8; --accent-3: #cbd5e1; --bg-1: #16181d; --bg-2: #0a0b0d; --bg-3: #14161a; --accent-rgb: 148, 163, 184; --accent-hi-rgb: 203, 213, 225; }
-  html[data-preset="dracula"] { --accent-1: #bd93f9; --accent-2: #ff79c6; --accent-3: #8be9fd; --bg-1: #282a36; --bg-2: #1e1f29; --bg-3: #22242e; --accent-rgb: 189, 147, 249; --accent-hi-rgb: 255, 121, 198; --panel-tint: 40, 42, 54; --card-tint: 50, 52, 66; }
-  html[data-preset="nord"] { --accent-1: #88c0d0; --accent-2: #81a1c1; --accent-3: #5e81ac; --bg-1: #2e3440; --bg-2: #242933; --bg-3: #2a303c; --accent-rgb: 136, 192, 208; --accent-hi-rgb: 129, 161, 193; --panel-tint: 46, 52, 64; --card-tint: 59, 66, 82; }
-  html[data-preset="catppuccin"] { --accent-1: #cba6f7; --accent-2: #f5c2e7; --accent-3: #f5e0dc; --bg-1: #1e1e2e; --bg-2: #181825; --bg-3: #1a1a27; --accent-rgb: 203, 166, 247; --accent-hi-rgb: 245, 194, 231; --panel-tint: 30, 30, 46; --card-tint: 49, 50, 68; }
-  html[data-preset="synthwave"] { --accent-1: #f92aad; --accent-2: #ff7edb; --accent-3: #36f9f6; --bg-1: #241b2f; --bg-2: #14101f; --bg-3: #1c1429; --accent-rgb: 249, 42, 173; --accent-hi-rgb: 255, 126, 219; --panel-tint: 36, 27, 47; --card-tint: 45, 33, 58; }
-  html[data-preset="tokyo"] { --accent-1: #7aa2f7; --accent-2: #bb9af7; --accent-3: #7dcfff; --bg-1: #1a1b26; --bg-2: #16161e; --bg-3: #181922; --accent-rgb: 122, 162, 247; --accent-hi-rgb: 187, 154, 247; --panel-tint: 26, 27, 38; --card-tint: 36, 40, 59; }
-  html[data-preset="gruvbox"] { --accent-1: #d79921; --accent-2: #b8bb26; --accent-3: #fabd2f; --bg-1: #282828; --bg-2: #1d2021; --bg-3: #232323; --accent-rgb: 215, 153, 33; --accent-hi-rgb: 184, 187, 38; --panel-tint: 40, 40, 40; --card-tint: 60, 56, 54; }
-  html[data-preset="rosepine"] { --accent-1: #ebbcba; --accent-2: #c4a7e7; --accent-3: #9ccfd8; --bg-1: #191724; --bg-2: #1f1d2e; --bg-3: #1c1a27; --accent-rgb: 235, 188, 186; --accent-hi-rgb: 196, 167, 231; --panel-tint: 25, 23, 36; --card-tint: 31, 29, 46; }
-  html[data-preset="solarized"] { --accent-1: #268bd2; --accent-2: #2aa198; --accent-3: #b58900; --bg-1: #fdf6e3; --bg-2: #eee8d5; --bg-3: #f5efdc; --accent-rgb: 38, 139, 210; --accent-hi-rgb: 42, 161, 152; --text-1: #073642; --text-2: #586e75; --text-3: #839496; --shadow-color: 7, 54, 66; --panel-tint: 253, 246, 227; --card-tint: 238, 232, 213; --card-border: 7, 54, 66; }
-  html[data-preset="obsidian"] { --accent-1: #6366f1; --accent-2: #818cf8; --accent-3: #a5b4fc; --bg-1: #0e0e1a; --bg-2: #08080f; --bg-3: #0c0c16; --accent-rgb: 129, 140, 248; --accent-hi-rgb: 165, 180, 252; --panel-tint: 14, 14, 26; --card-tint: 22, 22, 40; }
-  html[data-preset="sunset"] { --accent-1: #fb923c; --accent-2: #f472b6; --accent-3: #fbbf24; --bg-1: #2a1220; --bg-2: #170a12; --bg-3: #24101c; --accent-rgb: 244, 114, 182; --accent-hi-rgb: 251, 191, 36; --panel-tint: 42, 18, 32; --card-tint: 56, 26, 44; }
-  html[data-preset="ocean"] { --accent-1: #0891b2; --accent-2: #3b82f6; --accent-3: #67e8f9; --bg-1: #071a2e; --bg-2: #030f1d; --bg-3: #061627; --accent-rgb: 59, 130, 246; --accent-hi-rgb: 103, 232, 249; --panel-tint: 7, 26, 46; --card-tint: 12, 38, 64; }
-  html[data-preset="royal"] { --accent-1: #a855f7; --accent-2: #eab308; --accent-3: #fbbf24; --bg-1: #150c26; --bg-2: #0a0614; --bg-3: #130a20; --accent-rgb: 234, 179, 8; --accent-hi-rgb: 250, 204, 21; --panel-tint: 21, 12, 38; --card-tint: 32, 19, 56; }
-  html[data-preset="blossom"] { --accent-1: #fb7185; --accent-2: #fda4af; --accent-3: #fecdd3; --bg-1: #24121b; --bg-2: #150a10; --bg-3: #200f17; --accent-rgb: 251, 113, 133; --accent-hi-rgb: 253, 164, 175; --panel-tint: 36, 18, 27; --card-tint: 50, 26, 38; }
-
-  html, body { height: 100%; }
-  body {
-    font-family: 'Cairo', 'Tajawal', sans-serif;
-    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
-    color: var(--text-1);
-    overflow: hidden;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
-  }
-  code, pre, .font-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
-
-  .glass-panel {
-    background: rgba(var(--panel-tint), var(--glass-opacity));
-    backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
-    border: 1px solid rgba(var(--card-border), 0.14);
-    border-top-color: rgba(var(--card-border), 0.22);
-    box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.20), 0 20px 50px rgba(var(--shadow-color), 0.35), inset 0 1px 0 rgba(var(--card-border), 0.08);
-  }
-  .glass-card {
-    background: rgba(var(--card-tint), calc(var(--glass-opacity) * 0.85));
-    backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
-    border: 1px solid rgba(var(--card-border), 0.08);
-    box-shadow: 0 2px 8px rgba(var(--shadow-color), 0.12);
-    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .glass-card:hover { border-color: rgba(var(--accent-rgb), 0.45); box-shadow: 0 4px 12px rgba(var(--shadow-color), 0.2), 0 12px 32px -8px rgba(var(--accent-rgb), 0.3); transform: translateY(-1px); }
-
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: rgba(var(--shadow-color), .3); }
-  ::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), .5); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), .9); }
-
-  .nav-btn { transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
-  .nav-btn:hover { transform: translateX(2px); }
-  [dir="ltr"] .nav-btn:hover { transform: translateX(-2px); }
-  .nav-btn.active { background: rgba(var(--accent-rgb), 0.28) !important; color: var(--text-1) !important; border: 1px solid rgba(var(--accent-rgb), 0.5) !important; box-shadow: 0 4px 14px -4px rgba(var(--accent-rgb), 0.4); }
-
-  .pill-switch { display: inline-block !important; box-sizing: border-box !important; width: 46px !important; height: 26px !important; min-width: 46px !important; min-height: 26px !important; max-width: 46px !important; max-height: 26px !important; border-radius: 999px !important; position: relative !important; background: #475569 !important; background-image: none !important; border: 1px solid #64748b !important; cursor: pointer !important; padding: 0 !important; margin: 0 !important; flex: 0 0 auto !important; transition: background-color 200ms ease, border-color 200ms ease !important; vertical-align: middle !important; -webkit-appearance: none !important; appearance: none !important; outline: none !important; box-shadow: inset 0 1px 2px rgba(0,0,0,0.4) !important; }
-  .pill-switch:focus-visible { outline: 2px solid var(--accent-2) !important; outline-offset: 2px !important; }
-  .pill-switch .pill-switch-knob { position: absolute !important; top: 2px !important; left: 2px !important; right: auto !important; width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; border-radius: 999px !important; background: #f8fafc !important; box-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1) !important; pointer-events: none !important; }
-  .pill-switch.on { background: var(--accent-1) !important; background-image: none !important; border-color: var(--accent-2) !important; }
-  [dir="ltr"] .pill-switch .pill-switch-knob { left: 2px !important; right: auto !important; }
-  [dir="ltr"] .pill-switch.on .pill-switch-knob { transform: translateX(20px) !important; }
-  [dir="rtl"] .pill-switch .pill-switch-knob { left: auto !important; right: 2px !important; }
-  [dir="rtl"] .pill-switch.on .pill-switch-knob { transform: translateX(-20px) !important; }
-  .pill-switch-compact { width: 40px !important; height: 22px !important; min-width: 40px !important; min-height: 22px !important; max-width: 40px !important; max-height: 22px !important; }
-  .pill-switch-compact .pill-switch-knob { width: 16px !important; height: 16px !important; min-width: 16px !important; min-height: 16px !important; }
-  [dir="ltr"] .pill-switch-compact.on .pill-switch-knob { transform: translateX(18px) !important; }
-  [dir="rtl"] .pill-switch-compact.on .pill-switch-knob { transform: translateX(-18px) !important; }
-
-  #quickAccessChips { display: flex; align-items: center; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px 2px; scrollbar-width: thin; scrollbar-color: rgba(var(--accent-rgb),.5) transparent; }
-  #quickAccessChips::-webkit-scrollbar { height: 4px; }
-  #quickAccessChips::-webkit-scrollbar-track { background: transparent; }
-  #quickAccessChips::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb),.5); border-radius: 10px; }
-  .qa-chip { display: inline-flex !important; align-items: center; gap: 8px; padding: 5px 14px 5px 6px; border-radius: 999px !important; background: rgba(var(--card-tint), 0.7) !important; border: 1px solid rgba(var(--card-border), 0.1) !important; cursor: pointer; transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0 !important; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--text-2) !important; position: relative; outline: none; font-family: inherit; }
-  [dir="rtl"] .qa-chip { padding: 5px 6px 5px 14px; }
-  .qa-chip:hover { border-color: rgba(var(--accent-rgb),0.65) !important; box-shadow: 0 0 14px rgba(var(--accent-rgb),0.45); transform: translateY(-1px); }
-  .qa-chip.active { border-color: var(--accent-2) !important; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.35), rgba(var(--accent-hi-rgb), 0.25)) !important; color: #fff !important; transform: translateY(-1px); animation: qa-chip-pulse 2.4s ease-in-out infinite; }
-  .qa-chip.active img { border-color: var(--accent-2) !important; box-shadow: 0 0 10px rgba(var(--accent-hi-rgb), 0.85); }
-  @keyframes qa-chip-pulse { 0%, 100% { box-shadow: 0 0 12px rgba(var(--accent-hi-rgb), 0.7), 0 0 24px rgba(var(--accent-hi-rgb), 0.4); } 50% { box-shadow: 0 0 18px rgba(var(--accent-hi-rgb), 0.95), 0 0 36px rgba(var(--accent-hi-rgb), 0.55); } }
-  @keyframes qa-target-pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--accent-hi-rgb), 0.7); } 60% { box-shadow: 0 0 28px 8px rgba(var(--accent-hi-rgb), 0.4); } 100% { box-shadow: 0 0 0 0 rgba(var(--accent-hi-rgb), 0); } }
-  .qa-highlight { animation: qa-target-pulse 1.6s ease-out 1; border-color: var(--accent-2) !important; }
-
-  .details-game-item { transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-  .details-game-item:hover { border-color: rgba(var(--accent-rgb),0.5) !important; transform: translateX(-2px); }
-  [dir="ltr"] .details-game-item:hover { transform: translateX(2px); }
-  .details-game-item.active { border-color: var(--accent-2) !important; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.35), rgba(var(--accent-hi-rgb), 0.2)) !important; box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.45); }
-  .details-game-item.hidden-from-radial { opacity: 0.55; }
-  .details-game-item.hidden-from-radial img { filter: grayscale(60%); }
-
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
-  .modal-overlay.hidden { display: none !important; }
-
-  .exe-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(var(--card-border),0.08); background: rgba(var(--shadow-color), 0.6); cursor: pointer; transition: all 150ms ease; }
-  .exe-row:hover { border-color: rgba(var(--accent-rgb),0.5); background: rgba(var(--card-tint), 0.7); }
-  .exe-row.selected { border-color: var(--accent-2); background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-hi-rgb), 0.15)); }
-  .exe-row .chk { width: 20px; height: 20px; border-radius: 6px; border: 2px solid rgba(148, 163, 184, 0.7); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 150ms ease; background: transparent; }
-  .exe-row.selected .chk { background: var(--accent-1); border-color: var(--accent-2); }
-  .exe-row .chk i { opacity: 0; color: #fff; font-size: 11px; }
-  .exe-row.selected .chk i { opacity: 1; }
-  .exe-row .main-badge { font-size: 9px; padding: 1px 6px; border-radius: 999px; background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
-
-  .color-swatch { width: 32px; height: 32px; border-radius: 999px; border: 2px solid rgba(var(--card-border),0.2); cursor: pointer; transition: all 150ms ease; flex-shrink: 0; position: relative; }
-  .color-swatch:hover { transform: scale(1.1); border-color: rgba(var(--card-border),0.5); }
-  .color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.6); transform: scale(1.1); }
-
-  /* ✅ زر لون مخصص */
-  .custom-color-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    width: 32px; height: 32px; border-radius: 999px;
-    background: conic-gradient(from 0deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000);
-    border: 2px solid rgba(var(--card-border), 0.3);
-    cursor: pointer; transition: all 150ms ease;
-    position: relative; padding: 0;
-  }
-  .custom-color-btn::after {
-    content: '+'; position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 900; font-size: 16px;
-    text-shadow: 0 0 4px rgba(0,0,0,0.9);
-    background: rgba(0,0,0,0.4); border-radius: 999px;
-  }
-  .custom-color-btn:hover { transform: scale(1.15); border-color: #fff; box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.7); }
-
-  .uwp-badge { font-size: 9px; padding: 1px 6px; border-radius: 999px; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
-
-  .fav-btn { color: #64748b; padding: 2px; transition: all 200ms ease; cursor: pointer; background: transparent; border: none; }
-  .fav-btn:hover { color: #fbbf24; transform: scale(1.15); }
-  .fav-btn.on { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,.8); }
-  .fav-btn:focus-visible { outline: 2px solid var(--accent-2); border-radius: 4px; }
-
-  .search-box { display: flex; align-items: center; gap: 8px; background: rgba(var(--shadow-color), 0.7); border: 1px solid rgba(var(--card-border),0.08); border-radius: 12px; padding: 6px 12px; transition: all 180ms ease; }
-  .search-box:focus-within { border-color: rgba(var(--accent-rgb), 0.6); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); }
-  .search-box input { background: transparent; border: none; outline: none; width: 100%; font-size: 12px; color: var(--text-1); font-family: inherit; }
-  .search-box input::placeholder { color: var(--text-3); }
-
-  .sort-select { background: rgba(var(--shadow-color), 0.7); border: 1px solid rgba(var(--card-border),0.08); border-radius: 10px; color: var(--text-2); font-size: 11px; padding: 5px 8px; outline: none; font-family: inherit; }
-  .sort-select:focus { border-color: rgba(var(--accent-rgb), 0.6); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); }
-  .sort-select option { background: var(--bg-2); color: var(--text-1); }
-
-  .preset-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; border-radius: 14px; border: 2px solid rgba(var(--card-border),0.08); cursor: pointer; transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); background: rgba(var(--shadow-color), 0.5); }
-  .preset-card:hover { border-color: rgba(var(--accent-rgb), 0.5); transform: translateY(-2px); }
-  .preset-card.selected { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.3); }
-  .preset-swatch { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
-  .preset-label { font-size: 10px; font-weight: 700; color: var(--text-1); text-align: center; }
-
-  .mute-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: rgba(var(--shadow-color), 0.85); color: #ef4444; font-size: 10px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), inset 0 0 0 1px rgba(255,255,255,0.06); position: relative; }
-  .mute-badge i { transform: rotate(-45deg); }
-
-  .running-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; padding: 2px 8px 2px 6px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.45); color: #6ee7b7; animation: running-pulse 2s ease-in-out infinite; }
-  .running-dot .dot { width: 6px; height: 6px; border-radius: 999px; background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.9); animation: dot-pulse 1.6s ease-in-out infinite; }
-  @keyframes running-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); } 50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } }
-  @keyframes dot-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.6; } }
-
-  .icon-action-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 8px; color: var(--text-3); transition: all 180ms ease; display: inline-flex; align-items: center; justify-content: center; }
-  .icon-action-btn:hover { color: var(--accent-2); background: rgba(var(--accent-rgb), 0.12); }
-  .icon-action-btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
-
-  .hotkey-record-btn { background: rgba(var(--shadow-color), 0.7); border: 1px solid rgba(var(--card-border),0.15); border-radius: 10px; padding: 6px 16px; font-size: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-2); cursor: pointer; transition: all 180ms ease; min-width: 130px; }
-  .hotkey-record-btn:hover { border-color: rgba(var(--accent-rgb), 0.6); background: rgba(var(--accent-rgb), 0.1); }
-  .hotkey-record-btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
-  .hotkey-record-btn.recording { border-color: #f59e0b; background: rgba(245, 158, 11, 0.15); color: #fbbf24; animation: hotkey-pulse 1.2s ease-in-out infinite; }
-  @keyframes hotkey-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); } 50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } }
-
-  .backup-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 1px solid rgba(var(--card-border),0.15); cursor: pointer; transition: all 180ms ease; background: rgba(var(--shadow-color), 0.6); color: var(--text-2); }
-  .backup-btn:hover { border-color: rgba(var(--accent-rgb), 0.6); background: rgba(var(--accent-rgb), 0.12); transform: translateY(-1px); }
-  .backup-btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
-  .backup-btn.primary { background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); border-color: transparent; color: #fff; }
-  .backup-btn.primary:hover { background: linear-gradient(90deg, var(--accent-2), var(--accent-3)); transform: translateY(-1px); }
-
-  .radial-bg-preview { width: 72px; height: 72px; border-radius: 999px; background-size: cover; background-position: center; border: 2px solid rgba(var(--accent-rgb), 0.5); box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.5); flex-shrink: 0; }
-  .radial-bg-empty { width: 72px; height: 72px; border-radius: 999px; border: 2px dashed rgba(var(--card-border),0.2); display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 20px; flex-shrink: 0; }
-
-  .muted-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: rgba(var(--shadow-color), 0.5); border: 1px solid rgba(239, 68, 68, 0.2); transition: all 150ms ease; }
-  .muted-row:hover { border-color: rgba(239, 68, 68, 0.5); background: rgba(var(--card-tint), 0.6); }
-  .muted-row .mute-icon { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); flex-shrink: 0; }
-  .muted-row .unmute-btn { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 4px 12px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 150ms ease; }
-  .muted-row .unmute-btn:hover { background: rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.7); color: #fff; }
-
-  .cpu-cores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; }
-  .cpu-core { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 8px; border: 1px solid rgba(var(--card-border), 0.1); background: rgba(var(--shadow-color), 0.5); cursor: pointer; transition: all 150ms ease; font-size: 10px; user-select: none; }
-  .cpu-core:hover { border-color: rgba(var(--accent-rgb), 0.5); }
-  .cpu-core.selected { border-color: var(--accent-2); background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-hi-rgb), 0.15)); color: #fff; }
-  .cpu-core .core-num { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-  .cpu-core .core-idx { font-size: 9px; opacity: 0.6; }
-
-  .styled-select { width: 100%; background: rgba(var(--shadow-color), 0.7); border: 1px solid rgba(var(--card-border), 0.12); border-radius: 10px; color: var(--text-1); font-size: 12px; padding: 8px 10px; font-family: inherit; outline: none; cursor: pointer; transition: all 180ms ease; }
-  .styled-select:focus { border-color: rgba(var(--accent-rgb), 0.6); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); }
-  .styled-select option { background: var(--bg-2); color: var(--text-1); }
-
-  .warning-box { font-size: 11px; color: #fcd34d; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 8px 12px; }
-  .info-box { font-size: 11px; color: #7dd3fc; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 8px 12px; line-height: 1.6; }
-</style>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameLauncher Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="panel_ui.css?v=__GL_BUILD_SIG__">
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { cairo: ['Cairo','sans-serif'], tajawal: ['Tajawal','sans-serif'] } } } }
+    </script>
 </head>
 <body class="min-h-screen relative" id="bodyRoot">
 
@@ -339,15 +138,11 @@
                     </div>
                     <p id="selectedGamePath" class="text-[11px] text-gray-300 font-mono truncate"></p>
                   </div>
-                  <div class="flex flex-col items-center gap-1 shrink-0 ps-2 border-s border-white/10" id="gameLangToggleWrap">
-                    <span class="text-[9px] text-gray-300 text-center leading-tight w-16" data-t="gameLangToggleLabel">تبديل اللغة لهذه اللعبة</span>
-                    <button id="gameLangToggle" onclick="toggleGameAutoLangSwitch()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
                 </div>
                 <div id="noSelectionHint" class="text-center py-8 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl" data-t="selectGameHint">
                   اختر لعبةً من القائمة أولًا.
                 </div>
-                <div id="companionAppsList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+                <div id="companionAppsList" class="space-y-2 max-h-[280px] overflow-y-auto pr-1"></div>
               </div>
               <div class="pt-3 mt-3 border-t border-white/10">
                 <button onclick="nativeAction('addCompanion', {gameIndex: selectedGameIndex})" id="addCompanionBtn" disabled
@@ -459,7 +254,6 @@
                        placeholder="-windowed --server=x">
               </div>
 
-              <!-- ✅ لون مخصص لكل لعبة -->
               <div>
                 <label class="text-xs text-gray-200 block mb-2 flex items-center gap-2">
                   <i class="fa-solid fa-palette text-fuchsia-400 text-xs"></i>
@@ -477,6 +271,53 @@
                     </button>
                     <span class="text-[10px] text-gray-500 font-mono" id="detailsColorHex">#2EA6DA</span>
                   </div>
+                </div>
+              </div>
+
+              <div class="border-t border-white/10 pt-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1">
+                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
+                      <i class="fa-solid fa-hashtag text-purple-400 text-xs"></i>
+                      <span data-t="detailsQuickSlot">اختصار الفتح السريع</span>
+                    </h4>
+                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsQuickSlotHint">اضغط الرقم داخل الدائرة لفتح اللعبة مباشرة.</p>
+                  </div>
+                  <select id="detailsQuickSlotSelect" class="sort-select" onchange="onQuickSlotChange(this.value)" style="min-width:120px;">
+                    <option value="0" data-t="quickSlotNone">بدون اختصار</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- ✅ قسم لغة اللعبة الجديد -->
+              <div class="border-t border-white/10 pt-4">
+                <h4 class="text-xs text-gray-200 flex items-center gap-2 mb-2">
+                  <i class="fa-solid fa-language text-amber-400 text-xs"></i>
+                  <span data-t="detailsGameLanguage">لغة اللعبة داخل التطبيق</span>
+                </h4>
+                <p class="text-[10px] text-gray-500 mb-3" data-t="detailsGameLanguageHint">عند تشغيل اللعبة، سيتم تبديل لغة الكيبورد تلقائياً ثم إرجاعها عند الخروج.</p>
+                <div id="detailsLangSegments" class="lang-segments" role="group">
+                  <button type="button" class="lang-segment" data-lang="0" onclick="setGameLanguage(0)" tabindex="0">
+                    <i class="fa-solid fa-ban"></i>
+                    <span data-t="langOff">بدون تبديل</span>
+                  </button>
+                  <button type="button" class="lang-segment" data-lang="1" onclick="setGameLanguage(1)" tabindex="0">
+                    <i class="fa-solid fa-kaaba"></i>
+                    <span data-t="langArabic">عربي</span>
+                  </button>
+                  <button type="button" class="lang-segment" data-lang="2" onclick="setGameLanguage(2)" tabindex="0">
+                    <i class="fa-solid fa-e"></i>
+                    <span data-t="langEnglish">English</span>
+                  </button>
                 </div>
               </div>
 
@@ -540,6 +381,67 @@
               </div>
             </div>
 
+            <!-- Performance Black Box -->
+            <div id="detailBlackBoxOptions" class="glass-panel p-4 rounded-2xl space-y-4">
+              <h4 class="text-sm font-bold border-b border-white/10 pb-2 flex items-center gap-2" style="color: var(--accent-2);">
+                <i class="fa-solid fa-chart-line"></i>
+                <span data-t="detailsBlackBoxTitle">مراقبة الأداء (Black Box)</span>
+                <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono">SAFE</span>
+              </h4>
+
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <h5 class="text-xs text-gray-200 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-play text-emerald-400 text-xs"></i>
+                    <span data-t="detailsBlackBoxEnable">تفعيل مراقبة الأداء لهذه اللعبة</span>
+                  </h5>
+                  <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsBlackBoxEnableHint">يجمع FPS والحرارة والاستهلاك أثناء اللعب لعرض تقرير مفصل.</p>
+                </div>
+                <button id="detailsBlackBoxToggle" onclick="toggleGameBlackBox()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+              </div>
+
+              <div id="detailsBlackBoxWarning" class="hidden warning-box">
+                <div class="flex items-start gap-2">
+                  <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                  <div class="flex-1" data-t="detailsBlackBoxWarning">
+                    تنبيه: قراءة حرارة المعالج (CPU) قد تتعارض مع برامج مكافحة الغش في الألعاب التنافسية. FPS و GPU Temp آمنة تمامًا.
+                  </div>
+                </div>
+              </div>
+
+              <div id="detailsBlackBoxSubOptions" class="opacity-40 pointer-events-none space-y-3 pt-3 border-t border-white/10">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-gauge-high text-cyan-400 text-xs"></i>
+                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxFps">FPS + Frame Time</span>
+                  </div>
+                  <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-temperature-half text-orange-400 text-xs"></i>
+                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxGpuTemp">حرارة كرت الشاشة GPU</span>
+                  </div>
+                  <span class="safe-badge">✓ NVML</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-memory text-purple-400 text-xs"></i>
+                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxRam">RAM / VRAM</span>
+                  </div>
+                  <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
+                </div>
+              </div>
+
+              <div id="detailsBlackBoxActions" class="hidden flex items-center gap-2 pt-3 border-t border-white/10">
+                <button onclick="openPerformanceReport()" class="backup-btn primary flex-1 justify-center" tabindex="0">
+                  <i class="fa-solid fa-chart-column"></i>
+                  <span data-t="detailsBlackBoxViewReport">عرض التقرير</span>
+                  <span id="detailsBlackBoxSessionCount" class="text-[10px] opacity-80 font-mono">(0)</span>
+                </button>
+              </div>
+            </div>
+
             <div class="glass-panel p-4 rounded-2xl space-y-3">
               <h4 class="text-sm font-bold text-cyan-200 border-b border-white/10 pb-2" data-t="detailsCompanionsOptions">خيارات البرامج المرافقة</h4>
               <div id="detailsCompanionsList" class="space-y-3"></div>
@@ -561,7 +463,7 @@
             <i class="fa-solid fa-swatchbook" style="color: var(--accent-2);"></i>
             <span data-t="presetsTitle">ثيم اللوحة</span>
           </h3>
-          <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من 18 ثيمًا جاهزًا.</p>
+          <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من 33 ثيمًا جاهزًا.</p>
           <div id="presetsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3"></div>
         </div>
 
@@ -569,8 +471,22 @@
           <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
             <i class="fa-solid fa-circle-nodes text-purple-400"></i>
             <span data-t="radialTitle">نمط رسم الدائرة</span>
+            <span class="text-[10px] text-gray-500 font-mono">(20)</span>
           </h3>
           <div id="radialStylesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl max-w-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0 pe-3">
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-circle-half-stroke text-cyan-400"></i>
+                <span data-t="radialNoGlowTitle">أيقونات صافية (بدون إطار)</span>
+              </h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="radialNoGlowDesc">إخفاء الإطار والتوهج والظلال — الأيقونة فقط.</p>
+            </div>
+            <button id="radialNoGlowToggle" onclick="toggleRadialNoGlow()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
         </div>
 
         <div class="glass-panel p-4 rounded-2xl space-y-5 max-w-2xl">
@@ -598,12 +514,23 @@
           </div>
         </div>
 
-        <!-- ✅ شفافية اللوحة + الدائرة في مكان واحد -->
         <div class="glass-panel p-5 rounded-2xl space-y-5 max-w-2xl">
           <h3 class="font-bold text-white text-sm border-b border-white/10 pb-2 flex items-center gap-2">
             <i class="fa-solid fa-droplet text-blue-400"></i>
             <span data-t="transparencyTitle">الشفافية</span>
           </h3>
+
+          <div class="flex items-center justify-between pb-4 border-b border-white/10">
+            <div>
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-square-full text-cyan-400"></i>
+                <span data-t="panelGlassTitle">مظهر زجاجي حقيقي للوحة التحكم</span>
+              </h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="panelGlassDesc">تأثير Acrylic شفاف يُظهر خلفية سطح المكتب من خلف اللوحة.</p>
+            </div>
+            <button id="panelGlassToggle" onclick="togglePanelGlass()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs text-gray-200" data-t="uiOpacityTitle">شفافية لوحة التحكم</span>
@@ -617,7 +544,7 @@
               <span class="text-xs font-mono" style="color: var(--accent-2);" id="radialOpacityVal">72%</span>
             </div>
             <input type="range" id="radialOpacitySlider" min="0" max="1" step="0.02" value="0.72" oninput="changeRadialOpacity(this.value)" onchange="changeRadialOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
-            <p class="text-[10px] text-gray-500" data-t="radialOpacityHint">تؤثر على الصورة المخصصة كخلفية لدائرة الألعاب. اتركها 100% لإخفاء الصورة تمامًا بدون شفافية.</p>
+            <p class="text-[10px] text-gray-500" data-t="radialOpacityHint">تؤثر على الصورة المخصصة كخلفية لدائرة الألعاب.</p>
           </div>
         </div>
       </section>
@@ -630,19 +557,13 @@
           </h2>
         </div>
 
-        <div class="glass-panel p-5 rounded-2xl space-y-5 max-w-2xl">
-          <!-- ✅ زر الـ Hub دائمًا -->
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-circle-dot text-yellow-400"></i>
-                <span data-t="hubAlwaysVisibleTitle">إظهار زر الـ Hub دائمًا</span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="hubAlwaysVisibleDesc">عرض زر فتح اللوحة في منتصف الدائرة بدون الحاجة لتمرير الماوس فوقه.</p>
-            </div>
-            <button id="hubAlwaysVisibleToggle" onclick="toggleHubAlwaysVisible()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <!-- ✅ قسم 1: الاختصارات -->
+        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+            <i class="fa-solid fa-keyboard text-yellow-400"></i>
+            <span data-t="settingsSectionHotkeys">الاختصارات</span>
+          </h3>
+          <div class="flex items-center justify-between">
             <div>
               <h4 class="font-bold text-white text-sm" data-t="hotkeySettingTitle">اختصار استدعاء دائرة الألعاب</h4>
               <p class="text-xs text-gray-400" data-t="hotkeySettingDesc">يدعم مفتاحًا مفردًا. يُطبَّق فورًا.</p>
@@ -652,91 +573,176 @@
           <div id="hotkeyWarning" class="hidden warning-box" data-t="hotkeySingleKeyWarning">
             تنبيه: المفتاح دون Ctrl/Alt/Shift سيُحجز بالكامل.
           </div>
-
-          <div class="border-b border-white/10 pb-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                  <i class="fa-solid fa-volume-xmark text-red-400"></i>
-                  <span data-t="muteEnableTitle">تفعيل اختصار الكتم السريع</span>
-                </h4>
-              </div>
-              <button id="muteEnabledToggle" onclick="toggleMuteEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          <div class="flex items-center justify-between border-t border-white/10 pt-4">
+            <div>
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-volume-xmark text-red-400"></i>
+                <span data-t="muteEnableTitle">تفعيل اختصار الكتم السريع</span>
+              </h4>
             </div>
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-white text-sm" data-t="muteHotkeyTitle">اختصار الكتم السريع</h4>
+            <button id="muteEnabledToggle" onclick="toggleMuteEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-bold text-white text-sm" data-t="muteHotkeyTitle">اختصار الكتم السريع</h4>
+            </div>
+            <button onclick="startMuteHotkeyCapture()" id="muteHotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
+          </div>
+          <div class="flex items-center justify-between border-t border-white/10 pt-4">
+            <div>
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+                <span data-t="overlayHotkeyTitle">اختصار إظهار/إخفاء الـ Overlay</span>
+              </h4>
+            </div>
+            <button onclick="startOverlayHotkeyCapture()" id="overlayHotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
+          </div>
+        </div>
+
+        <!-- ✅ قسم 2: يد التحكم -->
+        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+            <i class="fa-solid fa-gamepad text-purple-400"></i>
+            <span data-t="settingsSectionController">يد التحكم (Xbox)</span>
+          </h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-bold text-white text-sm" data-t="controllerEnableTitle">تفعيل يد التحكم (Xbox)</h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerEnableDesc">يتيح لك فتح دائرة الألعاب بزر من يد Xbox.</p>
+            </div>
+            <button id="controllerEnabledToggle" onclick="toggleControllerEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+          <div id="controllerButtonRow" class="flex items-center justify-between opacity-40 pointer-events-none">
+            <div>
+              <h4 class="font-bold text-white text-sm" data-t="controllerButtonTitle">الزر الذي يفتح الدائرة</h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerButtonDesc">الافتراضي: زر Start.</p>
+            </div>
+            <select id="controllerButtonSelect" class="sort-select" onchange="onControllerButtonChange(this.value)">
+              <option value="0x0010" data-t="ctrlBtnStart">Start</option>
+              <option value="0x0020" data-t="ctrlBtnBack">Back</option>
+              <option value="0x1000" data-t="ctrlBtnA">A</option>
+              <option value="0x2000" data-t="ctrlBtnB">B</option>
+              <option value="0x4000" data-t="ctrlBtnX">X</option>
+              <option value="0x8000" data-t="ctrlBtnY">Y</option>
+              <option value="0x0100" data-t="ctrlBtnLB">LB</option>
+              <option value="0x0200" data-t="ctrlBtnRB">RB</option>
+              <option value="0x0040" data-t="ctrlBtnLS">Left Stick</option>
+              <option value="0x0080" data-t="ctrlBtnRS">Right Stick</option>
+              <option value="0x0400" data-t="ctrlBtnGuide">Xbox (Guide)</option>
+            </select>
+          </div>
+          <div id="controllerToggleModeRow" class="flex items-center justify-between border-t border-white/10 pt-4 opacity-40 pointer-events-none">
+            <div>
+              <h4 class="font-bold text-white text-sm" data-t="controllerToggleModeTitle">وضع التبديل (فتح/إغلاق)</h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerToggleModeDesc">عند التفعيل: الضغط مرة أخرى يغلق الدائرة.</p>
+            </div>
+            <button id="controllerToggleModeBtn" onclick="toggleControllerToggleMode()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+          <div id="controllerDuringGameRow" class="flex items-center justify-between border-t border-white/10 pt-4 opacity-40 pointer-events-none">
+            <div>
+              <h4 class="font-bold text-white text-sm" data-t="controllerDuringGameTitle">استدعاء الدائرة أثناء اللعب</h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerDuringGameDesc">يسمح بزر اليد بفتح الدائرة أثناء اللعب.</p>
+            </div>
+            <button id="controllerDuringGameBtn" onclick="toggleAllowControllerDuringGame()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+          <div class="info-box">
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-circle-info mt-0.5"></i>
+              <div class="flex-1">
+                <div class="font-bold mb-1" data-t="shareInfoTitle">بخصوص زر Share في يد Xbox Series</div>
+                <div data-t="shareInfoBody">زر Share غير مدعوم في XInput. يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.</div>
               </div>
-              <button onclick="startMuteHotkeyCapture()" id="muteHotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
             </div>
           </div>
+        </div>
 
-          <!-- ✅ يد التحكم -->
-          <div class="border-b border-white/10 pb-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                  <i class="fa-solid fa-gamepad text-purple-400"></i>
-                  <span data-t="controllerEnableTitle">تفعيل يد التحكم (Xbox)</span>
-                </h4>
-                <p class="text-xs text-gray-400 mt-0.5" data-t="controllerEnableDesc">يتيح لك فتح دائرة الألعاب بزر من يد Xbox.</p>
-              </div>
-              <button id="controllerEnabledToggle" onclick="toggleControllerEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+        <!-- ✅ قسم 3: المظهر والواجهة -->
+        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+            <i class="fa-solid fa-paintbrush text-pink-400"></i>
+            <span data-t="settingsSectionAppearance">المظهر والواجهة</span>
+          </h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-circle-dot text-yellow-400"></i>
+                <span data-t="hubAlwaysVisibleTitle">إظهار زر الـ Hub دائمًا</span>
+              </h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="hubAlwaysVisibleDesc">عرض زر فتح اللوحة في منتصف الدائرة بدون الحاجة لتمرير الماوس فوقه.</p>
             </div>
-            <div id="controllerButtonRow" class="flex items-center justify-between opacity-40 pointer-events-none">
-              <div>
-                <h4 class="font-bold text-white text-sm" data-t="controllerButtonTitle">الزر الذي يفتح الدائرة</h4>
-                <p class="text-xs text-gray-400 mt-0.5" data-t="controllerButtonDesc">الافتراضي: زر Start.</p>
-              </div>
-              <select id="controllerButtonSelect" class="sort-select" onchange="onControllerButtonChange(this.value)">
-                <option value="0x0010" data-t="ctrlBtnStart">Start</option>
-                <option value="0x0020" data-t="ctrlBtnBack">Back</option>
-                <option value="0x1000" data-t="ctrlBtnA">A</option>
-                <option value="0x2000" data-t="ctrlBtnB">B</option>
-                <option value="0x4000" data-t="ctrlBtnX">X</option>
-                <option value="0x8000" data-t="ctrlBtnY">Y</option>
-                <option value="0x0100" data-t="ctrlBtnLB">LB (Left Shoulder)</option>
-                <option value="0x0200" data-t="ctrlBtnRB">RB (Right Shoulder)</option>
-                <option value="0x0040" data-t="ctrlBtnLS">Left Stick</option>
-                <option value="0x0080" data-t="ctrlBtnRS">Right Stick</option>
-                <option value="0x0400" data-t="ctrlBtnGuide">Xbox (Guide)</option>
-              </select>
-            </div>
-
-            <!-- ✅ معلومات عن زر Share -->
-            <div class="info-box mt-2">
-              <div class="flex items-start gap-2">
-                <i class="fa-solid fa-circle-info mt-0.5"></i>
-                <div class="flex-1">
-                  <div class="font-bold mb-1" data-t="shareInfoTitle">بخصوص زر Share في يد Xbox Series</div>
-                  <div data-t="shareInfoBody">زر Share غير مدعوم في XInput (واجهة ويندوز الرسمية). يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي من مايكروسوفت على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.</div>
-                </div>
-              </div>
-            </div>
+            <button id="hubAlwaysVisibleToggle" onclick="toggleHubAlwaysVisible()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
           </div>
-
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <div class="flex items-center justify-between border-t border-white/10 pt-4">
             <div><h4 class="font-bold text-white text-sm" data-t="langSettingTitle">لغة الواجهة</h4></div>
             <select id="langSelect" onchange="nativeAction('setLang', {lang: this.value})" class="sort-select" tabindex="0">
               <option value="ar">العربية</option>
               <option value="en">English</option>
             </select>
           </div>
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        </div>
+
+        <!-- ✅ قسم 4: النظام -->
+        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+            <i class="fa-solid fa-microchip text-cyan-400"></i>
+            <span data-t="settingsSectionSystem">النظام</span>
+          </h3>
+          <div class="flex items-center justify-between">
             <div>
               <h4 class="font-bold text-white text-sm" data-t="autoStartTitle">التشغيل مع بداية ويندوز</h4>
               <p class="text-xs text-gray-400" data-t="autoStartDesc">يشغّل GameLauncher تلقائيًا عند تسجيل الدخول.</p>
             </div>
             <button id="autoStartToggle" onclick="toggleAutoStart()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
           </div>
-          <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="autoLayoutTitle">التبديل التلقائي للغة الكيبورد</h4>
+          <div class="flex items-center justify-between border-t border-white/10 pt-4">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-orange-400"></i>
+                <span data-t="restartAsAdminTitle">تشغيل كمسؤول</span>
+                <span id="adminBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30 font-mono"></span>
+              </h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="restartAsAdminDesc">مطلوب لتفعيل FPS. لا يؤثر على الألعاب المفتوحة.</p>
             </div>
-            <button id="autoLayoutToggle" onclick="toggleAutoLayout()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+            <button id="restartAsAdminBtn" onclick="requestRestartAsAdmin()" class="backup-btn primary shrink-0" tabindex="0">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span data-t="restartAsAdminBtn">إعادة التشغيل كمسؤول</span>
+            </button>
           </div>
+          <div class="flex items-center justify-between border-t border-white/10 pt-4">
+            <div>
+              <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+                <span data-t="overlayEnableTitle">تفعيل الـ Overlay (CPU / RAM)</span>
+              </h4>
+              <p class="text-xs text-gray-400 mt-0.5" data-t="overlayEnableDesc">نافذة صغيرة شفافة تعرض معلومات النظام أثناء اللعب.</p>
+            </div>
+            <button id="overlayEnabledToggle" onclick="toggleOverlayEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+          </div>
+          <div id="overlayOptionsWrap" class="space-y-3 border-t border-white/10 pt-4 opacity-40 pointer-events-none">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-white text-sm" data-t="overlayShowOnLaunchTitle">إظهاره تلقائياً عند تشغيل لعبة</h4>
+              </div>
+              <button id="overlayShowOnLaunchToggle" onclick="toggleOverlayShowOnLaunch()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-200" data-t="overlayOpacityLabel">شفافية الـ Overlay</span>
+                <span class="text-xs font-mono" style="color: var(--accent-2);" id="overlayOpacityVal">85%</span>
+              </div>
+              <input type="range" id="overlayOpacitySlider" min="0.20" max="1" step="0.05" value="0.85" oninput="changeOverlayOpacity(this.value)" onchange="changeOverlayOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
+            </div>
+          </div>
+        </div>
 
-          <div class="border-b border-white/10 pb-4 space-y-3">
+        <!-- ✅ قسم 5: الأدوات والإدارة -->
+        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+            <i class="fa-solid fa-toolbox text-amber-400"></i>
+            <span data-t="settingsSectionTools">الأدوات والإدارة</span>
+          </h3>
+
+          <div class="space-y-3">
             <div class="flex items-center justify-between">
               <h4 class="font-bold text-white text-sm flex items-center gap-2">
                 <i class="fa-solid fa-volume-xmark text-red-400"></i>
@@ -750,7 +756,7 @@
             </div>
           </div>
 
-          <div class="border-b border-white/10 pb-4 space-y-3">
+          <div class="border-t border-white/10 pt-4 space-y-3">
             <h4 class="font-bold text-white text-sm flex items-center gap-2">
               <i class="fa-solid fa-database text-cyan-400"></i>
               <span data-t="backupTitle">النسخ الاحتياطي</span>
@@ -761,7 +767,7 @@
             </div>
           </div>
 
-          <div class="space-y-3">
+          <div class="border-t border-white/10 pt-4 space-y-3">
             <h4 class="font-bold text-white text-sm flex items-center gap-2">
               <i class="fa-solid fa-file-lines text-amber-400"></i>
               <span data-t="logTitle">ملف السجل التشخيصي</span>
@@ -815,1129 +821,49 @@
   </div>
 </div>
 
-<script>
-const RADIAL_META = [
-  { icon: 'fa-circle-notch',   descAr: 'حلقة بسيطة محيطة بالأيقونة.',              descEn: 'Simple outline ring.' },
-  { icon: 'fa-bolt',           descAr: 'توهّج نيون متعدد الطبقات.',                 descEn: 'Layered neon glow.' },
-  { icon: 'fa-swatchbook',     descAr: 'حلقة بتدرج لوني ناعم.',                      descEn: 'Soft gradient ring.' },
-  { icon: 'fa-minus',          descAr: 'دون أي إطار — ظل خفيف فقط.',                descEn: 'Just a soft shadow.' },
-  { icon: 'fa-shapes',         descAr: 'إطار سداسي بدل الدائري.',                    descEn: 'Hexagon frame.' },
-  { icon: 'fa-meteor',         descAr: 'قوس مضيء جزئي حركي.',                        descEn: 'Bright partial arc.' },
-  { icon: 'fa-burst',          descAr: 'انفجاري — أشعة وشظايا (أكشن).',              descEn: 'Burst — rays and sparks (action).' },
-  { icon: 'fa-spa',            descAr: 'ساكورا — بتلات وردية (أنمي).',               descEn: 'Sakura — pink petals (anime).' },
-  { icon: 'fa-cube',           descAr: 'زجاج مصنفر — لمعة وملمس شفاف.',              descEn: 'Frosted glass — glossy finish.' },
-  { icon: 'fa-hurricane',      descAr: 'دوامة — أقواس دوّارة.',                       descEn: 'Vortex — swirling arcs.' },
-  { icon: 'fa-circle',         descAr: 'حلقة نظيفة واحدة — بدون أي ظل أو توهّج.',    descEn: 'One clean ring — zero shadow, zero glow.' },
-  { icon: 'fa-rainbow',        descAr: 'توهّج شفقي بتدرج متعدد الألوان.',            descEn: 'Aurora — flowing multicolor gradient glow.' },
-  { icon: 'fa-satellite-dish', descAr: 'هالة تقنية منقّطة بإحساس واجهة سايبر.',      descEn: 'HUD halo — dotted sci-fi ring with tick marks.' },
-];
+<div id="perfReportModalOverlay" class="modal-overlay hidden">
+  <div class="glass-panel rounded-2xl p-5 max-w-5xl w-full flex flex-col max-h-[90vh]">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style="background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3);">
+          <i class="fa-solid fa-chart-line" style="color: var(--accent-2);"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-white truncate" id="perfReportGameName">—</h3>
+          <p id="perfReportSubtitle" class="text-xs text-gray-400 mt-0.5"></p>
+        </div>
+      </div>
+      <button onclick="closePerformanceReport()" class="icon-action-btn shrink-0" tabindex="0" title="إغلاق">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
 
-const PANEL_PRESETS = [
-  { id: 'purple',     nameAr: 'بنفسجي',    nameEn: 'Purple',     colors: ['#7c3aed', '#a855f7'], icon: 'fa-star' },
-  { id: 'cyber',      nameAr: 'سيبراني',   nameEn: 'Cyber',      colors: ['#0ea5e9', '#22d3ee'], icon: 'fa-bolt' },
-  { id: 'ember',      nameAr: 'جمر',       nameEn: 'Ember',      colors: ['#dc2626', '#f97316'], icon: 'fa-fire' },
-  { id: 'forest',     nameAr: 'غابة',      nameEn: 'Forest',     colors: ['#059669', '#10b981'], icon: 'fa-leaf' },
-  { id: 'gray',       nameAr: 'رمادي',     nameEn: 'Gray',       colors: ['#64748b', '#cbd5e1'], icon: 'fa-moon' },
-  { id: 'dracula',    nameAr: 'دراكولا',   nameEn: 'Dracula',    colors: ['#bd93f9', '#ff79c6'], icon: 'fa-ghost' },
-  { id: 'nord',       nameAr: 'نورد',      nameEn: 'Nord',       colors: ['#88c0d0', '#5e81ac'], icon: 'fa-snowflake' },
-  { id: 'catppuccin', nameAr: 'كاتبوتشين', nameEn: 'Catppuccin', colors: ['#cba6f7', '#f5c2e7'], icon: 'fa-cat' },
-  { id: 'synthwave',  nameAr: 'ريترو',     nameEn: 'Synthwave',  colors: ['#f92aad', '#36f9f6'], icon: 'fa-compact-disc' },
-  { id: 'tokyo',      nameAr: 'طوكيو',     nameEn: 'Tokyo Night',colors: ['#7aa2f7', '#bb9af7'], icon: 'fa-city' },
-  { id: 'gruvbox',    nameAr: 'غروب',      nameEn: 'Gruvbox',    colors: ['#d79921', '#b8bb26'], icon: 'fa-wheat-awn' },
-  { id: 'rosepine',   nameAr: 'وردة',      nameEn: 'Rosé Pine',  colors: ['#ebbcba', '#c4a7e7'], icon: 'fa-rose' },
-  { id: 'solarized',  nameAr: 'مشمس',      nameEn: 'Solarized',  colors: ['#268bd2', '#2aa198'], icon: 'fa-sun' },
-  { id: 'obsidian',   nameAr: 'أوبسيديان', nameEn: 'Obsidian',   colors: ['#6366f1', '#818cf8'], icon: 'fa-gem' },
-  { id: 'sunset',     nameAr: 'غروب',      nameEn: 'Sunset',     colors: ['#fb923c', '#f472b6'], icon: 'fa-cloud-sun' },
-  { id: 'ocean',      nameAr: 'محيط',      nameEn: 'Ocean',      colors: ['#0891b2', '#3b82f6'], icon: 'fa-water' },
-  { id: 'royal',      nameAr: 'ملكي',      nameEn: 'Royal',      colors: ['#a855f7', '#eab308'], icon: 'fa-crown' },
-  { id: 'blossom',    nameAr: 'إزهار',     nameEn: 'Blossom',    colors: ['#fb7185', '#fda4af'], icon: 'fa-heart' },
-];
+    <div class="flex-1 grid grid-cols-12 gap-4 overflow-hidden min-h-0">
+      <aside class="col-span-4 xl:col-span-3 border-e border-white/10 pe-3 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h4 class="text-xs font-bold flex items-center gap-2" style="color: var(--accent-2);">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span data-t="perfSessionsTitle">الجلسات السابقة</span>
+            <span class="text-[10px] text-gray-500">(<span id="perfSessionsCount">0</span>)</span>
+          </h4>
+          <button onclick="deleteAllPerformanceSessions()" id="perfDeleteAllBtn" class="icon-action-btn" tabindex="0" title="حذف الكل">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        </div>
+        <div id="perfSessionList" class="space-y-1.5"></div>
+      </aside>
 
-const I18N = {
-  ar: {
-    appTitle: 'GameLauncher — لوحة التحكم', hotkeyLabel: 'الاختصار:', muteHotkeyLabel: 'كتم:',
-    tabDashboard: 'الألعاب والمرافقون', tabDesign: 'تخصيص التصميم', tabSettings: 'الإعدادات',
-    tabDetails: 'تفاصيل اللعبة',
-    totalGamesLabel: 'إجمالي الألعاب:', dashTitle: 'الألعاب والبرامج المرافقة',
-    dashSubtitle: 'اسحب ملفًا تنفيذيًا أو اختصارًا أو رابطًا أو مجلد لعبة كاملًا وأفلته، أو استخدم زر الإضافة.',
-    addGameBtn: 'إضافة لعبة',
-    gamesListTitle: 'الألعاب', companionsTitle: 'البرامج المرافقة',
-    selectGameHint: 'اختر لعبةً من القائمة أولًا.', addCompanionBtn: 'إضافة برنامج مرافق',
-    designTitle: 'تخصيص التصميم والنمط', presetsTitle: 'ثيم اللوحة',
-    presetsDesc: 'اختر من 18 ثيمًا جاهزًا.',
-    radialTitle: 'نمط رسم الدائرة', backgroundsTitle: 'الخلفيات العامة',
-    transparencyTitle: 'الشفافية',
-    uiOpacityTitle: 'شفافية لوحة التحكم',
-    radialOpacityLabel: 'شفافية خلفية دائرة الألعاب',
-    radialOpacityHint: 'تؤثر على الصورة المخصصة كخلفية لدائرة الألعاب.',
-    settingsTitle: 'الإعدادات العامة',
-    hotkeySettingTitle: 'اختصار استدعاء دائرة الألعاب',
-    hotkeySettingDesc: 'يدعم مفتاحًا مفردًا. يُطبَّق فورًا.',
-    hotkeySingleKeyWarning: 'تنبيه: المفتاح دون Ctrl/Alt/Shift سيُحجز بالكامل.',
-    langSettingTitle: 'لغة الواجهة',
-    autoStartTitle: 'التشغيل مع بداية ويندوز',
-    autoStartDesc: 'يشغّل GameLauncher تلقائيًا عند تسجيل الدخول.',
-    autoLayoutTitle: 'التبديل التلقائي للغة الكيبورد',
-    engineRunning: 'المحرك: يعمل', engineStopped: 'المحرك: متوقف',
-    stopEngine: 'إيقاف المحرك', startEngine: 'تشغيل المحرك',
-    gamesUnit: 'لعبة', noCompanions: 'لا يوجد برنامج مرافق لهذه اللعبة حاليًا.',
-    pressNewKey: 'اضغط المفتاح الجديد... (Esc للإلغاء)', selectStyle: 'اختيار',
-    selectedStyle: 'مُفعّل',
-    confirmRemoveGame: 'هل تريد حذف "{name}" من قائمة الألعاب؟',
-    confirmRemoveCompanion: 'هل تريد حذف البرنامج المرافق "{name}"؟',
-    confirmResetStats: 'هل تريد تصفير إحصاءات "{name}"؟',
-    confirmCancel: 'إلغاء', confirmDelete: 'حذف', confirmReset: 'تصفير',
-    gameLangToggleLabel: 'تبديل اللغة لهذه اللعبة',
-    gameLangToggleNeedsGlobal: 'فعّل "التبديل التلقائي" من الإعدادات أولًا.',
-    detailsTitle: 'تفاصيل اللعبة المحددة',
-    detailsEmptyHint: 'لم تُضف أي لعبة بعد.',
-    detailsAllGames: 'كل الألعاب',
-    detailsGameOptions: 'خيارات اللعبة الرئيسية',
-    detailsRunAsAdmin: 'التشغيل كمسؤول',
-    detailsShowInRadial: 'إظهار في الدائرة',
-    detailsLaunchArgs: 'معاملات التشغيل',
-    detailsItemColor: 'لون الإطار / التوهج',
-    detailsPickCustomColor: 'اختيار لون مخصص…',
-    detailsRadialBg: 'خلفية دائرية مخصصة',
-    detailsRadialBgHint: 'اختر صورة لتظهر دائرية خلف الأيقونة.',
-    detailsRadialBgChoose: 'اختيار صورة…',
-    detailsRadialBgClear: 'إزالة الخلفية',
-    detailsHideOriginalIcon: 'إخفاء أيقونة اللعبة الأصلية',
-    detailsCompanionsOptions: 'خيارات البرامج المرافقة',
-    detailsNoCompanions: 'لا توجد برامج مرافقة.',
-    detailsPerformanceTitle: 'خيارات الأداء (متقدمة)',
-    detailsPriorityLabel: 'أولوية العملية',
-    detailsAffinityLabel: 'تقييد الأنوية',
-    selectAllCores: 'تحديد الكل', clearAllCores: 'مسح',
-    quickAccessTitle: 'الوصول السريع',
-    quickAccessHint: 'انقر للانتقال',
-    companionShowInRadial: 'تشغيل مع اللعبة',
-    bgPanelTitle: 'خلفية لوحة التحكم',
-    bgPanelChoose: 'اختيار صورة…', bgPanelClear: 'إرجاع الافتراضية',
-    bgRadialTitle: 'خلفية دائرة الألعاب',
-    bgRadialChoose: 'اختيار صورة…', bgRadialClear: 'إرجاع الافتراضية',
-    exeListTitle: 'الملفات التنفيذية المكتشفة',
-    exeListSubtitle: 'تم العثور على {count} ملف داخل "{folder}"',
-    exeListSelectAll: 'تحديد الكل', exeListClear: 'إلغاء التحديد',
-    exeListAddSelected: 'إضافة المحدد',
-    exeListCounter: 'المحدد: {n} من {total}',
-    exeListMainBadge: 'رئيسي محتمل',
-    searchPlaceholder: 'ابحث في الألعاب...',
-    searchEmpty: 'لا توجد نتائج مطابقة.',
-    sortManual: 'الترتيب اليدوي',
-    sortFavorite: 'المفضّلة أولاً',
-    sortRecent: 'الأحدث لعبًا',
-    sortMostPlayed: 'الأكثر لعبًا',
-    sortName: 'الاسم (أ-ي)',
-    playStatsTitle: 'إحصاءات اللعب',
-    statsTotalTime: 'إجمالي وقت اللعب',
-    statsLastPlayed: 'آخر مرة لعبت',
-    statsSessions: 'عدد الجلسات',
-    statsReset: 'تصفير الإحصاءات',
-    never: 'لم تُلعب بعد', justNow: 'الآن',
-    minutesAgo: 'قبل {n} دقيقة', hoursAgo: 'قبل {n} ساعة', daysAgo: 'قبل {n} يوم',
-    timeHM: '{h}س {m}د', timeMS: '{m}د {s}ث', timeS: '{s}ث',
-    sessionsUnit: 'جلسة',
-    muteEnableTitle: 'تفعيل اختصار الكتم السريع',
-    muteHotkeyTitle: 'اختصار الكتم السريع',
-    runningLabel: 'قيد التشغيل',
-    openFolderTooltip: 'افتح مجلد ملف اللعبة',
-    backupTitle: 'النسخ الاحتياطي',
-    backupExportBtn: 'حفظ نسخة احتياطية',
-    backupImportBtn: 'استيراد نسخة',
-    mutedAppsTitle: 'التطبيقات المكتومة حاليًا',
-    noMutedApps: 'لا توجد تطبيقات مكتومة.',
-    unmuteBtn: 'إلغاء الكتم',
-  hubAlwaysVisibleTitle: 'إظهار زر الـ Hub دائمًا',
-    hubAlwaysVisibleDesc: 'عرض زر فتح اللوحة في منتصف الدائرة بدون الحاجة لتمرير الماوس فوقه.',
-    logTitle: 'ملف السجل التشخيصي',
-    logOpenBtn: 'فتح ملف السجل',
-    controllerEnableTitle: 'تفعيل يد التحكم (Xbox)',
-    controllerEnableDesc: 'يتيح لك فتح الدائرة بزر من يد Xbox.',
-    controllerButtonTitle: 'الزر الذي يفتح الدائرة',
-    controllerButtonDesc: 'الافتراضي: زر Start.',
-    ctrlBtnStart: 'Start', ctrlBtnBack: 'Back',
-    ctrlBtnA: 'A', ctrlBtnB: 'B', ctrlBtnX: 'X', ctrlBtnY: 'Y',
-    ctrlBtnLB: 'LB (Left Shoulder)', ctrlBtnRB: 'RB (Right Shoulder)',
-    ctrlBtnLS: 'Left Stick', ctrlBtnRS: 'Right Stick', ctrlBtnGuide: 'Xbox (Guide)',
-    shareInfoTitle: 'بخصوص زر Share في يد Xbox Series',
-    shareInfoBody: 'زر Share غير مدعوم في XInput (واجهة ويندوز الرسمية). يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.',
-  },
-  en: {
-    appTitle: 'GameLauncher — Control Panel', hotkeyLabel: 'Hotkey:', muteHotkeyLabel: 'Mute:',
-    tabDashboard: 'Games & Companions', tabDesign: 'Design', tabSettings: 'Settings',
-    tabDetails: 'Game Details',
-    totalGamesLabel: 'Total games:', dashTitle: 'Games & Companion Programs',
-    dashSubtitle: 'Drag & drop an executable, shortcut, url, or whole game folder.',
-    addGameBtn: 'Add Game',
-    gamesListTitle: 'Games', companionsTitle: 'Companion Programs',
-    selectGameHint: 'Select a game first.', addCompanionBtn: 'Add Companion',
-    designTitle: 'Design & Style', presetsTitle: 'Panel Theme',
-    presetsDesc: 'Choose from 18 ready themes.',
-    radialTitle: 'Radial Drawing Style', backgroundsTitle: 'Global Backgrounds',
-    transparencyTitle: 'Transparency',
-    uiOpacityTitle: 'Control panel transparency',
-    radialOpacityLabel: 'Game circle background transparency',
-    radialOpacityHint: 'Affects the custom radial background image.',
-    settingsTitle: 'General Settings',
-    hotkeySettingTitle: 'Game circle hotkey',
-    hotkeySettingDesc: 'Supports a single key. Applied instantly.',
-    hotkeySingleKeyWarning: 'Note: a key without modifiers will be reserved system-wide.',
-    langSettingTitle: 'Interface language',
-    autoStartTitle: 'Start with Windows',
-    autoStartDesc: 'Launches automatically on Windows sign-in.',
-    autoLayoutTitle: 'Auto keyboard layout switch',
-    engineRunning: 'Engine: running', engineStopped: 'Engine: stopped',
-    stopEngine: 'Stop Engine', startEngine: 'Start Engine',
-    gamesUnit: 'games', noCompanions: 'No companion program yet.',
-    pressNewKey: 'Press the new key... (Esc to cancel)', selectStyle: 'Select',
-    selectedStyle: 'Active',
-    confirmRemoveGame: 'Remove "{name}" from your games list?',
-    confirmRemoveCompanion: 'Remove companion "{name}"?',
-    confirmResetStats: 'Reset play stats for "{name}"?',
-    confirmCancel: 'Cancel', confirmDelete: 'Delete', confirmReset: 'Reset',
-    gameLangToggleLabel: 'Switch language for this game',
-    gameLangToggleNeedsGlobal: 'Turn on the auto switch in Settings first.',
-    detailsTitle: 'Selected Game Details',
-    detailsEmptyHint: 'No games yet.',
-    detailsAllGames: 'All Games',
-    detailsGameOptions: 'Main Game Options',
-    detailsRunAsAdmin: 'Run as Administrator',
-    detailsShowInRadial: 'Show in game circle',
-    detailsLaunchArgs: 'Launch Arguments',
-    detailsItemColor: 'Ring / glow color',
-    detailsPickCustomColor: 'Pick custom color…',
-    detailsRadialBg: 'Custom circular background',
-    detailsRadialBgHint: 'Pick an image to appear as circular background.',
-    detailsRadialBgChoose: 'Choose image…',
-    detailsRadialBgClear: 'Remove background',
-    detailsHideOriginalIcon: 'Hide original game icon',
-    detailsCompanionsOptions: 'Companion Programs Options',
-    detailsNoCompanions: 'No companion programs.',
-    detailsPerformanceTitle: 'Performance Options (Advanced)',
-    detailsPriorityLabel: 'Process Priority',
-    detailsAffinityLabel: 'CPU Affinity',
-    selectAllCores: 'Select all', clearAllCores: 'Clear',
-    quickAccessTitle: 'Quick Access',
-    quickAccessHint: 'Click to jump',
-    companionShowInRadial: 'Launch with game',
-    bgPanelTitle: 'Control Panel Background',
-    bgPanelChoose: 'Choose image…', bgPanelClear: 'Reset',
-    bgRadialTitle: 'Game Circle Background',
-    bgRadialChoose: 'Choose image…', bgRadialClear: 'Reset',
-    exeListTitle: 'Executables Found',
-    exeListSubtitle: 'Found {count} files inside "{folder}"',
-    exeListSelectAll: 'Select all', exeListClear: 'Clear',
-    exeListAddSelected: 'Add Selected',
-    exeListCounter: 'Selected: {n} of {total}',
-    exeListMainBadge: 'Likely main',
-    searchPlaceholder: 'Search games...',
-    searchEmpty: 'No matching results.',
-    sortManual: 'Manual order',
-    sortFavorite: 'Favorites first',
-    sortRecent: 'Recently played',
-    sortMostPlayed: 'Most played',
-    sortName: 'Name (A-Z)',
-    playStatsTitle: 'Play Stats',
-    statsTotalTime: 'Total play time',
-    statsLastPlayed: 'Last played',
-    statsSessions: 'Sessions',
-    statsReset: 'Reset stats',
-    never: 'Never played', justNow: 'Just now',
-    minutesAgo: '{n} min ago', hoursAgo: '{n} h ago', daysAgo: '{n} d ago',
-    timeHM: '{h}h {m}m', timeMS: '{m}m {s}s', timeS: '{s}s',
-    sessionsUnit: 'sessions',
-    muteEnableTitle: 'Enable quick-mute hotkey',
-    muteHotkeyTitle: 'Quick-mute hotkey',
-    runningLabel: 'Running',
-    openFolderTooltip: 'Open the game file location',
-    backupTitle: 'Backup',
-    backupExportBtn: 'Save backup',
-    backupImportBtn: 'Import backup',
-    mutedAppsTitle: 'Currently muted applications',
-    noMutedApps: 'No muted applications right now.',
-    unmuteBtn: 'Unmute',
-    hubAlwaysVisibleTitle: 'Always show Hub button',
-    hubAlwaysVisibleDesc: 'Show the open-panel button in the center without hovering.',
-    logTitle: 'Diagnostic log file',
-    logOpenBtn: 'Open log file',
-    controllerEnableTitle: 'Enable Xbox Controller',
-    controllerEnableDesc: 'Allows opening the circle with an Xbox button.',
-    controllerButtonTitle: 'Button that opens the circle',
-    controllerButtonDesc: 'Default: Start button.',
-    ctrlBtnStart: 'Start', ctrlBtnBack: 'Back',
-    ctrlBtnA: 'A', ctrlBtnB: 'B', ctrlBtnX: 'X', ctrlBtnY: 'Y',
-    ctrlBtnLB: 'LB (Left Shoulder)', ctrlBtnRB: 'RB (Right Shoulder)',
-    ctrlBtnLS: 'Left Stick', ctrlBtnRS: 'Right Stick', ctrlBtnGuide: 'Xbox (Guide)',
-    shareInfoTitle: 'About the Share button on Xbox Series controllers',
-    shareInfoBody: 'Share button is not supported in XInput (Microsoft\'s official Windows API). You can remap it via the official Xbox Accessories app to any key (e.g. F13), then register that key as the open-circle hotkey above.',
-  }
-};
+      <div class="col-span-8 xl:col-span-9 overflow-y-auto pe-1" id="perfSessionDetail">
+        <div class="text-center py-8 text-gray-500 text-sm">
+          <i class="fa-solid fa-chart-line text-3xl mb-3 opacity-30"></i>
+          <p data-t="perfSelectSessionHint">اختر جلسة من القائمة لعرض تفاصيلها</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-let state = { lang: 'ar', hotkey: '—', muteHotkey: '—', muteEnabled: false,
-              engineRunning: false, autoStart: false, autoLayoutSwitch: false,
-              radialStyle: 0, radialStyleNames: [], games: [],
-              panelBackground: '', radialBackground: '', panelPreset: 'purple',
-              controllerEnabled: false, controllerButton: 0x0010, controllerButtonName: 'Start',
-              cpuCoreCount: 8, processPriorityNames: [], radialTransparency: 0.72,
-              hubAlwaysVisible: false };let selectedGameIndex = -1;
-let selectedGamePath = null;
-let reorderDragIndex = null;
-let capturingHotkey = false;
-let capturingMuteHotkey = false;
-let detailsGameIndex = -1;
-let qaActiveTarget = 'game';
-let exeListItems = [];
-let exeListSelected = new Set();
-let searchQuery = '';
-let sortMode = 'manual';
-let mutedAppsCache = [];
-let mutedAppsTimerId = null;
-let pendingAffinityMask = 0;
+<script src="panel_ui.js?v=__GL_BUILD_SIG__"></script>
 
-function t(key) { return (I18N[state.lang] || I18N.ar)[key] || key; }
-function tFormat(key, params) {
-  let s = t(key);
-  Object.keys(params || {}).forEach(k => { s = s.split('{' + k + '}').join(params[k]); });
-  return s;
-}
-function formatPlayTime(seconds) {
-  if (!seconds || seconds <= 0) return t('never');
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return tFormat('timeHM', { h, m });
-  if (m > 0) return tFormat('timeMS', { m, s });
-  return tFormat('timeS', { s });
-}
-function formatRelativeTime(unixSeconds) {
-  if (!unixSeconds || unixSeconds <= 0) return t('never');
-  const now = Math.floor(Date.now() / 1000);
-  const diff = now - unixSeconds;
-  if (diff < 60) return t('justNow');
-  if (diff < 3600) return tFormat('minutesAgo', { n: Math.floor(diff / 60) });
-  if (diff < 86400) return tFormat('hoursAgo', { n: Math.floor(diff / 3600) });
-  return tFormat('daysAgo', { n: Math.floor(diff / 86400) });
-}
-function applyPreset(presetId) { document.documentElement.setAttribute('data-preset', presetId || 'purple'); }
-
-function showConfirmModal(message, onConfirm, opts) {
-  opts = opts || {};
-  const overlay = document.getElementById('confirmModalOverlay');
-  const iconWrap = document.getElementById('confirmModalIconWrap');
-  const icon = document.getElementById('confirmModalIcon');
-  document.getElementById('confirmModalText').innerText = message;
-  document.getElementById('confirmModalCancelBtn').innerText = opts.cancelLabel || t('confirmCancel');
-  document.getElementById('confirmModalOkBtn').innerText = opts.okLabel || t('confirmDelete');
-  document.getElementById('confirmModalOkBtn').className = 'flex-1 py-2 rounded-xl text-xs font-bold transition text-white ' + (opts.okColorClass || 'bg-red-600/80 hover:bg-red-600');
-  iconWrap.className = 'w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3 ' + (opts.iconWrapClass || 'bg-red-500/15 border border-red-500/30');
-  icon.className = 'fa-solid ' + (opts.iconClass || 'fa-trash') + ' ' + (opts.iconColorClass || 'text-red-400');
-  overlay.classList.remove('hidden');
-  const cancelBtn = document.getElementById('confirmModalCancelBtn');
-  const okBtn = document.getElementById('confirmModalOkBtn');
-  const close = () => overlay.classList.add('hidden');
-  const onCancel = () => { close(); cleanup(); };
-  const onOk = () => { close(); cleanup(); onConfirm(); };
-  function cleanup() { cancelBtn.removeEventListener('click', onCancel); okBtn.removeEventListener('click', onOk); }
-  cancelBtn.addEventListener('click', onCancel);
-  okBtn.addEventListener('click', onOk);
-  setTimeout(() => okBtn.focus(), 50);
-}
-function confirmRemoveGame(index, name) {
-  showConfirmModal(tFormat('confirmRemoveGame', { name }), () => nativeAction('removeGame', { index }));
-}
-function confirmRemoveCompanion(gameIndex, companionIndex, name) {
-  showConfirmModal(tFormat('confirmRemoveCompanion', { name }), () => nativeAction('removeCompanion', { gameIndex, companionIndex }));
-}
-function reorderGameTo(fromIndex, toIndex) {
-  const order = state.games.map(g => g.index);
-  const fromPos = order.indexOf(fromIndex);
-  const toPos = order.indexOf(toIndex);
-  if (fromPos === -1 || toPos === -1) return;
-  order.splice(toPos, 0, order.splice(fromPos, 1)[0]);
-  nativeAction('reorderGames', { order });
-}
-function nativeAction(action, payload) {
-  const msg = Object.assign({ action }, payload || {});
-  window.chrome.webview.postMessage(JSON.stringify(msg));
-}
-window.chrome.webview.addEventListener('message', (e) => {
-  const msg = JSON.parse(e.data);
-  if (msg.type === 'state') { state = msg; onStateUpdated(); }
-  else if (msg.type === 'status') { showStatus(msg.text, msg.kind || 'info'); }
-  else if (msg.type === 'suggestExe') { showSuggestExeModal(msg.folder, msg.path); }
-  else if (msg.type === 'suggestExeList') { showExeListModal(msg.folder, msg.items || []); }
-  else if (msg.type === 'mutedAppsList') { renderMutedApps(msg.apps || []); }
-});
-function showSuggestExeModal(folderName, exePath) {
-  const fileName = exePath.split(/[\\/]/).pop();
-  showConfirmModal(tFormat('suggestExeMessage', { folder: folderName, file: fileName }),
-    () => nativeAction('addSuggestedExe', { path: exePath }),
-    { okLabel: t('suggestExeAdd'), cancelLabel: t('confirmCancel'),
-      okColorClass: 'bg-purple-600/80 hover:bg-purple-600',
-      iconWrapClass: 'bg-purple-500/15 border border-purple-500/30',
-      iconClass: 'fa-folder-open', iconColorClass: 'text-purple-300' });
-}
-function showExeListModal(folderName, items) {
-  exeListItems = items;
-  exeListSelected = new Set();
-  items.forEach((it, i) => { if (it.main) exeListSelected.add(i); });
-  if (exeListSelected.size === 0 && items.length > 0) exeListSelected.add(0);
-  document.getElementById('exeListSubtitle').innerText = tFormat('exeListSubtitle', { count: items.length, folder: folderName });
-  const container = document.getElementById('exeListContainer');
-  container.innerHTML = '';
-  items.forEach((it, i) => {
-    const row = document.createElement('div');
-    row.className = 'exe-row' + (exeListSelected.has(i) ? ' selected' : '');
-    row.dataset.idx = i;
-    row.tabIndex = 0;
-    row.innerHTML = `
-      <div class="chk"><i class="fa-solid fa-check"></i></div>
-      <img src="${it.icon || ''}" class="w-8 h-8 rounded object-contain bg-black/30 border border-white/10 shrink-0" onerror="this.style.display='none'">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <p class="text-xs font-bold text-white truncate">${escapeHtml(it.name)}</p>
-          ${it.main ? `<span class="main-badge">${escapeHtml(t('exeListMainBadge'))}</span>` : ''}
-        </div>
-        <p class="text-[10px] text-gray-500 font-mono truncate" dir="ltr">${escapeHtml(it.path)}</p>
-      </div>
-      <span class="text-[10px] text-gray-400 font-mono shrink-0">${formatBytes(it.size)}</span>`;
-    row.onclick = () => {
-      if (exeListSelected.has(i)) exeListSelected.delete(i);
-      else exeListSelected.add(i);
-      row.classList.toggle('selected', exeListSelected.has(i));
-      updateExeListCounter();
-    };
-    row.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); row.click(); } });
-    container.appendChild(row);
-  });
-  updateExeListCounter();
-  const overlay = document.getElementById('exeListModalOverlay');
-  overlay.classList.remove('hidden');
-  const cancelBtn = document.getElementById('exeListCancelBtn');
-  const okBtn = document.getElementById('exeListOkBtn');
-  const close = () => overlay.classList.add('hidden');
-  const onCancel = () => { close(); cleanup(); };
-  const onOk = () => {
-    const paths = [];
-    exeListSelected.forEach(i => { if (exeListItems[i]) paths.push(exeListItems[i].path); });
-    close(); cleanup();
-    if (paths.length > 0) nativeAction('addSelectedExes', { paths });
-  };
-  function cleanup() { cancelBtn.removeEventListener('click', onCancel); okBtn.removeEventListener('click', onOk); }
-  cancelBtn.addEventListener('click', onCancel);
-  okBtn.addEventListener('click', onOk);
-}
-function exeListSelectAll(select) {
-  exeListSelected = new Set();
-  if (select) exeListItems.forEach((_, i) => exeListSelected.add(i));
-  const container = document.getElementById('exeListContainer');
-  container.querySelectorAll('.exe-row').forEach(row => {
-    const i = parseInt(row.dataset.idx, 10);
-    row.classList.toggle('selected', exeListSelected.has(i));
-  });
-  updateExeListCounter();
-}
-function updateExeListCounter() {
-  const total = exeListItems.length;
-  const n = exeListSelected.size;
-  document.getElementById('exeListCounter').innerText = tFormat('exeListCounter', { n, total });
-  document.getElementById('exeListOkBtn').disabled = (n === 0);
-}
-function formatBytes(b) {
-  if (!b || b <= 0) return '';
-  const units = ['B','KB','MB','GB'];
-  let i = 0; let v = b;
-  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
-  return v.toFixed(v >= 100 ? 0 : 1) + ' ' + units[i];
-}
-function showStatus(text, kind) {
-  const badge = document.getElementById('statusBadge');
-  const tt = document.getElementById('statusBadgeText');
-  tt.innerText = text;
-  badge.className = 'flex items-center gap-2 px-3 py-1 rounded-full font-semibold ' +
-    (kind === 'error' ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-      : kind === 'warn' ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300'
-      : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400');
-}
-function applyPanelBackground(path) {
-  const root = document.getElementById('bodyRoot');
-  if (!path) { root.style.backgroundImage = ''; return; }
-  const url = 'file:///' + path.replace(/\\/g, '/');
-  root.style.backgroundImage = `linear-gradient(rgba(13,11,24,0.30), rgba(13,11,24,0.48)), url("${url.replace(/"/g, '\\"')}")`;
-  root.style.backgroundSize = 'cover';
-  root.style.backgroundPosition = 'center';
-  root.style.backgroundAttachment = 'fixed';
-}
-function applyI18nStaticText() {
-  document.documentElement.lang = state.lang;
-  document.documentElement.dir = state.lang === 'en' ? 'ltr' : 'rtl';
-  document.querySelectorAll('[data-t]').forEach(el => {
-    const key = el.getAttribute('data-t');
-    if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) el.setAttribute('placeholder', t(key));
-    else el.innerText = t(key);
-  });
-  document.getElementById('langSelect').value = state.lang;
-}
-function onStateUpdated() {
-  applyPreset(state.panelPreset || 'purple');
-  applyI18nStaticText();
-  applyPanelBackground(state.panelBackground || '');
-  document.getElementById('hotkeyBadge').innerText = state.hotkey;
-  document.getElementById('hotkeyCaptureBtn').innerText = state.hotkey;
-  document.getElementById('muteHotkeyBadge').innerText = state.muteHotkey || '—';
-  document.getElementById('muteHotkeyCaptureBtn').innerText = state.muteHotkey || '—';
-  const muteBadgeWrap = document.getElementById('muteBadgeWrap');
-  muteBadgeWrap.style.opacity = state.muteEnabled ? '1' : '0.4';
-  document.getElementById('muteEnabledToggle').classList.toggle('on', !!state.muteEnabled);
-  document.getElementById('controllerEnabledToggle').classList.toggle('on', !!state.controllerEnabled);
-  document.getElementById('hubAlwaysVisibleToggle').classList.toggle('on', !!state.hubAlwaysVisible);
-  const ctrlBtnRow = document.getElementById('controllerButtonRow');
-  if (state.controllerEnabled) ctrlBtnRow.classList.remove('opacity-40', 'pointer-events-none');
-  else ctrlBtnRow.classList.add('opacity-40', 'pointer-events-none');
-  const ctrlSel = document.getElementById('controllerButtonSelect');
-  const curBtnHex = '0x' + (state.controllerButton >>> 0).toString(16).padStart(4, '0');
-  ctrlSel.value = curBtnHex;
-  const engineBtn = document.getElementById('engineToggleBtn');
-  const engineTxt = document.getElementById('engineToggleText');
-  if (state.engineRunning) {
-    showStatus(t('engineRunning'), 'info');
-    engineTxt.innerText = t('stopEngine');
-    engineBtn.className = 'w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30';
-  } else {
-    showStatus(t('engineStopped'), 'warn');
-    engineTxt.innerText = t('startEngine');
-    engineBtn.className = 'w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30';
-  }
-  document.getElementById('autoStartToggle').classList.toggle('on', !!state.autoStart);
-  document.getElementById('autoLayoutToggle').classList.toggle('on', !!state.autoLayoutSwitch);
-  document.getElementById('totalGamesCount').innerText = state.games.length + ' ' + t('gamesUnit');
-  // شفافية الدائرة
-  const rt = typeof state.radialTransparency === 'number' ? state.radialTransparency : 0.72;
-  const rSlider = document.getElementById('radialOpacitySlider');
-  if (rSlider && document.activeElement !== rSlider) {
-    rSlider.value = rt;
-    document.getElementById('radialOpacityVal').innerText = Math.round(rt * 100) + '%';
-  }
-  if (selectedGamePath) {
-    const match = state.games.find(g => g.path === selectedGamePath);
-    selectedGameIndex = match ? match.index : -1;
-    if (!match) selectedGamePath = null;
-  }
-  if (selectedGameIndex >= state.games.length) selectedGameIndex = -1;
-  renderGamesList();
-  renderCompanions();
-  renderRadialStyles();
-  renderPresets();
-  if (!document.getElementById('tab-details').classList.contains('hidden')) {
-    if (detailsGameIndex >= 0 && !state.games.find(g => g.index === detailsGameIndex)) detailsGameIndex = -1;
-    renderGameDetails();
-  }
-}
-function onSearchChange(value) { searchQuery = (value || '').toLowerCase().trim(); renderGamesList(); }
-function onSortChange(value) { sortMode = value || 'manual'; renderGamesList(); }
-function getSortedFilteredGames() {
-  let list = state.games.slice();
-  if (searchQuery) list = list.filter(g => (g.name || '').toLowerCase().includes(searchQuery) || (g.path || '').toLowerCase().includes(searchQuery));
-  switch (sortMode) {
-    case 'favorite': list.sort((a, b) => { const fa = a.favorite ? 1 : 0, fb = b.favorite ? 1 : 0; if (fa !== fb) return fb - fa; return a.index - b.index; }); break;
-    case 'recent': list.sort((a, b) => { const la = a.lastPlayedUnix || 0, lb = b.lastPlayedUnix || 0; if (la !== lb) return lb - la; return a.index - b.index; }); break;
-    case 'mostPlayed': list.sort((a, b) => { const pa = a.totalPlaySeconds || 0, pb = b.totalPlaySeconds || 0; if (pa !== pb) return pb - pa; return a.index - b.index; }); break;
-    case 'name': list.sort((a, b) => a.name.localeCompare(b.name)); break;
-    default: break;
-  }
-  return list;
-}
-function renderGamesList() {
-  const container = document.getElementById('gamesListContainer');
-  const empty = document.getElementById('searchEmpty');
-  container.innerHTML = '';
-  const filtered = getSortedFilteredGames();
-  document.getElementById('gamesListCount').innerText = state.games.length;
-  if (state.games.length > 0 && filtered.length === 0) { empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-  filtered.forEach(game => {
-    const selected = game.index === selectedGameIndex;
-    const card = document.createElement('div');
-    card.className = 'glass-card p-3 rounded-xl flex items-center justify-between cursor-pointer border';
-    card.tabIndex = 0;
-    if (selected) { card.style.borderColor = 'var(--accent-2)'; card.style.background = 'rgba(var(--accent-rgb), 0.15)'; }
-    else card.style.borderColor = 'rgba(255,255,255,0.05)';
-    const canDrag = (sortMode === 'manual' && !searchQuery);
-    card.draggable = canDrag;
-    card.onclick = () => { selectedGameIndex = game.index; selectedGamePath = game.path; renderGamesList(); renderCompanions(); };
-    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === card) { e.preventDefault(); card.click(); } } });
-    if (canDrag) {
-      card.addEventListener('dragstart', (e) => { reorderDragIndex = game.index; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(game.index)); setTimeout(() => card.classList.add('opacity-40'), 0); });
-      card.addEventListener('dragend', () => { card.classList.remove('opacity-40'); reorderDragIndex = null; });
-      card.addEventListener('dragover', (e) => { if (reorderDragIndex === null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; card.style.outline = '1px solid var(--accent-2)'; });
-      card.addEventListener('dragleave', () => { card.style.outline = ''; });
-      card.addEventListener('drop', (e) => { card.style.outline = ''; if (reorderDragIndex === null || reorderDragIndex === game.index) return; e.preventDefault(); e.stopPropagation(); reorderGameTo(reorderDragIndex, game.index); });
-    }
-    const eyeIcon = game.showInRadial ? `<i class="fa-solid fa-eye text-emerald-400 text-xs"></i>` : `<i class="fa-solid fa-eye-slash text-gray-500 text-xs"></i>`;
-    const uwpBadge = game.isUwp ? `<span class="uwp-badge">UWP</span>` : '';
-    const favClass = game.favorite ? 'fav-btn on' : 'fav-btn';
-    const gripIcon = canDrag ? `<i class="fa-solid fa-grip-vertical text-gray-500 text-xs shrink-0 cursor-grab"></i>` : `<i class="fa-solid fa-grip-vertical text-gray-700 text-xs shrink-0 opacity-30"></i>`;
-    const muteIndicator = game.muted ? `<span class="mute-badge"><i class="fa-solid fa-volume-xmark"></i></span>` : '';
-    const runningIndicator = game.isRunning ? `<span class="running-dot"><span class="dot"></span><span>${escapeHtml(t('runningLabel'))}</span></span>` : '';
-    const canOpenFolder = !game.isSteam && !game.isUwp;
-    card.innerHTML = `
-      <div class="flex items-center gap-3 overflow-hidden">
-        ${gripIcon}
-        <div class="relative shrink-0">
-          <img src="${game.icon}" class="w-10 h-10 rounded-lg object-contain bg-black/20 border border-white/10">
-          ${game.missing ? `<span class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-500 border-2 border-[#0f0c1b] flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-[9px] text-black"></i></span>` : ''}
-        </div>
-        <div class="overflow-hidden">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h4 class="font-bold text-white text-sm truncate">${escapeHtml(game.name)}</h4>
-            ${uwpBadge}${muteIndicator}${runningIndicator}
-          </div>
-          <p class="text-[11px] font-mono truncate ${game.missing ? 'text-amber-400' : 'text-gray-300'}">${escapeHtml(game.path)}</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-1 shrink-0">
-        <button onclick="event.stopPropagation(); toggleFavoriteByIndex(${game.index})" class="${favClass}" tabindex="-1"><i class="fa-solid fa-star text-sm"></i></button>
-        ${eyeIcon}
-        <span class="text-[11px] px-2 py-0.5 rounded-full ${game.companions.length > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-gray-800 text-gray-400'}">${game.companions.length}</span>
-        ${canOpenFolder ? `<button onclick="event.stopPropagation(); nativeAction('openGameFolder', {index: ${game.index}})" class="icon-action-btn" tabindex="-1"><i class="fa-solid fa-folder-open text-xs"></i></button>` : ''}
-        <button onclick="event.stopPropagation(); openGameDetails(${game.index})" class="text-gray-400 hover:text-cyan-300 p-1" tabindex="-1"><i class="fa-solid fa-gears"></i></button>
-        <button onclick="event.stopPropagation(); confirmRemoveGame(${game.index}, decodeURIComponent('${encodeURIComponent(game.name)}'))" class="text-gray-400 hover:text-red-400 p-1" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
-      </div>`;
-    container.appendChild(card);
-  });
-}
-function toggleFavoriteByIndex(index) {
-  const game = state.games.find(g => g.index === index);
-  if (!game) return;
-  nativeAction('setGameFavorite', { index: index, enabled: game.favorite ? 0 : 1 });
-}
-function openGameFolderDetails() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('openGameFolder', { index: game.index });
-}
-function renderCompanions() {
-  const banner = document.getElementById('selectedGameBanner');
-  const hint = document.getElementById('noSelectionHint');
-  const addBtn = document.getElementById('addCompanionBtn');
-  const list = document.getElementById('companionAppsList');
-  const game = state.games.find(g => g.index === selectedGameIndex);
-  if (!game) { banner.classList.add('hidden'); hint.classList.remove('hidden'); addBtn.disabled = true; list.innerHTML = ''; return; }
-  banner.classList.remove('hidden'); hint.classList.add('hidden'); addBtn.disabled = false;
-  document.getElementById('selectedGameImg').src = game.icon;
-  document.getElementById('selectedGameName').innerText = game.name;
-  document.getElementById('selectedGamePath').innerText = game.path;
-  const muteBadge = document.getElementById('selectedGameMuteBadge');
-  muteBadge.classList.toggle('hidden', !game.muted);
-  const runningBadge = document.getElementById('selectedGameRunningBadge');
-  runningBadge.classList.toggle('hidden', !game.isRunning);
-  const langToggle = document.getElementById('gameLangToggle');
-  const langToggleWrap = document.getElementById('gameLangToggleWrap');
-  langToggle.classList.toggle('on', !!game.autoLangSwitch);
-  const globalOn = !!state.autoLayoutSwitch;
-  langToggle.style.opacity = globalOn ? '1' : '0.4';
-  langToggle.style.pointerEvents = globalOn ? 'auto' : 'none';
-  langToggleWrap.title = globalOn ? '' : t('gameLangToggleNeedsGlobal');
-  list.innerHTML = '';
-  if (game.companions.length === 0) {
-    list.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl">${t('noCompanions')}</div>`;
-    return;
-  }
-  game.companions.forEach(comp => {
-    const item = document.createElement('div');
-    item.className = 'bg-slate-900/80 border border-white/10 p-2.5 rounded-xl flex items-center justify-between';
-    item.innerHTML = `
-      <div class="flex items-center gap-2.5 overflow-hidden">
-        <img src="${comp.icon}" class="w-7 h-7 rounded object-contain bg-black/20 shrink-0">
-        <div class="overflow-hidden">
-          <p class="text-xs font-bold text-white truncate">${escapeHtml(comp.name)}</p>
-          <p class="text-[10px] text-gray-300 font-mono truncate">${escapeHtml(comp.path)}</p>
-        </div>
-      </div>
-      <button onclick="confirmRemoveCompanion(${game.index}, ${comp.index}, decodeURIComponent('${encodeURIComponent(comp.name)}'))" class="text-gray-400 hover:text-red-400 p-1 text-xs shrink-0" tabindex="0"><i class="fa-solid fa-trash"></i></button>`;
-    list.appendChild(item);
-  });
-}
-function renderRadialStyles() {
-  const grid = document.getElementById('radialStylesGrid');
-  grid.innerHTML = '';
-  state.radialStyleNames.forEach((name, i) => {
-    const meta = RADIAL_META[i] || { icon: 'fa-circle', descAr: '', descEn: '' };
-    const selected = i === state.radialStyle;
-    const card = document.createElement('div');
-    card.className = 'glass-card p-3 rounded-xl cursor-pointer border ' + (selected ? '' : 'border-white/5');
-    if (selected) card.style.borderColor = 'var(--accent-2)';
-    card.tabIndex = 0;
-    card.onclick = () => nativeAction('setRadialStyle', { style: i });
-    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
-    card.innerHTML = `
-      <div class="w-9 h-9 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center mb-2">
-        <i class="fa-solid ${meta.icon}" style="color: var(--accent-2); font-size: 14px;"></i>
-      </div>
-      <h3 class="font-bold text-white text-xs">${escapeHtml(name)}</h3>
-      <p class="text-[10px] text-gray-400 mt-1 leading-tight">${escapeHtml(state.lang === 'en' ? meta.descEn : meta.descAr)}</p>`;
-    grid.appendChild(card);
-  });
-}
-function renderPresets() {
-  const grid = document.getElementById('presetsGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  PANEL_PRESETS.forEach(preset => {
-    const selected = preset.id === (state.panelPreset || 'purple');
-    const card = document.createElement('div');
-    card.className = 'preset-card' + (selected ? ' selected' : '');
-    card.tabIndex = 0;
-    card.onclick = () => nativeAction('setPanelPreset', { preset: preset.id });
-    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
-    card.innerHTML = `
-      <div class="preset-swatch" style="background: linear-gradient(135deg, ${preset.colors[0]}, ${preset.colors[1]});">
-        <i class="fa-solid ${preset.icon}"></i>
-      </div>
-      <div class="preset-label">${escapeHtml(state.lang === 'en' ? preset.nameEn : preset.nameAr)}</div>`;
-    grid.appendChild(card);
-  });
-}
-function openGameDetails(gameIndex) { detailsGameIndex = gameIndex; qaActiveTarget = 'game'; switchTab('details'); renderGameDetails(); }
-function renderDetailsSidebar() {
-  const sidebar = document.getElementById('detailsGameSidebar');
-  const counter = document.getElementById('detailsGamesCount');
-  if (!sidebar) return;
-  counter.innerText = state.games.length;
-  sidebar.innerHTML = '';
-  state.games.forEach(game => {
-    const active = game.index === detailsGameIndex;
-    const item = document.createElement('div');
-    item.className = 'details-game-item glass-card p-2.5 rounded-xl border flex items-center gap-2.5 ' + (active ? 'active' : 'border-white/5') + (game.showInRadial ? '' : ' hidden-from-radial');
-    item.tabIndex = 0;
-    if (!active) item.style.borderColor = 'rgba(255,255,255,0.05)';
-    item.onclick = () => { if (detailsGameIndex === game.index) return; detailsGameIndex = game.index; qaActiveTarget = 'game'; renderGameDetails(); };
-    item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); } });
-    const eyeIcon = game.showInRadial ? `<i class="fa-solid fa-eye text-emerald-400 text-[11px]"></i>` : `<i class="fa-solid fa-eye-slash text-gray-500 text-[11px]"></i>`;
-    const uwp = game.isUwp ? `<span class="uwp-badge">UWP</span>` : '';
-    const favStar = game.favorite ? `<i class="fa-solid fa-star text-[10px]" style="color:#fbbf24;"></i>` : '';
-    const muteMini = game.muted ? `<span class="mute-badge"><i class="fa-solid fa-volume-xmark"></i></span>` : '';
-    const runMini = game.isRunning ? `<span class="running-dot" style="padding:1px 5px;"><span class="dot" style="width:5px;height:5px;"></span></span>` : '';
-    item.innerHTML = `
-      <img src="${game.icon}" class="w-9 h-9 rounded-lg object-contain bg-black/20 border border-white/10 shrink-0">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <div class="text-xs font-bold text-white truncate">${escapeHtml(game.name)}</div>
-          ${uwp}${favStar}${muteMini}${runMini}
-        </div>
-        <div class="text-[10px] text-gray-500 truncate font-mono">${escapeHtml(game.path)}</div>
-      </div>
-      <div class="flex flex-col items-center gap-0.5 shrink-0">
-        ${eyeIcon}
-        <span class="text-[9px] text-gray-500">${game.companions.length}</span>
-      </div>`;
-    sidebar.appendChild(item);
-  });
-}
-function renderQuickAccessBar(game) {
-  const container = document.getElementById('quickAccessChips');
-  if (!container) return;
-  container.innerHTML = '';
-  const gameChip = document.createElement('button');
-  gameChip.type = 'button'; gameChip.className = 'qa-chip'; gameChip.dataset.qaTarget = 'game'; gameChip.tabIndex = 0;
-  gameChip.innerHTML = `<img src="${game.icon}" class="w-7 h-7 rounded-lg object-contain bg-black/30 border border-white/10"><span class="truncate max-w-[140px]">${escapeHtml(game.name)}</span><i class="fa-solid fa-gamepad text-purple-300 text-[10px]"></i>`;
-  gameChip.onclick = () => focusQuickAccessTarget('game');
-  container.appendChild(gameChip);
-  (game.companions || []).forEach(c => {
-    const chip = document.createElement('button');
-    chip.type = 'button'; chip.className = 'qa-chip'; chip.dataset.qaTarget = 'comp-' + c.index; chip.tabIndex = 0;
-    chip.innerHTML = `<img src="${c.icon}" class="w-7 h-7 rounded-lg object-contain bg-black/30 border border-white/10"><span class="truncate max-w-[140px]">${escapeHtml(c.name)}</span><i class="fa-solid fa-puzzle-piece text-cyan-300 text-[10px]"></i>`;
-    chip.onclick = () => focusQuickAccessTarget('comp-' + c.index);
-    container.appendChild(chip);
-  });
-  const available = Array.from(container.querySelectorAll('.qa-chip')).map(c => c.dataset.qaTarget);
-  if (!available.includes(qaActiveTarget)) qaActiveTarget = 'game';
-  container.querySelectorAll('.qa-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.qaTarget === qaActiveTarget));
-}
-function focusQuickAccessTarget(targetId) {
-  qaActiveTarget = targetId;
-  document.querySelectorAll('.qa-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.qaTarget === targetId));
-  let el = null;
-  if (targetId === 'game') el = document.getElementById('detailGameOptions');
-  else el = document.getElementById('detailComp-' + targetId.replace('comp-', ''));
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.remove('qa-highlight'); void el.offsetWidth; el.classList.add('qa-highlight');
-    setTimeout(() => el.classList.remove('qa-highlight'), 1700);
-  }
-}
-// ✅ لون مخصص
-function pickCustomColor() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('browseGameCustomColor', { index: game.index });
-}
-function renderColorPreview(game) {
-  const preview = document.getElementById('detailsColorPreview');
-  const hexEl = document.getElementById('detailsColorHex');
-  if (!preview || !hexEl) return;
-  const c = game.color >>> 0;
-  const r = c & 0xFF, g = (c >> 8) & 0xFF, b = (c >> 16) & 0xFF;
-  const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
-  preview.style.background = hex;
-  preview.style.boxShadow = `0 0 18px ${hex}90`;
-  hexEl.innerText = hex;
-}
-function chooseGameRadialBg() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('browseGameRadialBg', { index: game.index });
-}
-function clearGameRadialBg() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('clearGameRadialBg', { index: game.index });
-}
-function toggleGameHideOriginalIcon() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game || !game.radialBgPath) return;
-  nativeAction('setGameHideOriginalIcon', { index: game.index, enabled: game.hideOriginalIcon ? 0 : 1 });
-}
-function renderRadialBgPreview(game) {
-  const wrap = document.getElementById('detailsRadialBgPreviewWrap');
-  const clearBtn = document.getElementById('detailsRadialBgClearBtn');
-  const hideIconRow = document.getElementById('detailsHideIconRow');
-  const hideIconToggle = document.getElementById('detailsHideIconToggle');
-  if (!wrap) return;
-  if (game && game.radialBgPath && game.radialBgPreview) {
-    wrap.innerHTML = `<div class="radial-bg-preview" style="background-image: url('${game.radialBgPreview}');"></div>`;
-    if (clearBtn) clearBtn.style.display = 'inline-flex';
-    if (hideIconRow) hideIconRow.style.display = 'flex';
-    if (hideIconToggle) hideIconToggle.classList.toggle('on', !!game.hideOriginalIcon);
-  } else {
-    wrap.innerHTML = `<div class="radial-bg-empty"><i class="fa-solid fa-image"></i></div>`;
-    if (clearBtn) clearBtn.style.display = 'none';
-    if (hideIconRow) hideIconRow.style.display = 'none';
-  }
-}
-function renderPrioritySelect(game) {
-  const sel = document.getElementById('detailsPrioritySelect');
-  if (!sel) return;
-  sel.innerHTML = '';
-  const names = state.processPriorityNames || [];
-  names.forEach((name, i) => {
-    const opt = document.createElement('option');
-    opt.value = i; opt.innerText = name;
-    sel.appendChild(opt);
-  });
-  sel.value = game.processPriority || 0;
-}
-function renderCpuCoresGrid(game) {
-  const grid = document.getElementById('detailsCpuCoresGrid');
-  const label = document.getElementById('cpuCountLabel');
-  const wrap = document.getElementById('detailsCpuCoresWrap');
-  const toggle = document.getElementById('detailsAffinityToggle');
-  if (!grid || !label || !wrap || !toggle) return;
-  const cores = state.cpuCoreCount || 8;
-  label.innerText = `${cores} ${state.lang === 'en' ? 'cores' : 'أنوية'}`;
-  let mask = game.affinityMask || ((1n << BigInt(cores)) - 1n);
-  if (mask === 0n || mask === 0) mask = (1n << BigInt(cores)) - 1n;
-  pendingAffinityMask = mask;
-  toggle.classList.toggle('on', !!game.applyAffinity);
-  wrap.classList.toggle('opacity-40', !game.applyAffinity);
-  wrap.classList.toggle('pointer-events-none', !game.applyAffinity);
-  grid.innerHTML = '';
-  for (let i = 0; i < cores; i++) {
-    const bitSet = (pendingAffinityMask & (1n << BigInt(i))) !== 0n;
-    const core = document.createElement('div');
-    core.className = 'cpu-core' + (bitSet ? ' selected' : '');
-    core.dataset.coreIdx = i;
-    core.innerHTML = `<span class="core-num">${i}</span><span class="core-idx">CPU</span>`;
-    core.onclick = () => {
-      pendingAffinityMask ^= (1n << BigInt(i));
-      core.classList.toggle('selected', (pendingAffinityMask & (1n << BigInt(i))) !== 0n);
-    };
-    grid.appendChild(core);
-  }
-}
-function selectAllCores() {
-  const cores = state.cpuCoreCount || 8;
-  pendingAffinityMask = (1n << BigInt(cores)) - 1n;
-  document.querySelectorAll('#detailsCpuCoresGrid .cpu-core').forEach(el => el.classList.add('selected'));
-}
-function clearAllCores() {
-  pendingAffinityMask = 0n;
-  document.querySelectorAll('#detailsCpuCoresGrid .cpu-core').forEach(el => el.classList.remove('selected'));
-}
-function onPriorityChange(value) {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  const prio = parseInt(value, 10) || 0;
-  nativeAction('setGameProcessPriority', { index: game.index, priority: prio });
-}
-function toggleGameAffinity() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  const newEnabled = !game.applyAffinity;
-  const maskStr = pendingAffinityMask.toString();
-  nativeAction('setGameAffinity', { index: game.index, enabled: newEnabled ? 1 : 0, mask: maskStr });
-  const wrap = document.getElementById('detailsCpuCoresWrap');
-  const toggle = document.getElementById('detailsAffinityToggle');
-  if (wrap) { wrap.classList.toggle('opacity-40', !newEnabled); wrap.classList.toggle('pointer-events-none', !newEnabled); }
-  if (toggle) toggle.classList.toggle('on', newEnabled);
-}
-function renderGameDetails() {
-  const empty = document.getElementById('detailsEmpty');
-  const content = document.getElementById('detailsContent');
-  if (!empty || !content) return;
-  if (state.games.length === 0) { empty.classList.remove('hidden'); content.classList.add('hidden'); return; }
-  empty.classList.add('hidden'); content.classList.remove('hidden');
-  if (detailsGameIndex < 0 || !state.games.find(g => g.index === detailsGameIndex)) {
-    detailsGameIndex = state.games[0].index; qaActiveTarget = 'game';
-  }
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  renderDetailsSidebar();
-  document.getElementById('detailsGameImg').src = game.icon;
-  document.getElementById('detailsGameName').innerText = game.name;
-  document.getElementById('detailsGamePath').innerText = game.path;
-  document.getElementById('detailsUwpBadge').classList.toggle('hidden', !game.isUwp);
-  const muteBadge = document.getElementById('detailsMuteBadge');
-  muteBadge.classList.toggle('hidden', !game.muted);
-  const runningBadge = document.getElementById('detailsRunningBadge');
-  runningBadge.classList.toggle('hidden', !game.isRunning);
-  const openFolderBtn = document.getElementById('detailsOpenFolderBtn');
-  openFolderBtn.style.display = (game.isSteam || game.isUwp) ? 'none' : 'inline-flex';
-  const favBtn = document.getElementById('detailsFavBtn');
-  favBtn.classList.toggle('on', !!game.favorite);
-  document.getElementById('detailsRunAsAdminToggle').classList.toggle('on', !!game.runAsAdmin);
-  document.getElementById('detailsShowInRadialToggle').classList.toggle('on', !!game.showInRadial);
-  const argsInput = document.getElementById('detailsLaunchArgsInput');
-  if (document.activeElement !== argsInput) argsInput.value = game.launchArgs || '';
-  document.getElementById('statTotalTime').innerText = formatPlayTime(game.totalPlaySeconds);
-  document.getElementById('statLastPlayed').innerText = formatRelativeTime(game.lastPlayedUnix);
-  document.getElementById('statSessions').innerText = (game.playCount || 0) + ' ' + t('sessionsUnit');
-  renderColorPreview(game);
-  renderRadialBgPreview(game);
-  renderQuickAccessBar(game);
-  renderPrioritySelect(game);
-  renderCpuCoresGrid(game);
-  const list = document.getElementById('detailsCompanionsList');
-  list.innerHTML = '';
-  if (!game.companions || game.companions.length === 0) {
-    list.innerHTML = `<div class="text-center py-4 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl">${t('detailsNoCompanions')}</div>`;
-    return;
-  }
-  game.companions.forEach(c => {
-    const row = document.createElement('div');
-    row.id = 'detailComp-' + c.index;
-    row.className = 'bg-slate-900/70 border border-white/10 rounded-xl p-3 space-y-2.5 transition-all duration-300' + (c.showInRadial ? '' : ' opacity-60');
-    row.innerHTML = `
-      <div class="flex items-center gap-2.5">
-        <img src="${c.icon}" class="w-7 h-7 rounded object-contain bg-black/20 shrink-0">
-        <div class="overflow-hidden flex-1">
-          <p class="text-xs font-bold text-white truncate">${escapeHtml(c.name)}</p>
-          <p class="text-[10px] text-gray-400 font-mono truncate">${escapeHtml(c.path)}</p>
-        </div>
-      </div>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid ${c.showInRadial ? 'fa-toggle-on text-cyan-400' : 'fa-toggle-off text-gray-500'} text-xs"></i>
-          <span class="text-[11px] text-gray-300">${t('companionShowInRadial')}</span>
-        </div>
-        <button class="pill-switch ${c.showInRadial ? 'on' : ''}" data-comp-show="${c.index}" tabindex="0"><span class="pill-switch-knob"></span></button>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] text-gray-300">${t('detailsRunAsAdmin')}</span>
-        <button class="pill-switch ${c.runAsAdmin ? 'on' : ''}" data-comp-admin="${c.index}" tabindex="0"><span class="pill-switch-knob"></span></button>
-      </div>
-      <div>
-        <label class="text-[11px] text-gray-300 block mb-1">${t('detailsLaunchArgs')}</label>
-        <input type="text" dir="ltr" value="${escapeHtml(c.launchArgs || '')}" data-comp-args="${c.index}" tabindex="0" class="w-full bg-slate-950/70 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-white outline-none focus:border-cyan-500">
-      </div>`;
-    list.appendChild(row);
-  });
-  list.querySelectorAll('[data-comp-show]').forEach(btn => {
-    btn.onclick = () => {
-      const ci = parseInt(btn.getAttribute('data-comp-show'), 10);
-      const comp = game.companions.find(x => x.index === ci);
-      if (!comp) return;
-      nativeAction('setCompanionShowInRadial', { gameIndex: game.index, companionIndex: ci, enabled: comp.showInRadial ? 0 : 1 });
-    };
-  });
-  list.querySelectorAll('[data-comp-admin]').forEach(btn => {
-    btn.onclick = () => {
-      const ci = parseInt(btn.getAttribute('data-comp-admin'), 10);
-      const comp = game.companions.find(x => x.index === ci);
-      if (!comp) return;
-      nativeAction('setCompanionRunAsAdmin', { gameIndex: game.index, companionIndex: ci, enabled: comp.runAsAdmin ? 0 : 1 });
-    };
-  });
-  list.querySelectorAll('[data-comp-args]').forEach(inp => {
-    inp.onchange = () => {
-      const ci = parseInt(inp.getAttribute('data-comp-args'), 10);
-      nativeAction('setCompanionLaunchArgs', { gameIndex: game.index, companionIndex: ci, args: inp.value });
-    };
-  });
-}
-function toggleGameRunAsAdmin() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('setGameRunAsAdmin', { index: game.index, enabled: game.runAsAdmin ? 0 : 1 });
-}
-function toggleGameShowInRadial() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('setGameShowInRadial', { index: game.index, enabled: game.showInRadial ? 0 : 1 });
-}
-function toggleGameFavorite() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  nativeAction('setGameFavorite', { index: game.index, enabled: game.favorite ? 0 : 1 });
-}
-function resetGamePlayTime() {
-  const game = state.games.find(g => g.index === detailsGameIndex);
-  if (!game) return;
-  showConfirmModal(tFormat('confirmResetStats', { name: game.name }),
-    () => nativeAction('resetGamePlayTime', { index: game.index }),
-    { okLabel: t('confirmReset'), okColorClass: 'bg-amber-600/80 hover:bg-amber-600',
-      iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
-      iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
-}
-function switchTab(id) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById('tab-' + id).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('nav-' + id).classList.add('active');
-  if (id === 'details') { if (detailsGameIndex >= 0 || state.games.length > 0) renderGameDetails(); }
-  if (id === 'settings') {
-    refreshMutedApps();
-    if (mutedAppsTimerId === null) mutedAppsTimerId = setInterval(refreshMutedApps, 3000);
-  } else {
-    if (mutedAppsTimerId !== null) { clearInterval(mutedAppsTimerId); mutedAppsTimerId = null; }
-  }
-}
-function toggleEngine() { nativeAction(state.engineRunning ? 'stopEngine' : 'startEngine'); }
-function toggleAutoStart() { nativeAction('setAutoStart', { enabled: state.autoStart ? 0 : 1 }); }
-function toggleAutoLayout() { nativeAction('setAutoLayoutSwitch', { enabled: state.autoLayoutSwitch ? 0 : 1 }); }
-function toggleMuteEnabled() { nativeAction('setMuteEnabled', { enabled: state.muteEnabled ? 0 : 1 }); }
-function toggleControllerEnabled() { nativeAction('setControllerEnabled', { enabled: state.controllerEnabled ? 0 : 1 }); }
-function toggleHubAlwaysVisible() { nativeAction('setHubAlwaysVisible', { enabled: state.hubAlwaysVisible ? 0 : 1 }); }
-function onControllerButtonChange(value) { const btn = parseInt(value, 16) || 0x0010; nativeAction('setControllerButton', { button: btn }); }
-function toggleGameAutoLangSwitch() {
-  const game = state.games.find(g => g.index === selectedGameIndex);
-  if (!game || !state.autoLayoutSwitch) return;
-  nativeAction('setGameAutoLangSwitch', { index: game.index, enabled: game.autoLangSwitch ? 0 : 1 });
-}
-function changeGlassOpacity(val) {
-  document.documentElement.style.setProperty('--glass-opacity', val);
-  document.getElementById('opacityVal').innerText = Math.round(val * 100) + '%';
-}
-function changeRadialOpacity(val) {
-  document.getElementById('radialOpacityVal').innerText = Math.round(val * 100) + '%';
-}
-function changeRadialOpacityCommit(val) {
-  nativeAction('setRadialTransparency', { value: String(val) });
-}
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function startHotkeyCapture() {
-  capturingHotkey = true; capturingMuteHotkey = false;
-  const btn = document.getElementById('hotkeyCaptureBtn');
-  btn.innerText = t('pressNewKey'); btn.classList.add('recording');
-  document.getElementById('hotkeyWarning').classList.add('hidden');
-}
-function startMuteHotkeyCapture() {
-  capturingMuteHotkey = true; capturingHotkey = false;
-  const btn = document.getElementById('muteHotkeyCaptureBtn');
-  btn.innerText = t('pressNewKey'); btn.classList.add('recording');
-}
-document.addEventListener('keydown', (e) => {
-  if (!capturingHotkey && !capturingMuteHotkey) return;
-  e.preventDefault();
-  if (e.key === 'Escape') {
-    capturingHotkey = false; capturingMuteHotkey = false;
-    document.getElementById('hotkeyCaptureBtn').classList.remove('recording');
-    document.getElementById('muteHotkeyCaptureBtn').classList.remove('recording');
-    onStateUpdated(); return;
-  }
-  if (['Control','Alt','Shift','Meta'].includes(e.key)) return;
-  let mods = 0;
-  if (e.ctrlKey) mods |= 0x0002;
-  if (e.altKey)  mods |= 0x0001;
-  if (e.shiftKey) mods |= 0x0004;
-  if (e.metaKey) mods |= 0x0008;
-  const vk = e.keyCode;
-  const isPlainAlnum = mods === 0 && ((vk >= 48 && vk <= 90) || (vk >= 96 && vk <= 111));
-  if (capturingHotkey) {
-    if (isPlainAlnum) document.getElementById('hotkeyWarning').classList.remove('hidden');
-    capturingHotkey = false;
-    document.getElementById('hotkeyCaptureBtn').classList.remove('recording');
-    nativeAction('changeHotkey', { modifiers: mods, vk: vk });
-  } else if (capturingMuteHotkey) {
-    capturingMuteHotkey = false;
-    document.getElementById('muteHotkeyCaptureBtn').classList.remove('recording');
-    nativeAction('changeMuteHotkey', { modifiers: mods, vk: vk });
-  }
-});
-function refreshMutedApps() { nativeAction('getMutedApps'); }
-function renderMutedApps(apps) {
-  mutedAppsCache = apps || [];
-  const list = document.getElementById('mutedAppsList');
-  const count = document.getElementById('mutedAppsCount');
-  if (!list || !count) return;
-  count.innerText = `(${mutedAppsCache.length})`;
-  if (mutedAppsCache.length === 0) {
-    list.innerHTML = `<div class="text-center py-3 text-gray-500 text-xs">${t('noMutedApps')}</div>`;
-    return;
-  }
-  list.innerHTML = '';
-  mutedAppsCache.forEach(app => {
-    const row = document.createElement('div');
-    row.className = 'muted-row';
-    row.innerHTML = `
-      <div class="flex items-center gap-2.5 min-w-0">
-        <div class="mute-icon"><i class="fa-solid fa-volume-xmark"></i></div>
-        <span class="text-xs font-bold text-white truncate">${escapeHtml(app.displayName)}</span>
-      </div>
-      <button class="unmute-btn" data-exe="${escapeHtml(app.exeName)}">${t('unmuteBtn')}</button>`;
-    row.querySelector('.unmute-btn').onclick = () => {
-      nativeAction('unmuteApp', { exeName: app.exeName });
-      setTimeout(refreshMutedApps, 200);
-    };
-    list.appendChild(row);
-  });
-}
-let dragDepth = 0;
-const dropZoneEl = document.getElementById('dropZone');
-document.addEventListener('dragover', (e) => e.preventDefault());
-document.addEventListener('dragenter', (e) => {
-  if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
-  e.preventDefault(); dragDepth++;
-  dropZoneEl.classList.add('ring-2', 'ring-purple-400', 'rounded-2xl');
-});
-document.addEventListener('dragleave', (e) => {
-  if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
-  dragDepth = Math.max(0, dragDepth - 1);
-  if (dragDepth === 0) dropZoneEl.classList.remove('ring-2', 'ring-purple-400', 'rounded-2xl');
-});
-document.addEventListener('drop', (e) => {
-  e.preventDefault(); dragDepth = 0;
-  dropZoneEl.classList.remove('ring-2', 'ring-purple-400', 'rounded-2xl');
-  const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
-  if (!files || files.length === 0) return;
-  try { window.chrome.webview.postMessageWithAdditionalObjects('addDroppedPaths', files); }
-  catch (err) { showStatus(state.lang === 'en' ? 'WebView2 too old for drag & drop.' : 'نسخة WebView2 قديمة ما تدعم سحب الملفات.', 'warn'); }
-});
-document.addEventListener('DOMContentLoaded', () => {
-  const argsInput = document.getElementById('detailsLaunchArgsInput');
-  if (argsInput) {
-    argsInput.addEventListener('change', () => {
-      const game = state.games.find(g => g.index === detailsGameIndex);
-      if (game) nativeAction('setGameLaunchArgs', { index: game.index, args: argsInput.value });
-    });
-  }
-});
-switchTab('dashboard');
-changeGlassOpacity(0.32);
-nativeAction('ready');
-</script>
 </body>
 </html>
