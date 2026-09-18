@@ -3,7 +3,7 @@
 <div align="center">
 <div align="center">
 
-[![تحميل](https://img.shields.io/badge/تحميل-أحدث_إصدار-success?style=flat&logo=github)](https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest)
+[![تحميل](https://img.shields.io/badge/Download-Latest_Release-success?style=flat&logo=github)](https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest)
 ![الإصدار](https://img.shields.io/badge/version-1.7.0-a855f7)
 ![المنصة](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
