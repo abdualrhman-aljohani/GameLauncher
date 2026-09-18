@@ -1,12 +1,18 @@
 # 🎮 GameLauncher
 
 <div align="center">
-  ![تحميل](https://img.shields.io/badge/تحميل-أحدث_إصدار-success?style=flat&logo=github)](https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest)
+<div align="center">
+
+[![تحميل](https://img.shields.io/badge/تحميل-أحدث_إصدار-success?style=flat&logo=github)](https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest)
 ![الإصدار](https://img.shields.io/badge/version-1.7.0-a855f7)
 ![المنصة](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
 ![Win32](https://img.shields.io/badge/Win32-native-00A4EF)
 ![الترخيص](https://img.shields.io/badge/license-PolyForm%20NC%201.0.0-f59e0b)
+
+</div>
+
+
 
 **مُشغّل ألعاب Win32 نيتف — دائرة ألعاب أنيقة + مراقبة أداء احترافية + كتم صوت ذكي.**
 
