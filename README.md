@@ -32,8 +32,6 @@ The project is built entirely in **native C++ / Win32** — no .NET, no Electron
 
 ### 🎯 Game Circle
 
-- **13 drawing styles** — Outline, Neon, Gradient, Minimal, Hex, Comet, Burst, Sakura, Glass, Vortex, Simple, Aurora, Halo
-- **33 ready themes** — Purple, Cyber, Ember, Forest, Dracula, Nord, Tokyo Night, Catppuccin, Synthwave, Gruvbox, and more
 - **Customizable hotkey** — default `Ctrl+Alt+G`
 - **Xbox Controller support** — open the circle with a controller button
 - **Quick Slots 1-9** — launch your favorite game with a single number key
