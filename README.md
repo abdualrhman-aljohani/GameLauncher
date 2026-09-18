@@ -41,7 +41,6 @@ The project is built entirely in **native C++ / Win32** — no .NET, no Electron
 ### 🎛️ Control Panel
 
 - Modern **WebView2** interface
-- **33 instant themes** with live preview
 - **Custom backgrounds** for panel and game circle
 - Real **Acrylic glass effect**
 - **Drag & drop** files and folders
