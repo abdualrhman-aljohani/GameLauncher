@@ -32,8 +32,6 @@ GameLauncher هو مُشغّل ألعاب خفيف لويندوز، مبني ب�
 
 ### 🎯 دائرة الألعاب
 
-- **13 نمط رسم** — Outline, Neon, Gradient, Minimal, Hex, Comet, Burst, Sakura, Glass, Vortex, Simple, Aurora, Halo
-- **33 ثيم جاهز** — Purple, Cyber, Ember, Forest, Dracula, Nord, Tokyo Night, Catppuccin, Synthwave, Gruvbox
 - **اختصار قابل للتخصيص** — الافتراضي `Ctrl+Alt+G`
 - **دعم Xbox Controller** — افتح الدائرة بزر من يد التحكم
 - **Quick Slots 1-9** — افتح لعبتك المفضلة بضغطة رقم
@@ -43,7 +41,6 @@ GameLauncher هو مُشغّل ألعاب خفيف لويندوز، مبني ب�
 ### 🎛️ لوحة التحكم
 
 - واجهة **WebView2** حديثة
-- **33 ثيم فوري** مع معاينة مباشرة
 - **خلفيات مخصصة** للوحة ولدائرة الألعاب
 - **مظهر زجاجي (Acrylic)** حقيقي
 - **سحب وإفلات** الملفات والمجلدات
