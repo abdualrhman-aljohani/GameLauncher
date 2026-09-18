@@ -32,30 +32,33 @@
 #pragma comment(lib, "propsys.lib")
 #pragma comment(lib, "taskschd.lib")
 
-static const wchar_t* GAMES_FILE        = L"games.cfg";
-static const wchar_t* SETTINGS_FILE     = L"hotkey.cfg";
-static const wchar_t* LANGUAGE_FILE     = L"language.cfg";
-static const wchar_t* THEME_FILE        = L"theme.cfg";
-static const wchar_t* PRESET_FILE       = L"panel_theme.cfg";
-static const wchar_t* PANEL_BG_FILE     = L"panel_bg.cfg";
-static const wchar_t* RADIAL_BG_FILE    = L"radial_bg.cfg";
+static const wchar_t* GAMES_FILE = L"games.cfg";
+static const wchar_t* SETTINGS_FILE = L"hotkey.cfg";
+static const wchar_t* LANGUAGE_FILE = L"language.cfg";
+static const wchar_t* THEME_FILE = L"theme.cfg";
+static const wchar_t* PRESET_FILE = L"panel_theme.cfg";
+static const wchar_t* PANEL_BG_FILE = L"panel_bg.cfg";
+static const wchar_t* RADIAL_BG_FILE = L"radial_bg.cfg";
 static const wchar_t* MUTE_SETTINGS_FILE = L"mute_hotkey.cfg";
-static const wchar_t* CONTROLLER_FILE   = L"controller.cfg";
+static const wchar_t* CONTROLLER_FILE = L"controller.cfg";
 static const wchar_t* RADIAL_TRANSP_FILE = L"radial_transparency.cfg";
-static const wchar_t* FIRST_RUN_FILE    = L"first_run_done.txt";
-static const wchar_t* HUB_VISIBLE_FILE  = L"hub_always_visible.cfg";
-static const wchar_t* PANEL_GLASS_FILE  = L"panel_glass.cfg";
-static const wchar_t* OVERLAY_FILE      = L"overlay.cfg";
+static const wchar_t* FIRST_RUN_FILE = L"first_run_done.txt";
+static const wchar_t* HUB_VISIBLE_FILE = L"hub_always_visible.cfg";
+static const wchar_t* PANEL_GLASS_FILE = L"panel_glass.cfg";
+static const wchar_t* OVERLAY_FILE = L"overlay.cfg";
 static const wchar_t* PERFORMANCE_GLOBAL_FILE = L"performance_global.cfg";
 static const wchar_t* RADIAL_NOGLOW_FILE = L"radial_noglow.cfg";
+static const wchar_t* CUSTOM_THEME_FILE = L"custom_theme.cfg";
+static const wchar_t* CUSTOM_RSTYLE_FILE = L"custom_radial_style.cfg";
+static const wchar_t* RADIAL_SCALE_FILE = L"radial_scale.cfg";
 
 static const wchar_t FIELD_SEP = L'\x1F';
-static const wchar_t ITEM_SEP  = L'\x1E';
-static const wchar_t SUB_SEP   = L'\x1D';
+static const wchar_t ITEM_SEP = L'\x1E';
+static const wchar_t SUB_SEP = L'\x1D';
 
-static const wchar_t* TASK_FOLDER   = L"\\GameLauncher";
-static const wchar_t* TASK_NAME     = L"GameLauncher_AutoStart";
-static const wchar_t* TASK_AUTHOR   = L"GameLauncher";
+static const wchar_t* TASK_FOLDER = L"\\GameLauncher";
+static const wchar_t* TASK_NAME = L"GameLauncher_AutoStart";
+static const wchar_t* TASK_AUTHOR = L"GameLauncher";
 
 static HANDLE g_gamesCfgMutex = nullptr;
 static void EnsureGamesCfgMutex() {
@@ -96,7 +99,8 @@ std::wstring GetAppDataDir() {
     if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &appData)) && appData) {
         dir = std::wstring(appData) + L"\\GameLauncher";
         CoTaskMemFree(appData);
-    } else dir = GetExeDir();
+    }
+    else dir = GetExeDir();
     CreateDirectoryW(dir.c_str(), nullptr);
     cached = dir;
     return cached;
@@ -137,15 +141,18 @@ std::wstring MuteSettingsPath() {
 }
 std::wstring ControllerSettingsPath() { return GetAppDataDir() + L"\\" + CONTROLLER_FILE; }
 std::wstring RadialTransparencyPath() { return GetAppDataDir() + L"\\" + RADIAL_TRANSP_FILE; }
-std::wstring FirstRunDonePath()       { return GetAppDataDir() + L"\\" + FIRST_RUN_FILE; }
-std::wstring HubAlwaysVisiblePath()   { return GetAppDataDir() + L"\\" + HUB_VISIBLE_FILE; }
+std::wstring FirstRunDonePath() { return GetAppDataDir() + L"\\" + FIRST_RUN_FILE; }
+std::wstring HubAlwaysVisiblePath() { return GetAppDataDir() + L"\\" + HUB_VISIBLE_FILE; }
 std::wstring PanelPresetPath() { return GetAppDataDir() + L"\\" + PRESET_FILE; }
-std::wstring PanelBackgroundPath()  { return GetAppDataDir() + L"\\" + PANEL_BG_FILE; }
+std::wstring PanelBackgroundPath() { return GetAppDataDir() + L"\\" + PANEL_BG_FILE; }
 std::wstring RadialBackgroundPath() { return GetAppDataDir() + L"\\" + RADIAL_BG_FILE; }
 std::wstring PanelGlassEffectPath() { return GetAppDataDir() + L"\\" + PANEL_GLASS_FILE; }
-std::wstring OverlaySettingsPath()  { return GetAppDataDir() + L"\\" + OVERLAY_FILE; }
+std::wstring OverlaySettingsPath() { return GetAppDataDir() + L"\\" + OVERLAY_FILE; }
 std::wstring PerformanceSettingsPath() { return GetAppDataDir() + L"\\" + PERFORMANCE_GLOBAL_FILE; }
 std::wstring RadialNoGlowPath() { return GetAppDataDir() + L"\\" + RADIAL_NOGLOW_FILE; }
+std::wstring CustomThemePath() { return GetAppDataDir() + L"\\" + CUSTOM_THEME_FILE; }
+std::wstring CustomRadialStylePath() { return GetAppDataDir() + L"\\" + CUSTOM_RSTYLE_FILE; }
+std::wstring RadialScalePath() { return GetAppDataDir() + L"\\" + RADIAL_SCALE_FILE; }
 
 static std::wstring ToLowerCopy(const std::wstring& in) {
     std::wstring s = in;
@@ -153,7 +160,7 @@ static std::wstring ToLowerCopy(const std::wstring& in) {
     return s;
 }
 static size_t FindCaseInsensitive(const std::wstring& haystack,
-                                  const std::wstring& needle, size_t from = 0) {
+    const std::wstring& needle, size_t from = 0) {
     if (needle.empty() || haystack.size() < needle.size()) return std::wstring::npos;
     std::wstring h = ToLowerCopy(haystack);
     std::wstring n = ToLowerCopy(needle);
@@ -176,7 +183,7 @@ std::vector<std::wstring> SplitEscaped(const std::wstring& in, wchar_t delim) { 
 static std::wstring SerializeCompanion(const CompanionEntry& c) {
     if (!c.runAsAdmin && c.launchArgs.empty() && c.showInRadial) return c.path;
     return c.path + SUB_SEP + (c.runAsAdmin ? L"1" : L"0") + SUB_SEP +
-           c.launchArgs + SUB_SEP + (c.showInRadial ? L"1" : L"0");
+        c.launchArgs + SUB_SEP + (c.showInRadial ? L"1" : L"0");
 }
 static CompanionEntry DeserializeCompanion(const std::wstring& raw) {
     CompanionEntry c;
@@ -239,7 +246,6 @@ void LoadGames(std::vector<GameEntry>& games) {
             int gl = _wtoi(fields[23].c_str());
             if (gl >= 0 && gl <= 2) g.gameLanguage = gl;
         }
-        // ✅ Boost FPS — fields 25-31 (indices 24-30)
         if (fields.size() >= 25 && !fields[24].empty()) g.boostFps = (fields[24] != L"0");
         if (fields.size() >= 26 && !fields[25].empty()) g.boostDisableCore0 = (fields[25] != L"0");
         if (fields.size() >= 27 && !fields[26].empty()) g.boostHighPriority = (fields[26] != L"0");
@@ -268,38 +274,39 @@ void SaveGames(const std::vector<GameEntry>& games) {
                 comp += SerializeCompanion(g.companions[i]);
             }
             f << g.name << FIELD_SEP << g.exePath << FIELD_SEP
-              << (unsigned long)g.color << FIELD_SEP << comp << FIELD_SEP
-              << g.iconPath << FIELD_SEP << g.iconIndex << FIELD_SEP
-              << (g.autoLangSwitch ? 1 : 0) << FIELD_SEP
-              << (g.runAsAdmin ? 1 : 0) << FIELD_SEP
-              << g.launchArgs << FIELD_SEP
-              << (g.showInRadial ? 1 : 0) << FIELD_SEP
-              << (g.favorite ? 1 : 0) << FIELD_SEP
-              << g.totalPlaySeconds << FIELD_SEP
-              << (unsigned long)g.lastPlayedUnix << FIELD_SEP
-              << g.playCount << FIELD_SEP
-              << g.radialBgPath << FIELD_SEP
-              << (g.hideOriginalIcon ? 1 : 0) << FIELD_SEP
-              << (g.transparentIcon ? 1 : 0) << FIELD_SEP
-              << (int)g.processPriority << FIELD_SEP
-              << (g.applyAffinity ? 1 : 0) << FIELD_SEP
-              << g.affinityMask << FIELD_SEP
-              << g.quickSlot << FIELD_SEP
-              << (g.performanceMonitor ? 1 : 0) << FIELD_SEP
-              << (g.performanceCpuTemp ? 1 : 0) << FIELD_SEP
-              << g.gameLanguage << FIELD_SEP
-              << (g.boostFps ? 1 : 0) << FIELD_SEP
-              << (g.boostDisableCore0 ? 1 : 0) << FIELD_SEP
-              << (g.boostHighPriority ? 1 : 0) << FIELD_SEP
-              << (g.boostStopStats ? 1 : 0) << FIELD_SEP
-              << (g.boostTimerResolution ? 1 : 0) << FIELD_SEP
-              << (g.boostSystemResponsiveness ? 1 : 0) << FIELD_SEP
-              << (g.boostMmcss ? 1 : 0) << L"\n";
+                << (unsigned long)g.color << FIELD_SEP << comp << FIELD_SEP
+                << g.iconPath << FIELD_SEP << g.iconIndex << FIELD_SEP
+                << (g.autoLangSwitch ? 1 : 0) << FIELD_SEP
+                << (g.runAsAdmin ? 1 : 0) << FIELD_SEP
+                << g.launchArgs << FIELD_SEP
+                << (g.showInRadial ? 1 : 0) << FIELD_SEP
+                << (g.favorite ? 1 : 0) << FIELD_SEP
+                << g.totalPlaySeconds << FIELD_SEP
+                << (unsigned long)g.lastPlayedUnix << FIELD_SEP
+                << g.playCount << FIELD_SEP
+                << g.radialBgPath << FIELD_SEP
+                << (g.hideOriginalIcon ? 1 : 0) << FIELD_SEP
+                << (g.transparentIcon ? 1 : 0) << FIELD_SEP
+                << (int)g.processPriority << FIELD_SEP
+                << (g.applyAffinity ? 1 : 0) << FIELD_SEP
+                << g.affinityMask << FIELD_SEP
+                << g.quickSlot << FIELD_SEP
+                << (g.performanceMonitor ? 1 : 0) << FIELD_SEP
+                << (g.performanceCpuTemp ? 1 : 0) << FIELD_SEP
+                << g.gameLanguage << FIELD_SEP
+                << (g.boostFps ? 1 : 0) << FIELD_SEP
+                << (g.boostDisableCore0 ? 1 : 0) << FIELD_SEP
+                << (g.boostHighPriority ? 1 : 0) << FIELD_SEP
+                << (g.boostStopStats ? 1 : 0) << FIELD_SEP
+                << (g.boostTimerResolution ? 1 : 0) << FIELD_SEP
+                << (g.boostSystemResponsiveness ? 1 : 0) << FIELD_SEP
+                << (g.boostMmcss ? 1 : 0) << L"\n";
         }
         f.flush();
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
+
 
 HotkeySettings LoadHotkey() {
     HotkeySettings hk;
@@ -351,8 +358,8 @@ void SaveMuteSettings(const MuteSettings& ms) {
         std::wofstream f(tmp.c_str(), std::ios::trunc);
         if (!f.is_open()) return;
         f << (unsigned long)ms.modifiers << L" "
-          << (unsigned long)ms.vk << L" "
-          << (ms.enabled ? 1 : 0) << L"\n";
+            << (unsigned long)ms.vk << L" "
+            << (ms.enabled ? 1 : 0) << L"\n";
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
@@ -386,31 +393,31 @@ void SaveControllerSettings(const ControllerSettings& cs) {
         std::wofstream f(tmp.c_str(), std::ios::trunc);
         if (!f.is_open()) return;
         f << (cs.enabled ? 1 : 0) << L" "
-          << (unsigned long)cs.openRadialButton << L" "
-          << (cs.toggleMode ? 1 : 0) << L" "
-          << (cs.allowControllerDuringGame ? 1 : 0) << L"\n";
+            << (unsigned long)cs.openRadialButton << L" "
+            << (cs.toggleMode ? 1 : 0) << L" "
+            << (cs.allowControllerDuringGame ? 1 : 0) << L"\n";
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 std::wstring ControllerButtonName(DWORD button, Lang lang) {
     bool en = (lang == Lang::EN);
     switch (button) {
-        case 0x1000: return en ? L"A"              : L"زر A";
-        case 0x2000: return en ? L"B"              : L"زر B";
-        case 0x4000: return en ? L"X"              : L"زر X";
-        case 0x8000: return en ? L"Y"              : L"زر Y";
-        case 0x0010: return en ? L"Start"          : L"Start";
-        case 0x0020: return en ? L"Back"           : L"Back";
-        case 0x0100: return en ? L"Left Shoulder"  : L"LB";
-        case 0x0200: return en ? L"Right Shoulder" : L"RB";
-        case 0x0040: return en ? L"Left Thumb"     : L"LS";
-        case 0x0080: return en ? L"Right Thumb"    : L"RS";
-        case 0x0001: return en ? L"D-Pad Up"       : L"↑ D-Pad";
-        case 0x0002: return en ? L"D-Pad Down"     : L"↓ D-Pad";
-        case 0x0004: return en ? L"D-Pad Left"     : L"← D-Pad";
-        case 0x0008: return en ? L"D-Pad Right"    : L"→ D-Pad";
-        case 0x0400: return en ? L"Xbox (Guide)"   : L"زر Xbox (الشعار)";
-        default:     return L"?";
+    case 0x1000: return en ? L"A" : L"زر A";
+    case 0x2000: return en ? L"B" : L"زر B";
+    case 0x4000: return en ? L"X" : L"زر X";
+    case 0x8000: return en ? L"Y" : L"زر Y";
+    case 0x0010: return en ? L"Start" : L"Start";
+    case 0x0020: return en ? L"Back" : L"Back";
+    case 0x0100: return en ? L"Left Shoulder" : L"LB";
+    case 0x0200: return en ? L"Right Shoulder" : L"RB";
+    case 0x0040: return en ? L"Left Thumb" : L"LS";
+    case 0x0080: return en ? L"Right Thumb" : L"RS";
+    case 0x0001: return en ? L"D-Pad Up" : L"↑ D-Pad";
+    case 0x0002: return en ? L"D-Pad Down" : L"↓ D-Pad";
+    case 0x0004: return en ? L"D-Pad Left" : L"← D-Pad";
+    case 0x0008: return en ? L"D-Pad Right" : L"→ D-Pad";
+    case 0x0400: return en ? L"Xbox (Guide)" : L"زر Xbox (الشعار)";
+    default:     return L"?";
     }
 }
 
@@ -439,12 +446,12 @@ void SaveOverlaySettings(const OverlaySettings& os) {
         std::wofstream f(tmp.c_str(), std::ios::trunc);
         if (!f.is_open()) return;
         f << (os.enabled ? 1 : 0) << L" "
-          << (unsigned long)os.hotkeyModifiers << L" "
-          << (unsigned long)os.hotkeyVk << L" "
-          << (os.showOnGameLaunch ? 1 : 0) << L" "
-          << os.posX << L" "
-          << os.posY << L" "
-          << os.opacity << L"\n";
+            << (unsigned long)os.hotkeyModifiers << L" "
+            << (unsigned long)os.hotkeyVk << L" "
+            << (os.showOnGameLaunch ? 1 : 0) << L" "
+            << os.posX << L" "
+            << os.posY << L" "
+            << os.opacity << L"\n";
     }
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
@@ -471,7 +478,7 @@ std::wstring ComputeGameStorageHash(const std::wstring& gamePath) {
         hash *= 1099511628211ULL;
     }
     wchar_t buf[32];
-    wsprintfW(buf, L"%016llX", hash);
+    swprintf_s(buf, 32, L"%016llX", hash);
     return buf;
 }
 
@@ -507,13 +514,13 @@ ProcessPriority ProcessPriorityFromIndex(int idx) {
 std::wstring ProcessPriorityName(ProcessPriority p, Lang lang) {
     bool en = (lang == Lang::EN);
     switch (p) {
-        case ProcessPriority::Idle:        return en ? L"Idle"          : L"خامل (Idle)";
-        case ProcessPriority::BelowNormal: return en ? L"Below Normal"  : L"أقل من الطبيعي";
-        case ProcessPriority::Normal:      return en ? L"Normal"        : L"طبيعي";
-        case ProcessPriority::AboveNormal: return en ? L"Above Normal"  : L"أعلى من الطبيعي";
-        case ProcessPriority::High:        return en ? L"High"          : L"عالية";
-        case ProcessPriority::Realtime:    return en ? L"Realtime"      : L"زمن حقيقي";
-        default: return L"";
+    case ProcessPriority::Idle:        return en ? L"Idle" : L"خامل (Idle)";
+    case ProcessPriority::BelowNormal: return en ? L"Below Normal" : L"أقل من الطبيعي";
+    case ProcessPriority::Normal:      return en ? L"Normal" : L"طبيعي";
+    case ProcessPriority::AboveNormal: return en ? L"Above Normal" : L"أعلى من الطبيعي";
+    case ProcessPriority::High:        return en ? L"High" : L"عالية";
+    case ProcessPriority::Realtime:    return en ? L"Realtime" : L"زمن حقيقي";
+    default: return L"";
     }
 }
 
@@ -573,18 +580,18 @@ bool IsEngineRunning() {
     return false;
 }
 
-// ✅ هل العملية الحالية بصلاحيات Admin؟
 bool IsProcessElevated() {
     BOOL isElevated = FALSE;
     PSID adminGroup = nullptr;
     SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
     if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                                 DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)) {
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)) {
         CheckTokenMembership(nullptr, adminGroup, &isElevated);
         FreeSid(adminGroup);
     }
     return isElevated != FALSE;
 }
+
 
 bool IsUwpPath(const std::wstring& path) {
     return path.size() >= 4 && path.compare(0, 4, L"uwp:") == 0;
@@ -598,7 +605,7 @@ bool ActivateUwpApp(const std::wstring& aumid) {
     if (aumid.empty()) return false;
     IApplicationActivationManager* mgr = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_ApplicationActivationManager, nullptr,
-                                   CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&mgr));
+        CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&mgr));
     if (FAILED(hr) || !mgr) return false;
     DWORD pid = 0;
     hr = mgr->ActivateApplication(aumid.c_str(), nullptr, AO_NONE, &pid);
@@ -625,7 +632,7 @@ HICON ExtractUwpIcon(const std::wstring& aumid, int sizePx) {
         DeleteObject(hbmp);
         if (ii.hbmMask) DeleteObject(ii.hbmMask);
         return hicon;
-    };
+        };
 
     {
         PIDLIST_ABSOLUTE pidl = nullptr;
@@ -666,7 +673,8 @@ std::wstring DefaultUwpName(const std::wstring& aumid) {
         if (base[i] == L'.') {
             if (first) { first = false; continue; }
             out += L' ';
-        } else out += base[i];
+        }
+        else out += base[i];
     }
     return out.empty() ? base : out;
 }
@@ -676,7 +684,7 @@ HICON ExtractHighQualityIcon(const std::wstring& path, int index, int desiredSiz
     if (path.empty() || IsUriLike(path)) return nullptr;
     HICON hicon = nullptr;
     UINT n = PrivateExtractIconsW(path.c_str(), index, desiredSizePx, desiredSizePx,
-                                  &hicon, nullptr, 1, 0);
+        &hicon, nullptr, 1, 0);
     if (n == 0 || n == (UINT)-1 || !hicon) {
         HICON hLarge = nullptr, hSmall = nullptr;
         ExtractIconExW(path.c_str(), index, &hLarge, &hSmall, 1);
@@ -692,7 +700,7 @@ ShortcutInfo ResolveShortcutFull(const std::wstring& lnkPath) {
     bool needUninit = (hrInit == S_OK || hrInit == S_FALSE);
     IShellLinkW* psl = nullptr;
     if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-                                    IID_IShellLinkW, (void**)&psl))) {
+        IID_IShellLinkW, (void**)&psl))) {
         IPersistFile* ppf = nullptr;
         if (SUCCEEDED(psl->QueryInterface(IID_IPersistFile, (void**)&ppf))) {
             if (SUCCEEDED(ppf->Load(lnkPath.c_str(), STGM_READ))) {
@@ -732,7 +740,7 @@ ShortcutInfo ResolveShortcutFull(const std::wstring& lnkPath) {
     if (info.aumid.empty() && !lnkPath.empty()) {
         IShellItem* psi = nullptr;
         if (SUCCEEDED(SHCreateItemFromParsingName(lnkPath.c_str(), nullptr,
-                                                   IID_PPV_ARGS(&psi))) && psi) {
+            IID_PPV_ARGS(&psi))) && psi) {
             const SIGDN types[] = { SIGDN_DESKTOPABSOLUTEPARSING, SIGDN_PARENTRELATIVEPARSING, SIGDN_NORMALDISPLAY };
             for (auto t : types) {
                 if (!info.aumid.empty()) break;
@@ -934,7 +942,7 @@ static bool IsNoiseFolder(const std::wstring& lowerName) {
 }
 
 static void WalkDir(const std::wstring& dir, int depth, const std::wstring& folderLower,
-                    std::vector<ExeScanResult>& out, int maxCount) {
+    std::vector<ExeScanResult>& out, int maxCount) {
     if (depth < 0 || (int)out.size() >= maxCount) return;
     WIN32_FIND_DATAW fd;
     std::wstring pattern = dir + L"\\*";
@@ -948,7 +956,8 @@ static void WalkDir(const std::wstring& dir, int depth, const std::wstring& fold
             std::wstring sub = ToLowerCopy(fd.cFileName);
             if (IsNoiseFolder(sub)) continue;
             subDirs.push_back(full);
-        } else {
+        }
+        else {
             std::wstring name = fd.cFileName;
             if (name.size() >= 4 && ToLowerCopy(name.substr(name.size() - 4)) == L".exe") {
                 std::wstring base = name.substr(0, name.size() - 4);
@@ -959,8 +968,8 @@ static void WalkDir(const std::wstring& dir, int depth, const std::wstring& fold
                 r.size = (((ULONGLONG)fd.nFileSizeHigh) << 32) | fd.nFileSizeLow;
                 r.looksLikeMain = !folderLower.empty() &&
                     (baseLower == folderLower ||
-                     baseLower.find(folderLower) != std::wstring::npos ||
-                     folderLower.find(baseLower) != std::wstring::npos);
+                        baseLower.find(folderLower) != std::wstring::npos ||
+                        folderLower.find(baseLower) != std::wstring::npos);
                 out.push_back(r);
                 if ((int)out.size() >= maxCount) break;
             }
@@ -974,7 +983,7 @@ static void WalkDir(const std::wstring& dir, int depth, const std::wstring& fold
 }
 
 void FindAllExesInFolder(const std::wstring& folderPath, std::vector<ExeScanResult>& out,
-                         int maxDepth, int maxCount) {
+    int maxDepth, int maxCount) {
     out.clear();
     std::wstring folderName = GetFileNameFromPath(folderPath);
     std::wstring folderLower = ToLowerCopy(folderName);
@@ -982,7 +991,7 @@ void FindAllExesInFolder(const std::wstring& folderPath, std::vector<ExeScanResu
     std::sort(out.begin(), out.end(), [](const ExeScanResult& a, const ExeScanResult& b) {
         if (a.looksLikeMain != b.looksLikeMain) return a.looksLikeMain;
         return a.size > b.size;
-    });
+        });
 }
 
 FolderExeSuggestion FindBestExeInFolder(const std::wstring& folderPath) {
@@ -993,14 +1002,45 @@ FolderExeSuggestion FindBestExeInFolder(const std::wstring& folderPath) {
     return result;
 }
 
-// ✅ 20 نمط رسم
-int RadialStyleCount() { return 20; }
+
+// ═════════════════════════════════════════════════════════════
+// الأنماط المرئية (6 فقط: 5 موجودة + 1 مخصص)
+// ═════════════════════════════════════════════════════════════
+static const RadialStyle kVisibleRadialStyles[] = {
+    RadialStyle::Ripple,   // 0 — موجات متداخلة
+    RadialStyle::Flame,    // 1 — لهب
+    RadialStyle::Neon,     // 2 — نيون
+    RadialStyle::Gradient, // 3 — حلقة متدرجة
+    RadialStyle::Aurora,   // 4 — توهج الشفق
+    RadialStyle::Custom,   // 5 — مخصص
+};
+static const int kVisibleRadialStyleCount = 6;
+
+int RadialStyleCount() { return kVisibleRadialStyleCount; }
+
+RadialStyle VisibleRadialStyleAt(int idx) {
+    if (idx < 0 || idx >= kVisibleRadialStyleCount) return RadialStyle::Neon;
+    return kVisibleRadialStyles[idx];
+}
+
+int VisibleRadialStyleIndexOf(RadialStyle s) {
+    for (int i = 0; i < kVisibleRadialStyleCount; i++)
+        if (kVisibleRadialStyles[i] == s) return i;
+    return 2;  // افتراضي: Neon
+}
+
 RadialStyle LoadRadialStyle() {
     std::wifstream f(ThemePath().c_str());
-    if (!f.is_open()) return RadialStyle::Outline;
+    if (!f.is_open()) return RadialStyle::Neon;
     int val = -1;
-    if (f >> val && val >= 0 && val < RadialStyleCount()) return (RadialStyle)val;
-    return RadialStyle::Outline;
+    if (f >> val) {
+        // تحقق أن القيمة في القائمة المرئية، وإلا ارجع للافتراضي
+        for (int i = 0; i < kVisibleRadialStyleCount; i++) {
+            if ((int)kVisibleRadialStyles[i] == val) return (RadialStyle)val;
+        }
+        return RadialStyle::Neon;
+    }
+    return RadialStyle::Neon;
 }
 void SaveRadialStyle(RadialStyle style) {
     std::wstring target = ThemePath();
@@ -1015,27 +1055,13 @@ void SaveRadialStyle(RadialStyle style) {
 std::wstring RadialStyleName(RadialStyle style, Lang lang) {
     bool en = (lang == Lang::EN);
     switch (style) {
-        case RadialStyle::Outline:  return en ? L"Outline Ring"     : L"حلقة محيطية";
-        case RadialStyle::Neon:     return en ? L"Neon Glow"        : L"توهّج نيون";
-        case RadialStyle::Gradient: return en ? L"Gradient Ring"    : L"حلقة متدرجة";
-        case RadialStyle::Minimal:  return en ? L"Minimal"          : L"بسيط";
-        case RadialStyle::Hex:      return en ? L"Hex Frame"        : L"إطار سداسي";
-        case RadialStyle::Comet:    return en ? L"Comet Arc"        : L"قوس مذنّب";
-        case RadialStyle::Burst:    return en ? L"Burst (Action)"   : L"انفجاري (أكشن)";
-        case RadialStyle::Sakura:   return en ? L"Sakura (Anime)"   : L"ساكورا (أنمي)";
-        case RadialStyle::Glass:    return en ? L"Frosted Glass"    : L"زجاج مصنفر";
-        case RadialStyle::Vortex:   return en ? L"Vortex"           : L"دوامة";
-        case RadialStyle::Simple:   return en ? L"Clean Ring"       : L"حلقة نظيفة";
-        case RadialStyle::Aurora:   return en ? L"Aurora Glow"      : L"توهّج الشفق";
-        case RadialStyle::Halo:     return en ? L"HUD Halo"         : L"هالة تقنية";
-        case RadialStyle::Ripple:   return en ? L"Ripple Waves"     : L"موجات متداخلة";
-        case RadialStyle::Crystal:  return en ? L"Crystal Facet"    : L"بلّورة";
-        case RadialStyle::Plasma:   return en ? L"Plasma Field"     : L"حقل بلازما";
-        case RadialStyle::Orbit:    return en ? L"Orbit Ring"       : L"حلقة مدارية";
-        case RadialStyle::Pixel:    return en ? L"Pixel Frame"      : L"إطار بكسل";
-        case RadialStyle::Circuit:  return en ? L"Circuit Board"    : L"لوحة إلكترونية";
-        case RadialStyle::Flame:    return en ? L"Flame"            : L"لهب";
-        default: return L"";
+    case RadialStyle::Neon:     return en ? L"Neon Glow" : L"توهّج نيون";
+    case RadialStyle::Gradient: return en ? L"Gradient Ring" : L"حلقة متدرجة";
+    case RadialStyle::Aurora:   return en ? L"Aurora Glow" : L"توهّج الشفق";
+    case RadialStyle::Ripple:   return en ? L"Ripple Waves" : L"موجات متداخلة";
+    case RadialStyle::Flame:    return en ? L"Flame" : L"لهب";
+    case RadialStyle::Custom:   return en ? L"Custom" : L"مخصص";
+    default: return L"";
     }
 }
 
@@ -1081,6 +1107,161 @@ void SavePanelPreset(const std::wstring& preset) {
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 
+// ═════════════════════════════════════════════════════════════
+// ✅ الثيم المخصص (4 ألوان + 3 سلايدرز)
+// ═════════════════════════════════════════════════════════════
+CustomTheme LoadCustomTheme() {
+    CustomTheme ct;
+    std::wifstream f(CustomThemePath().c_str());
+    if (!f.is_open()) return ct;
+    std::wstring line;
+    while (std::getline(f, line)) {
+        line = TrimString(line);
+        size_t eq = line.find(L'=');
+        if (eq == std::wstring::npos) continue;
+        std::wstring key = line.substr(0, eq);
+        std::wstring val = line.substr(eq + 1);
+        if (key == L"accent")    ct.accentHex = val;
+        else if (key == L"secondary") ct.secondaryHex = val;
+        else if (key == L"bg")        ct.bgHex = val;
+        else if (key == L"card")      ct.cardHex = val;
+        else if (key == L"cardOpacity")   ct.cardOpacity = (float)_wtof(val.c_str());
+        else if (key == L"accentStrength") ct.accentStrength = (float)_wtof(val.c_str());
+        else if (key == L"bgGlow")        ct.bgGlow = (float)_wtof(val.c_str());
+        else if (key == L"active")        ct.isActive = (val == L"1");
+    }
+    if (ct.cardOpacity < 0.10f) ct.cardOpacity = 0.10f;
+    if (ct.cardOpacity > 0.85f) ct.cardOpacity = 0.85f;
+    if (ct.accentStrength < 0.0f) ct.accentStrength = 0.0f;
+    if (ct.accentStrength > 1.0f) ct.accentStrength = 1.0f;
+    if (ct.bgGlow < 0.0f) ct.bgGlow = 0.0f;
+    if (ct.bgGlow > 1.0f) ct.bgGlow = 1.0f;
+    return ct;
+}
+void SaveCustomTheme(const CustomTheme& ct) {
+    std::wstring target = CustomThemePath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << L"accent=" << ct.accentHex << L"\n";
+        f << L"secondary=" << ct.secondaryHex << L"\n";
+        f << L"bg=" << ct.bgHex << L"\n";
+        f << L"card=" << ct.cardHex << L"\n";
+        f << L"cardOpacity=" << ct.cardOpacity << L"\n";
+        f << L"accentStrength=" << ct.accentStrength << L"\n";
+        f << L"bgGlow=" << ct.bgGlow << L"\n";
+        f << L"active=" << (ct.isActive ? 1 : 0) << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+// ═════════════════════════════════════════════════════════════
+// ✅ النمط المخصص (5 تحكمات)
+// ═════════════════════════════════════════════════════════════
+CustomRadialStyle LoadCustomRadialStyle() {
+    CustomRadialStyle cs;
+    std::wifstream f(CustomRadialStylePath().c_str());
+    if (!f.is_open()) return cs;
+    std::wstring line;
+    while (std::getline(f, line)) {
+        line = TrimString(line);
+        size_t eq = line.find(L'=');
+        if (eq == std::wstring::npos) continue;
+        std::wstring key = line.substr(0, eq);
+        std::wstring val = line.substr(eq + 1);
+        if (key == L"ringCount")      cs.ringCount = _wtoi(val.c_str());
+        else if (key == L"ringThickness")  cs.ringThickness = _wtoi(val.c_str());
+        else if (key == L"dashed")         cs.dashed = (val == L"1");
+        else if (key == L"glowLayers")     cs.glowLayers = _wtoi(val.c_str());
+        else if (key == L"glowStrength")   cs.glowStrength = (float)_wtof(val.c_str());
+        else if (key == L"active")         cs.isActive = (val == L"1");
+    }
+    if (cs.ringCount < 1) cs.ringCount = 1;
+    if (cs.ringCount > 4) cs.ringCount = 4;
+    if (cs.ringThickness < 1) cs.ringThickness = 1;
+    if (cs.ringThickness > 8) cs.ringThickness = 8;
+    if (cs.glowLayers < 0) cs.glowLayers = 0;
+    if (cs.glowLayers > 3) cs.glowLayers = 3;
+    if (cs.glowStrength < 0.0f) cs.glowStrength = 0.0f;
+    if (cs.glowStrength > 1.0f) cs.glowStrength = 1.0f;
+    return cs;
+}
+void SaveCustomRadialStyle(const CustomRadialStyle& cs) {
+    std::wstring target = CustomRadialStylePath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << L"ringCount=" << cs.ringCount << L"\n";
+        f << L"ringThickness=" << cs.ringThickness << L"\n";
+        f << L"dashed=" << (cs.dashed ? 1 : 0) << L"\n";
+        f << L"glowLayers=" << cs.glowLayers << L"\n";
+        f << L"glowStrength=" << cs.glowStrength << L"\n";
+        f << L"active=" << (cs.isActive ? 1 : 0) << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+// ═════════════════════════════════════════════════════════════
+// ✅ مقياس الدائرة (3 سلايدرز)
+// ═════════════════════════════════════════════════════════════
+RadialScale LoadRadialScale() {
+    RadialScale rs;
+    std::wifstream f(RadialScalePath().c_str());
+    if (!f.is_open()) return rs;
+    std::wstring line;
+    while (std::getline(f, line)) {
+        line = TrimString(line);
+        size_t eq = line.find(L'=');
+        if (eq == std::wstring::npos) continue;
+        std::wstring key = line.substr(0, eq);
+        std::wstring val = line.substr(eq + 1);
+        if (key == L"iconSize")  rs.iconSize = _wtoi(val.c_str());
+        else if (key == L"hubSize")   rs.hubSize = _wtoi(val.c_str());
+        else if (key == L"orbitDist") rs.orbitDist = _wtoi(val.c_str());
+    }
+    if (rs.iconSize < 30) rs.iconSize = 30;
+    if (rs.iconSize > 60) rs.iconSize = 60;
+    if (rs.hubSize < 30) rs.hubSize = 30;
+    if (rs.hubSize > 60) rs.hubSize = 60;
+    if (rs.orbitDist < 90) rs.orbitDist = 90;
+    if (rs.orbitDist > 180) rs.orbitDist = 180;
+    return rs;
+}
+void SaveRadialScale(const RadialScale& rs) {
+    std::wstring target = RadialScalePath();
+    std::wstring tmp = target + L".tmp";
+    {
+        std::wofstream f(tmp.c_str(), std::ios::trunc);
+        if (!f.is_open()) return;
+        f << L"iconSize=" << rs.iconSize << L"\n";
+        f << L"hubSize=" << rs.hubSize << L"\n";
+        f << L"orbitDist=" << rs.orbitDist << L"\n";
+    }
+    MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
+}
+
+
+bool IsProcessRunningByExeName(const std::wstring& exeName) {
+    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) return false;
+    PROCESSENTRY32W pe = { sizeof(pe) };
+    bool found = false;
+    if (Process32FirstW(snap, &pe)) {
+        do { if (_wcsicmp(pe.szExeFile, exeName.c_str()) == 0) { found = true; break; } } while (Process32NextW(snap, &pe));
+    }
+    CloseHandle(snap);
+    return found;
+}
+
+bool PathExistsOnDisk(const std::wstring& path) {
+    if (path.empty()) return false;
+    if (IsUwpPath(path)) return true;
+    if (IsUriLike(path)) return true;
+    return GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
 static const wchar_t* AUTOSTART_RUN_KEY = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 static const wchar_t* AUTOSTART_VALUE_NAME = L"GameLauncher";
 
@@ -1115,7 +1296,7 @@ static HRESULT TaskSchedulerEnable() {
     HRESULT hr = S_OK;
     ITaskService* pService = nullptr;
     hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
-                          IID_ITaskService, (void**)&pService);
+        IID_ITaskService, (void**)&pService);
     if (FAILED(hr) || !pService) return hr;
 
     hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
@@ -1230,7 +1411,7 @@ static bool TaskSchedulerDisable() {
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     ITaskService* pService = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
-                                  IID_ITaskService, (void**)&pService);
+        IID_ITaskService, (void**)&pService);
     if (FAILED(hr) || !pService) return false;
 
     hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
@@ -1255,7 +1436,7 @@ static bool TaskSchedulerIsEnabled() {
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     ITaskService* pService = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER,
-                                  IID_ITaskService, (void**)&pService);
+        IID_ITaskService, (void**)&pService);
     if (FAILED(hr) || !pService) return false;
     hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
     if (FAILED(hr)) { pService->Release(); return false; }
@@ -1285,10 +1466,12 @@ void SetAutoStartEnabled(bool enabled) {
         HRESULT hr = TaskSchedulerEnable();
         if (SUCCEEDED(hr)) {
             RunKeyDisable();
-        } else {
+        }
+        else {
             RunKeyEnable();
         }
-    } else {
+    }
+    else {
         TaskSchedulerDisable();
         RunKeyDisable();
     }
@@ -1308,15 +1491,12 @@ bool TestAutoStart(std::wstring& outDiagnostic) {
         outDiagnostic = L"ملف البرنامج غير موجود على القرص!";
         return false;
     }
-
     bool taskExists = TaskSchedulerIsEnabled();
     bool runKeyExists = RunKeyIsEnabled();
-
     if (!taskExists && !runKeyExists) {
         outDiagnostic = L"الإعداد غير مُفعّل. فعّله أولاً.";
         return false;
     }
-
     if (taskExists) {
         outDiagnostic = L"✅ الإعداد سليم عبر Task Scheduler — سيعمل عند تسجيل الدخول التالي.";
         return true;
@@ -1346,26 +1526,6 @@ bool TestAutoStart(std::wstring& outDiagnostic) {
     return false;
 }
 
-bool PathExistsOnDisk(const std::wstring& path) {
-    if (path.empty()) return false;
-    if (IsUwpPath(path)) return true;
-    if (IsUriLike(path)) return true;
-    return GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES;
-}
-
-bool IsProcessRunningByExeName(const std::wstring& exeName) {
-    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (snap == INVALID_HANDLE_VALUE) return false;
-    PROCESSENTRY32W pe = { sizeof(pe) };
-    bool found = false;
-    if (Process32FirstW(snap, &pe)) {
-        do { if (_wcsicmp(pe.szExeFile, exeName.c_str()) == 0) { found = true; break; } }
-        while (Process32NextW(snap, &pe));
-    }
-    CloseHandle(snap);
-    return found;
-}
-
 static std::wstring LoadSingleLineFile(const std::wstring& path) {
     std::wifstream f(path.c_str());
     if (!f.is_open()) return L"";
@@ -1391,13 +1551,12 @@ std::wstring LoadRadialBackground() {
     if (!p.empty() && GetFileAttributesW(p.c_str()) == INVALID_FILE_ATTRIBUTES) return L"";
     return p;
 }
-void SavePanelBackground(const std::wstring& path)  { SaveSingleLineFile(PanelBackgroundPath(), path); }
+void SavePanelBackground(const std::wstring& path) { SaveSingleLineFile(PanelBackgroundPath(), path); }
 void SaveRadialBackground(const std::wstring& path) { SaveSingleLineFile(RadialBackgroundPath(), path); }
 
 bool IsFirstRun() {
     return GetFileAttributesW(FirstRunDonePath().c_str()) == INVALID_FILE_ATTRIBUTES;
 }
-
 void MarkFirstRunDone() {
     std::wstring target = FirstRunDonePath();
     std::wstring tmp = target + L".tmp";
@@ -1414,7 +1573,6 @@ bool LoadHubAlwaysVisible() {
     std::wstring line; std::getline(f, line);
     return TrimString(line) == L"1";
 }
-
 void SaveHubAlwaysVisible(bool enabled) {
     std::wstring target = HubAlwaysVisiblePath();
     std::wstring tmp = target + L".tmp";
@@ -1432,7 +1590,6 @@ bool LoadPanelGlassEffect() {
     std::wstring line; std::getline(f, line);
     return TrimString(line) == L"1";
 }
-
 void SavePanelGlassEffect(bool enabled) {
     std::wstring target = PanelGlassEffectPath();
     std::wstring tmp = target + L".tmp";
@@ -1450,7 +1607,6 @@ bool LoadRadialNoGlow() {
     std::wstring line; std::getline(f, line);
     return TrimString(line) == L"1";
 }
-
 void SaveRadialNoGlow(bool enabled) {
     std::wstring target = RadialNoGlowPath();
     std::wstring tmp = target + L".tmp";
@@ -1462,11 +1618,98 @@ void SaveRadialNoGlow(bool enabled) {
     MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 
+// ============================================================
+// ✅ سجل جلسات اللعب (Play Sessions History)
+// ============================================================
+std::wstring PlaySessionsDir() {
+    std::wstring dir = GetAppDataDir() + L"\\play_sessions";
+    CreateDirectoryW(dir.c_str(), nullptr);
+    return dir;
+}
+static std::wstring PlaySessionLogPath(const std::wstring& gamePath) {
+    return PlaySessionsDir() + L"\\" + ComputeGameStorageHash(gamePath) + L".log";
+}
+static std::wstring PlaySessionMetaPath(const std::wstring& gamePath) {
+    return PlaySessionsDir() + L"\\" + ComputeGameStorageHash(gamePath) + L".meta";
+}
+
+void AppendPlaySession(const std::wstring& gamePath,
+    const std::wstring& gameName,
+    DWORD startUnix,
+    DWORD durationSec) {
+    if (gamePath.empty() || durationSec == 0) return;
+
+    std::wstring metaPath = PlaySessionMetaPath(gamePath);
+    if (GetFileAttributesW(metaPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        std::wstring metaTmp = metaPath + L".tmp";
+        {
+            std::wofstream mf(metaTmp.c_str(), std::ios::trunc);
+            if (mf.is_open()) {
+                mf << gamePath << L"\n" << gameName << L"\n";
+                mf.flush();
+            }
+        }
+        MoveFileExW(metaTmp.c_str(), metaPath.c_str(), MOVEFILE_REPLACE_EXISTING);
+    }
+
+    std::wstring logPath = PlaySessionLogPath(gamePath);
+    std::wofstream f(logPath.c_str(), std::ios::app);
+    if (!f.is_open()) return;
+    f << startUnix << L"|" << durationSec << L"\n";
+    f.flush();
+    f.close();
+}
+
+std::vector<PlaySessionEntry> LoadPlaySessions(const std::wstring& gamePath,
+    std::wstring* outGameName) {
+    std::vector<PlaySessionEntry> result;
+    if (outGameName) outGameName->clear();
+    if (gamePath.empty()) return result;
+
+    if (outGameName) {
+        std::wifstream mf(PlaySessionMetaPath(gamePath).c_str());
+        if (mf.is_open()) {
+            std::wstring p, n;
+            std::getline(mf, p);
+            std::getline(mf, n);
+            *outGameName = n;
+        }
+    }
+
+    std::wifstream f(PlaySessionLogPath(gamePath).c_str());
+    if (!f.is_open()) return result;
+    std::wstring line;
+    while (std::getline(f, line)) {
+        line = TrimString(line);
+        if (line.empty()) continue;
+        size_t sep = line.find(L'|');
+        if (sep == std::wstring::npos) continue;
+        PlaySessionEntry e;
+        e.startUnix = (DWORD)wcstoul(line.substr(0, sep).c_str(), nullptr, 10);
+        e.durationSec = (DWORD)wcstoul(line.substr(sep + 1).c_str(), nullptr, 10);
+        if (e.startUnix > 0 && e.durationSec > 0) result.push_back(e);
+    }
+    std::sort(result.begin(), result.end(),
+        [](const PlaySessionEntry& a, const PlaySessionEntry& b) {
+            return a.startUnix > b.startUnix;
+        });
+    return result;
+}
+
+bool ClearPlaySessions(const std::wstring& gamePath) {
+    if (gamePath.empty()) return false;
+    BOOL ok1 = DeleteFileW(PlaySessionLogPath(gamePath).c_str());
+    DWORD err = GetLastError();
+    bool logOk = ok1 || err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND;
+    DeleteFileW(PlaySessionMetaPath(gamePath).c_str());
+    return logOk;
+}
+
 // ✅ اسم اللغة داخل اللعبة
 std::wstring LangCodeToLayoutName(int gameLanguage) {
     switch (gameLanguage) {
-        case 1: return L"ar";  // العربية
-        case 2: return L"en";  // English
-        default: return L"";    // بدون
+    case 1: return L"ar";
+    case 2: return L"en";
+    default: return L"";
     }
 }

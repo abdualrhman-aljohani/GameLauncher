@@ -136,55 +136,20 @@ html.glass-mode .backup-btn {
 [dir="ltr"] .pill-switch-compact.on .pill-switch-knob { transform: translateX(18px) !important; }
 [dir="rtl"] .pill-switch-compact.on .pill-switch-knob { transform: translateX(-18px) !important; }
 
-/* شرائح اللغة داخل تبويب تفاصيل اللعبة */
-.lang-segments {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
+.lang-segments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .lang-segment {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 8px;
-  border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 12px 8px; border-radius: 14px;
   background: rgba(var(--shadow-color), 0.45);
   border: 1px solid rgba(var(--card-border), 0.10);
-  color: var(--text-2);
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  outline: none;
+  color: var(--text-2); font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); outline: none;
 }
-.lang-segment i {
-  font-size: 16px;
-  opacity: 0.85;
-}
-.lang-segment:hover {
-  border-color: rgba(var(--accent-rgb), 0.5);
-  background: rgba(var(--card-tint), 0.6);
-  color: var(--text-1);
-  transform: translateY(-1px);
-}
-.lang-segment:focus-visible {
-  outline: 2px solid var(--accent-2);
-  outline-offset: 2px;
-}
-.lang-segment.active {
-  border-color: var(--accent-2);
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.35), rgba(var(--accent-hi-rgb), 0.22));
-  color: #fff;
-  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
-}
-.lang-segment.active i {
-  opacity: 1;
-  color: var(--accent-2);
-  filter: drop-shadow(0 0 6px rgba(var(--accent-hi-rgb), 0.7));
-}
+.lang-segment i { font-size: 16px; opacity: 0.85; }
+.lang-segment:hover { border-color: rgba(var(--accent-rgb), 0.5); background: rgba(var(--card-tint), 0.6); color: var(--text-1); transform: translateY(-1px); }
+.lang-segment:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.lang-segment.active { border-color: var(--accent-2); background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.35), rgba(var(--accent-hi-rgb), 0.22)); color: #fff; box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.45), inset 0 1px 0 rgba(255,255,255,0.15); }
+.lang-segment.active i { opacity: 1; color: var(--accent-2); filter: drop-shadow(0 0 6px rgba(var(--accent-hi-rgb), 0.7)); }
 
 #quickAccessChips { display: flex; align-items: center; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px 2px; scrollbar-width: thin; scrollbar-color: rgba(var(--accent-rgb),.5) transparent; }
 #quickAccessChips::-webkit-scrollbar { height: 4px; }
@@ -207,6 +172,7 @@ html.glass-mode .backup-btn {
 .details-game-item.hidden-from-radial img { filter: grayscale(60%); }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+#confirmModalOverlay { z-index: 9999 !important; }
 .modal-overlay.hidden { display: none !important; }
 
 .exe-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(var(--card-border),0.08); background: rgba(var(--shadow-color), 0.6); cursor: pointer; transition: all 150ms ease; }
@@ -230,13 +196,7 @@ html.glass-mode .backup-btn {
   cursor: pointer; transition: all 150ms ease;
   position: relative; padding: 0;
 }
-.custom-color-btn::after {
-  content: '+'; position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 900; font-size: 16px;
-  text-shadow: 0 0 4px rgba(0,0,0,0.9);
-  background: rgba(0,0,0,0.4); border-radius: 999px;
-}
+.custom-color-btn::after { content: '+'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 16px; text-shadow: 0 0 4px rgba(0,0,0,0.9); background: rgba(0,0,0,0.4); border-radius: 999px; }
 .custom-color-btn:hover { transform: scale(1.15); border-color: #fff; box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.7); }
 
 .uwp-badge { font-size: 9px; padding: 1px 6px; border-radius: 999px; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
@@ -264,16 +224,7 @@ html.glass-mode .backup-btn {
 .mute-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: rgba(var(--shadow-color), 0.85); color: #ef4444; font-size: 10px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), inset 0 0 0 1px rgba(255,255,255,0.06); position: relative; }
 .mute-badge i { transform: rotate(-45deg); }
 
-/* ✅ Boost badge — شارة صاروخ على الألعاب المفعّلة */
-.boost-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; border-radius: 999px;
-  background: rgba(236, 72, 153, 0.2);
-  color: #f9a8d4;
-  font-size: 10px;
-  border: 1px solid rgba(236, 72, 153, 0.5);
-  box-shadow: 0 0 8px rgba(236, 72, 153, 0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
-}
+.boost-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: rgba(236, 72, 153, 0.2); color: #f9a8d4; font-size: 10px; border: 1px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 8px rgba(236, 72, 153, 0.5), inset 0 0 0 1px rgba(255,255,255,0.06); }
 .boost-badge i { transform: rotate(-45deg); }
 
 .running-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; padding: 2px 8px 2px 6px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.45); color: #6ee7b7; animation: running-pulse 2s ease-in-out infinite; }
@@ -325,47 +276,168 @@ html.glass-mode .backup-btn {
 .safe-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px; border-radius: 999px; background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); font-size: 9px; font-weight: 700; }
 .lock-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 999px; background: rgba(100, 116, 139, 0.25); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 
-.perf-session-item {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(var(--card-border), 0.08);
-  background: rgba(var(--shadow-color), 0.4);
-  cursor: pointer;
-  transition: all 150ms ease;
-  outline: none;
+.perf-session-item { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(var(--card-border), 0.08); background: rgba(var(--shadow-color), 0.4); cursor: pointer; transition: all 150ms ease; outline: none; }
+.perf-session-item:hover { border-color: rgba(var(--accent-rgb), 0.5); background: rgba(var(--card-tint), 0.6); }
+.perf-session-item.selected { border-color: var(--accent-2); background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-hi-rgb), 0.15)); box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.3); }
+.perf-stat-card { background: rgba(var(--shadow-color), 0.5); border: 1px solid rgba(var(--card-border), 0.08); border-radius: 12px; padding: 12px; }
+.perf-stat-label { font-size: 10px; color: var(--text-3); margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+.perf-stat-value { font-size: 18px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
+.perf-stat-sub { font-size: 10px; color: var(--text-2); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+/* ═══════════════════════════════════════
+   Settings Tab — Compact v5 (Bulletproof)
+   ═══════════════════════════════════════ */
+
+/* 1) الـ grid: يمنع أي تمدد أفقي/عمودي */
+#tab-settings > .grid {
+    align-items: start !important;
+    align-content: start !important;
+    grid-auto-rows: min-content;
 }
-.perf-session-item:hover {
-  border-color: rgba(var(--accent-rgb), 0.5);
-  background: rgba(var(--card-tint), 0.6);
+
+/* 2) البطاقة نفسها: block صريح، ارتفاع تلقائي، self-start */
+.settings-card {
+    display: block !important;
+    align-self: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 14px 16px !important;
+    position: relative;
+    overflow: hidden;
 }
-.perf-session-item.selected {
-  border-color: var(--accent-2);
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-hi-rgb), 0.15));
-  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.3);
+
+/* 3) شيل أي بلوب/جلو يوسّخ التصميم */
+.settings-card .card-glow,
+.card-glow {
+    display: none !important;
 }
-.perf-stat-card {
-  background: rgba(var(--shadow-color), 0.5);
-  border: 1px solid rgba(var(--card-border), 0.08);
-  border-radius: 12px;
-  padding: 12px;
+
+/* 4) رأس البطاقة: أيقونة + عنوان، خط سفلي رفيع */
+.setting-card-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 0 0 10px 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
-.perf-stat-label {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+
+.setting-card-header h3 {
+    font-weight: 700;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.2;
+    margin: 0;
 }
-.perf-stat-value {
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  font-family: 'JetBrains Mono', monospace;
+
+/* 5) الأيقونة */
+.icon-badge {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
 }
-.perf-stat-sub {
-  font-size: 10px;
-  color: var(--text-2);
-  margin-top: 2px;
-  font-family: 'JetBrains Mono', monospace;
+.icon-badge.purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.icon-badge.blue   { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.icon-badge.orange { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+.icon-badge.green  { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.icon-badge.pink   { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+
+/* 6) الصف: مكشوف، مضغوط، خط فاصل رفيع */
+.setting-line {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 8px 0 !important;
+    margin: 0 !important;
+    min-height: 44px !important;
+    height: auto !important;
+    flex: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* الصف الأول بعد الهيدر بدون خط */
+.setting-card-header + .setting-line,
+.setting-line:first-child {
+    border-top: none !important;
+}
+
+/* الصف العمودي (Sliders / قوائم) */
+.setting-line.vertical {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+    padding: 10px 0 !important;
+}
+
+
+/* ═══════════════════════════════════════
+   Settings Tab v5 — Bulletproof
+   ═══════════════════════════════════════ */
+
+/* الـ grid — يمنع تمدد البطاقات */
+#tab-settings > .grid {
+    align-items: start !important;
+    align-content: start !important;
+    grid-auto-rows: min-content;
+}
+
+/* كل بطاقة إعدادات — طولها بمقدار محتواها فقط */
+#tab-settings .glass-panel.settings-card,
+#tab-settings > .grid > div {
+    align-self: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* إخفاء card-glow نهائياً */
+#tab-settings .card-glow {
+    display: none !important;
+}
+
+/* رأس البطاقة */
+#tab-settings .setting-card-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 0 0 10px 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* صف الإعداد */
+#tab-settings .setting-line {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 8px 0 !important;
+    min-height: 44px !important;
+    height: auto !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+#tab-settings .setting-card-header + .setting-line,
+#tab-settings .setting-line:first-child {
+    border-top: none !important;
+}
+
+#tab-settings .setting-line.vertical {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    min-height: 0 !important;
+}
+
+/* حدود أوضح لبطاقات الإعدادات */
+#tab-settings .glass-panel {
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }

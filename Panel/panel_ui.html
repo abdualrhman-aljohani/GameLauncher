@@ -8,9 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GameLauncher Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link rel="stylesheet" href="panel_ui.css?v=__GL_BUILD_SIG__">
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { cairo: ['Cairo','sans-serif'], tajawal: ['Tajawal','sans-serif'] } } } }
@@ -81,771 +86,835 @@
 
     <main class="flex-1 overflow-y-auto p-4 md:p-6">
 
-      <section id="tab-dashboard" class="tab-content space-y-5">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 glass-panel p-5 rounded-2xl">
-          <div>
-            <h2 class="text-xl font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-gamepad" style="color: var(--accent-2);"></i>
-              <span data-t="dashTitle">الألعاب والبرامج المرافقة</span>
-            </h2>
-            <p class="text-xs text-gray-300 mt-1" data-t="dashSubtitle">اسحب ملفًا تنفيذيًا أو اختصارًا أو رابطًا أو مجلد لعبة كاملًا وأفلته، أو استخدم زر الإضافة.</p>
-          </div>
-          <button onclick="nativeAction('addGame')" class="text-white px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg transition active:scale-95" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); box-shadow: 0 10px 25px -8px rgba(var(--accent-rgb), 0.7);">
-            <i class="fa-solid fa-plus"></i>
-            <span data-t="addGameBtn">إضافة لعبة</span>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5" id="dropZone">
-          <div class="lg:col-span-7 space-y-3">
-            <div class="flex items-center justify-between gap-2 px-1 flex-wrap">
-              <h3 class="text-sm font-bold flex items-center gap-2" style="color: var(--accent-2);">
-                <i class="fa-solid fa-list-check"></i>
-                <span data-t="gamesListTitle">الألعاب</span> (<span id="gamesListCount">0</span>)
-              </h3>
-              <div class="flex items-center gap-2 flex-1 max-w-md">
-                <div class="search-box flex-1">
-                  <i class="fa-solid fa-magnifying-glass text-gray-500 text-xs"></i>
-                  <input id="gamesSearchInput" type="text" oninput="onSearchChange(this.value)" placeholder="ابحث في الألعاب..." data-t="searchPlaceholder">
+        <section id="tab-dashboard" class="tab-content space-y-5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 glass-panel p-5 rounded-2xl">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-gamepad" style="color: var(--accent-2);"></i>
+                        <span data-t="dashTitle">الألعاب والبرامج المرافقة</span>
+                    </h2>
+                    <p class="text-xs text-gray-300 mt-1" data-t="dashSubtitle">اسحب ملفًا تنفيذيًا أو اختصارًا أو رابطًا أو مجلد لعبة كاملًا وأفلته، أو استخدم زر الإضافة.</p>
                 </div>
-                <select id="gamesSortSelect" class="sort-select" onchange="onSortChange(this.value)">
-                  <option value="manual" data-t="sortManual">الترتيب اليدوي</option>
-                  <option value="favorite" data-t="sortFavorite">المفضّلة أولاً</option>
-                  <option value="recent" data-t="sortRecent">الأحدث لعبًا</option>
-                  <option value="mostPlayed" data-t="sortMostPlayed">الأكثر لعبًا</option>
-                  <option value="name" data-t="sortName">الاسم (أ-ي)</option>
-                </select>
-              </div>
-            </div>
-            <div class="space-y-2.5" id="gamesListContainer"></div>
-            <div id="searchEmpty" class="hidden text-center py-6 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl" data-t="searchEmpty">لا توجد نتائج مطابقة.</div>
-          </div>
-
-          <div class="lg:col-span-5 space-y-3">
-            <h3 class="text-sm font-bold text-cyan-200 flex items-center gap-2 px-1">
-              <i class="fa-solid fa-puzzle-piece text-cyan-400"></i>
-              <span data-t="companionsTitle">البرامج المرافقة</span>
-            </h3>
-            <div class="glass-panel p-4 rounded-2xl min-h-[360px] flex flex-col justify-between">
-              <div>
-                <div id="selectedGameBanner" class="bg-black/40 border border-white/10 p-3 rounded-xl mb-3 flex items-center gap-3 hidden">
-                  <img id="selectedGameImg" class="w-10 h-10 rounded-lg object-cover border border-white/10">
-                  <div class="overflow-hidden flex-1">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <h4 id="selectedGameName" class="font-bold text-white text-sm"></h4>
-                      <span id="selectedGameMuteBadge" class="mute-badge hidden"><i class="fa-solid fa-volume-xmark"></i></span>
-                      <span id="selectedGameRunningBadge" class="running-dot hidden"><span class="dot"></span><span data-t="runningLabel">قيد التشغيل</span></span>
-                    </div>
-                    <p id="selectedGamePath" class="text-[11px] text-gray-300 font-mono truncate"></p>
-                  </div>
-                </div>
-                <div id="noSelectionHint" class="text-center py-8 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl" data-t="selectGameHint">
-                  اختر لعبةً من القائمة أولًا.
-                </div>
-                <div id="companionAppsList" class="space-y-2 max-h-[280px] overflow-y-auto pr-1"></div>
-              </div>
-              <div class="pt-3 mt-3 border-t border-white/10">
-                <button onclick="nativeAction('addCompanion', {gameIndex: selectedGameIndex})" id="addCompanionBtn" disabled
-                  class="w-full bg-cyan-600/20 hover:bg-cyan-600/30 disabled:opacity-40 disabled:cursor-not-allowed text-cyan-200 border border-cyan-500/30 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition">
-                  <i class="fa-solid fa-plus-circle"></i>
-                  <span data-t="addCompanionBtn">إضافة برنامج مرافق</span>
+                <button onclick="nativeAction('addGame')" class="text-white px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg transition active:scale-95" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); box-shadow: 0 10px 25px -8px rgba(var(--accent-rgb), 0.7);">
+                    <i class="fa-solid fa-plus"></i>
+                    <span data-t="addGameBtn">إضافة لعبة</span>
                 </button>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section id="tab-details" class="tab-content hidden space-y-5">
-        <div class="glass-panel p-5 rounded-2xl">
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-gears text-cyan-400"></i>
-            <span data-t="detailsTitle">تفاصيل اللعبة المحددة</span>
-          </h2>
-        </div>
-
-        <div id="detailsEmpty" class="glass-panel p-8 rounded-2xl text-center text-xs text-gray-400" data-t="detailsEmptyHint">
-          لم تُضف أي لعبة بعد.
-        </div>
-
-        <div id="detailsContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <aside class="lg:col-span-4 xl:col-span-3 glass-panel rounded-2xl p-3 flex flex-col max-h-[80vh] min-w-0">
-            <div class="flex items-center justify-between mb-2 px-1">
-              <h3 class="text-xs font-bold flex items-center gap-2" style="color: var(--accent-2);">
-                <i class="fa-solid fa-layer-group"></i>
-                <span data-t="detailsAllGames">كل الألعاب</span>
-                <span class="text-[10px] text-gray-500">(<span id="detailsGamesCount">0</span>)</span>
-              </h3>
-            </div>
-            <div id="detailsGameSidebar" class="space-y-1.5 overflow-y-auto flex-1 pe-1"></div>
-          </aside>
-
-          <div class="lg:col-span-8 xl:col-span-9 space-y-4 min-w-0">
-            <div class="glass-panel p-4 rounded-2xl flex items-center gap-3">
-              <img id="detailsGameImg" class="w-12 h-12 rounded-lg object-contain bg-black/20 border border-white/10">
-              <div class="overflow-hidden flex-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h3 id="detailsGameName" class="font-bold text-white text-sm"></h3>
-                  <span id="detailsUwpBadge" class="uwp-badge hidden">UWP</span>
-                  <span id="detailsMuteBadge" class="mute-badge hidden"><i class="fa-solid fa-volume-xmark"></i></span>
-                  <span id="detailsRunningBadge" class="running-dot hidden"><span class="dot"></span><span data-t="runningLabel">قيد التشغيل</span></span>
-                  <button id="detailsFavBtn" onclick="toggleGameFavorite()" class="fav-btn" tabindex="0"><i class="fa-solid fa-star"></i></button>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5" id="dropZone">
+                <div class="lg:col-span-7 space-y-3">
+                    <div class="flex items-center justify-between gap-2 px-1 flex-wrap">
+                        <h3 class="text-sm font-bold flex items-center gap-2" style="color: var(--accent-2);">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span data-t="gamesListTitle">الألعاب</span> (<span id="gamesListCount">0</span>)
+                        </h3>
+                        <div class="flex items-center gap-2 flex-1 max-w-md">
+                            <div class="search-box flex-1">
+                                <i class="fa-solid fa-magnifying-glass text-gray-500 text-xs"></i>
+                                <input id="gamesSearchInput" type="text" oninput="onSearchChange(this.value)" placeholder="ابحث في الألعاب..." data-t="searchPlaceholder">
+                            </div>
+                            <select id="gamesSortSelect" class="sort-select" onchange="onSortChange(this.value)">
+                                <option value="manual" data-t="sortManual">الترتيب اليدوي</option>
+                                <option value="favorite" data-t="sortFavorite">المفضّلة أولاً</option>
+                                <option value="recent" data-t="sortRecent">الأحدث لعبًا</option>
+                                <option value="mostPlayed" data-t="sortMostPlayed">الأكثر لعبًا</option>
+                                <option value="name" data-t="sortName">الاسم (أ-ي)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="gamesListContainer"></div>
+                    <div id="searchEmpty" class="hidden text-center py-6 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl" data-t="searchEmpty">لا توجد نتائج مطابقة.</div>
                 </div>
-                <p id="detailsGamePath" class="text-[11px] text-gray-300 font-mono truncate"></p>
-              </div>
-              <button onclick="openGameFolderDetails()" id="detailsOpenFolderBtn" class="icon-action-btn" data-t="openFolderTooltip" tabindex="0">
-                <i class="fa-solid fa-folder-open text-base"></i>
-              </button>
+
+                <div class="lg:col-span-5 space-y-3">
+                    <h3 class="text-sm font-bold text-cyan-200 flex items-center gap-2 px-1">
+                        <i class="fa-solid fa-puzzle-piece text-cyan-400"></i>
+                        <span data-t="companionsTitle">البرامج المرافقة</span>
+                    </h3>
+                    <div class="glass-panel p-4 rounded-2xl min-h-[360px] flex flex-col justify-between">
+                        <div>
+                            <div id="selectedGameBanner" class="bg-black/40 border border-white/10 p-3 rounded-xl mb-3 flex items-center gap-3 hidden">
+                                <img id="selectedGameImg" class="w-10 h-10 rounded-lg object-cover border border-white/10">
+                                <div class="overflow-hidden flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h4 id="selectedGameName" class="font-bold text-white text-sm"></h4>
+                                        <span id="selectedGameMuteBadge" class="mute-badge hidden"><i class="fa-solid fa-volume-xmark"></i></span>
+                                        <span id="selectedGameRunningBadge" class="running-dot hidden"><span class="dot"></span><span data-t="runningLabel">قيد التشغيل</span></span>
+                                    </div>
+                                    <p id="selectedGamePath" class="text-[11px] text-gray-300 font-mono truncate"></p>
+                                </div>
+                            </div>
+                            <div id="noSelectionHint" class="text-center py-8 text-gray-400 text-xs border border-dashed border-white/10 rounded-xl" data-t="selectGameHint">
+                                اختر لعبةً من القائمة أولًا.
+                            </div>
+                            <div id="companionAppsList" class="space-y-2 max-h-[280px] overflow-y-auto pr-1"></div>
+                        </div>
+                        <div class="pt-3 mt-3 border-t border-white/10">
+                            <button onclick="nativeAction('addCompanion', {gameIndex: selectedGameIndex})" id="addCompanionBtn" disabled
+                                    class="w-full bg-cyan-600/20 hover:bg-cyan-600/30 disabled:opacity-40 disabled:cursor-not-allowed text-cyan-200 border border-cyan-500/30 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                <span data-t="addCompanionBtn">إضافة برنامج مرافق</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-details" class="tab-content hidden space-y-5">
+            <div class="glass-panel p-5 rounded-2xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-cyan-400"></i>
+                    <span data-t="detailsTitle">تفاصيل اللعبة المحددة</span>
+                </h2>
+            </div>
+
+            <div id="detailsEmpty" class="glass-panel p-8 rounded-2xl text-center text-xs text-gray-400" data-t="detailsEmptyHint">
+                لم تُضف أي لعبة بعد.
+            </div>
+
+            <div id="detailsContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <aside class="lg:col-span-4 xl:col-span-3 glass-panel rounded-2xl p-3 flex flex-col max-h-[80vh] min-w-0">
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <h3 class="text-xs font-bold flex items-center gap-2" style="color: var(--accent-2);">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span data-t="detailsAllGames">كل الألعاب</span>
+                            <span class="text-[10px] text-gray-500">(<span id="detailsGamesCount">0</span>)</span>
+                        </h3>
+                    </div>
+                    <div id="detailsGameSidebar" class="space-y-1.5 overflow-y-auto flex-1 pe-1"></div>
+                </aside>
+
+                <div class="lg:col-span-8 xl:col-span-9 space-y-4 min-w-0">
+                    <div class="glass-panel p-4 rounded-2xl flex items-center gap-3">
+                        <img id="detailsGameImg" class="w-12 h-12 rounded-lg object-contain bg-black/20 border border-white/10">
+                        <div class="overflow-hidden flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 id="detailsGameName" class="font-bold text-white text-sm"></h3>
+                                <span id="detailsUwpBadge" class="uwp-badge hidden">UWP</span>
+                                <span id="detailsMuteBadge" class="mute-badge hidden"><i class="fa-solid fa-volume-xmark"></i></span>
+                                <span id="detailsRunningBadge" class="running-dot hidden"><span class="dot"></span><span data-t="runningLabel">قيد التشغيل</span></span>
+                                <button id="detailsFavBtn" onclick="toggleGameFavorite()" class="fav-btn" tabindex="0"><i class="fa-solid fa-star"></i></button>
+                            </div>
+                            <p id="detailsGamePath" class="text-[11px] text-gray-300 font-mono truncate"></p>
+                        </div>
+                        <button onclick="openGameFolderDetails()" id="detailsOpenFolderBtn" class="icon-action-btn" data-t="openFolderTooltip" tabindex="0">
+                            <i class="fa-solid fa-folder-open text-base"></i>
+                        </button>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl">
+                        <h4 class="text-xs font-bold text-gray-300 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                            <span data-t="playStatsTitle">إحصاءات اللعب</span>
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div class="bg-black/30 rounded-xl p-3">
+                                <div class="text-[10px] text-gray-400" data-t="statsTotalTime">إجمالي وقت اللعب</div>
+                                <div id="statTotalTime" class="text-base font-bold text-emerald-300 mt-1">—</div>
+                            </div>
+                            <div class="bg-black/30 rounded-xl p-3">
+                                <div class="text-[10px] text-gray-400" data-t="statsLastPlayed">آخر مرة لعبت</div>
+                                <div id="statLastPlayed" class="text-base font-bold text-cyan-300 mt-1">—</div>
+                            </div>
+                            <div class="bg-black/30 rounded-xl p-3">
+                                <div class="text-[10px] text-gray-400" data-t="statsSessions">عدد الجلسات</div>
+                                <div id="statSessions" class="text-base font-bold text-fuchsia-300 mt-1">—</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-end gap-2 flex-wrap">
+                            <button onclick="openSessionHistory()" id="statsHistoryBtn" class="text-xs font-bold text-cyan-200 hover:text-white bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-400/70 rounded-xl px-4 py-2 transition flex items-center gap-2" tabindex="0">
+                                <i class="fa-solid fa-clock-rotate-left text-[12px]"></i>
+                                <span data-t="statsHistory">سجل الجلسات</span>
+                            </button>
+                            <button onclick="resetGamePlayTime()" class="text-[10px] text-gray-400 hover:text-red-300 border border-white/10 hover:border-red-500/40 rounded-lg px-3 py-1 transition" data-t="statsReset" tabindex="0">تصفير الإحصاءات</button>
+                        </div>
+                    </div>
+
+                    <div id="quickAccessBar" class="glass-panel p-3 rounded-2xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-bolt text-yellow-400 text-xs"></i>
+                            <span class="text-xs font-bold text-gray-200" data-t="quickAccessTitle">الوصول السريع</span>
+                            <span class="text-[10px] text-gray-500 ms-auto hidden md:inline" data-t="quickAccessHint">انقر للانتقال</span>
+                        </div>
+                        <div id="quickAccessChips"></div>
+                    </div>
+
+                    <div id="detailGameOptions" class="glass-panel p-4 rounded-2xl space-y-4 transition-all duration-300">
+                        <h4 class="text-sm font-bold border-b border-white/10 pb-2" style="color: var(--accent-2);" data-t="detailsGameOptions">خيارات اللعبة الرئيسية</h4>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-eye text-emerald-400 text-xs"></i>
+                                <span class="text-xs text-gray-200" data-t="detailsShowInRadial">إظهار في دائرة الألعاب</span>
+                            </div>
+                            <button id="detailsShowInRadialToggle" onclick="toggleGameShowInRadial()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-200" data-t="detailsRunAsAdmin">التشغيل كمسؤول (Run as Admin)</span>
+                            <button id="detailsRunAsAdminToggle" onclick="toggleGameRunAsAdmin()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-200 block mb-1.5" data-t="detailsLaunchArgs">معاملات التشغيل (Launch Arguments)</label>
+                            <input id="detailsLaunchArgsInput" type="text" dir="ltr" tabindex="0"
+                                   class="w-full bg-slate-900/80 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-white/40"
+                                   placeholder="-windowed --server=x">
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-200 block mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-palette text-fuchsia-400 text-xs"></i>
+                                <span data-t="detailsItemColor">لون الإطار / التوهج في الدائرة</span>
+                            </label>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <div id="detailsColorPreview"
+                                     class="w-12 h-12 rounded-full border-2 border-white/30 shadow-lg shrink-0"
+                                     style="background:#2ea6da;"></div>
+                                <div class="flex flex-col gap-1.5">
+                                    <button onclick="pickCustomColor()"
+                                            class="backup-btn primary text-xs">
+                                        <i class="fa-solid fa-eye-dropper"></i>
+                                        <span data-t="detailsPickCustomColor">اختيار لون مخصص…</span>
+                                    </button>
+                                    <span class="text-[10px] text-gray-500 font-mono" id="detailsColorHex">#2EA6DA</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex-1">
+                                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
+                                        <i class="fa-solid fa-hashtag text-purple-400 text-xs"></i>
+                                        <span data-t="detailsQuickSlot">اختصار الفتح السريع</span>
+                                    </h4>
+                                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsQuickSlotHint">اضغط الرقم داخل الدائرة لفتح اللعبة مباشرة.</p>
+                                </div>
+                                <select id="detailsQuickSlotSelect" class="sort-select" onchange="onQuickSlotChange(this.value)" style="min-width:120px;">
+                                    <option value="0" data-t="quickSlotNone">بدون اختصار</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-4">
+                            <h4 class="text-xs text-gray-200 flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-language text-amber-400 text-xs"></i>
+                                <span data-t="detailsGameLanguage">لغة اللعبة داخل التطبيق</span>
+                            </h4>
+                            <p class="text-[10px] text-gray-500 mb-3" data-t="detailsGameLanguageHint">عند تشغيل اللعبة، سيتم تبديل لغة الكيبورد تلقائياً ثم إرجاعها عند الخروج.</p>
+                            <div id="detailsLangSegments" class="lang-segments" role="group">
+                                <button type="button" class="lang-segment" data-lang="0" onclick="setGameLanguage(0)" tabindex="0">
+                                    <i class="fa-solid fa-ban"></i>
+                                    <span data-t="langOff">بدون تبديل</span>
+                                </button>
+                                <button type="button" class="lang-segment" data-lang="1" onclick="setGameLanguage(1)" tabindex="0">
+                                    <i class="fa-solid fa-kaaba"></i>
+                                    <span data-t="langArabic">عربي</span>
+                                </button>
+                                <button type="button" class="lang-segment" data-lang="2" onclick="setGameLanguage(2)" tabindex="0">
+                                    <i class="fa-solid fa-e"></i>
+                                    <span data-t="langEnglish">English</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-4">
+                            <label class="text-xs text-gray-200 block mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-image text-fuchsia-400 text-xs"></i>
+                                <span data-t="detailsRadialBg">خلفية دائرية مخصصة في دائرة الألعاب</span>
+                            </label>
+                            <div class="flex items-center gap-4 flex-wrap">
+                                <div id="detailsRadialBgPreviewWrap">
+                                    <div id="detailsRadialBgPreview" class="radial-bg-empty">
+                                        <i class="fa-solid fa-image"></i>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2 flex-1 min-w-[180px]">
+                                    <p class="text-[11px] text-gray-400" data-t="detailsRadialBgHint">اختر صورة لتظهر دائرية خلف أيقونة هذه اللعبة.</p>
+                                    <div class="flex gap-2 flex-wrap">
+                                        <button onclick="chooseGameRadialBg()" class="backup-btn" data-t="detailsRadialBgChoose" tabindex="0">اختيار صورة…</button>
+                                        <button id="detailsRadialBgClearBtn" onclick="clearGameRadialBg()" class="backup-btn" data-t="detailsRadialBgClear" tabindex="0">إزالة الخلفية</button>
+                                    </div>
+                                    <div id="detailsHideIconRow" style="display:none;" class="flex items-center justify-between mt-1 pt-2 border-t border-white/10">
+                                        <span class="text-[11px] text-gray-300" data-t="detailsHideOriginalIcon">إخفاء أيقونة اللعبة الأصلية</span>
+                                        <button id="detailsHideIconToggle" onclick="toggleGameHideOriginalIcon()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="detailPerformanceOptions" class="glass-panel p-4 rounded-2xl space-y-4">
+                        <h4 class="text-sm font-bold border-b border-white/10 pb-2 flex items-center gap-2" style="color: var(--accent-2);">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span data-t="detailsPerformanceTitle">خيارات الأداء (متقدمة)</span>
+                        </h4>
+                        <div>
+                            <label class="text-xs text-gray-200 block mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-orange-400 text-xs"></i>
+                                <span data-t="detailsPriorityLabel">أولوية العملية (Process Priority)</span>
+                            </label>
+                            <select id="detailsPrioritySelect" class="styled-select" onchange="onPriorityChange(this.value)"></select>
+                        </div>
+                        <div class="border-t border-white/10 pt-3">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="text-xs text-gray-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-layer-group text-cyan-400 text-xs"></i>
+                                    <span data-t="detailsAffinityLabel">تقييد الأنوية (CPU Affinity)</span>
+                                </label>
+                                <button id="detailsAffinityToggle" onclick="toggleGameAffinity()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                            </div>
+                            <div id="detailsCpuCoresWrap" class="opacity-40 pointer-events-none">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] text-gray-400" id="cpuCountLabel">—</span>
+                                    <div class="flex gap-2 text-[10px]">
+                                        <button onclick="selectAllCores()" style="color: var(--accent-2);" class="font-bold" data-t="selectAllCores">تحديد الكل</button>
+                                        <span class="text-gray-600">•</span>
+                                        <button onclick="clearAllCores()" class="text-gray-400 hover:text-gray-200 font-bold" data-t="clearAllCores">مسح</button>
+                                    </div>
+                                </div>
+                                <div id="detailsCpuCoresGrid" class="cpu-cores-grid"></div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
+                                        <i class="fa-solid fa-rocket text-pink-400 text-xs"></i>
+                                        <span data-t="boostFpsTitle">Boost FPS</span>
+                                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30 font-mono">BETA</span>
+                                    </h4>
+                                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="boostFpsDesc">تحسينات تلقائية عند تشغيل اللعبة، تتراجع عند الإغلاق.</p>
+                                </div>
+                                <button id="detailsBoostFpsToggle" onclick="toggleBoostFps()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                            </div>
+
+                            <div id="boostFpsOptions" class="opacity-40 pointer-events-none space-y-2 ps-3 border-s-2 border-pink-500/30">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] text-gray-300" data-t="boostDisableCore0">تعطيل Core 0</span>
+                                    <button id="boostDisableCore0Toggle" onclick="toggleBoostDisableCore0()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] text-gray-300" data-t="boostHighPriority">رفع الأولوية إلى High</span>
+                                    <button id="boostHighPriorityToggle" onclick="toggleBoostHighPriority()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] text-gray-300" data-t="boostStopStats">إيقاف الإحصائيات والـ Overlay</span>
+                                    <button id="boostStopStatsToggle" onclick="toggleBoostStopStats()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] text-gray-300" data-t="boostTimerResolution">تحسين دقة المؤقت (Timer 1ms)</span>
+                                    <button id="boostTimerResolutionToggle" onclick="toggleBoostTimerResolution()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-gray-300" data-t="boostSystemResponsiveness">SystemResponsiveness</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                                    </div>
+                                    <button id="boostSystemResponsivenessToggle" onclick="toggleBoostSystemResponsiveness()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-gray-300" data-t="boostMmcss">MMCSS Game Priority</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                                    </div>
+                                    <button id="boostMmcssToggle" onclick="toggleBoostMmcss()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                                </div>
+                            </div>
+
+                            <div class="info-box text-[10px]">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                <span data-t="boostFpsHint">قد تختلف نتائج Boost من لعبة لأخرى. بعض الخيارات تحتاج صلاحيات Admin.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="detailBlackBoxOptions" class="glass-panel p-4 rounded-2xl space-y-4">
+                        <h4 class="text-sm font-bold border-b border-white/10 pb-2 flex items-center gap-2" style="color: var(--accent-2);">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span data-t="detailsBlackBoxTitle">مراقبة الأداء (Black Box)</span>
+                            <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono">SAFE</span>
+                        </h4>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <h5 class="text-xs text-gray-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-play text-emerald-400 text-xs"></i>
+                                    <span data-t="detailsBlackBoxEnable">تفعيل مراقبة الأداء لهذه اللعبة</span>
+                                </h5>
+                                <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsBlackBoxEnableHint">يجمع FPS والحرارة والاستهلاك أثناء اللعب لعرض تقرير مفصل.</p>
+                            </div>
+                            <button id="detailsBlackBoxToggle" onclick="toggleGameBlackBox()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div id="detailsBlackBoxWarning" class="hidden warning-box">
+                            <div class="flex items-start gap-2">
+                                <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                                <div class="flex-1" data-t="detailsBlackBoxWarning">
+                                    تنبيه: قراءة حرارة المعالج (CPU) قد تتعارض مع برامج مكافحة الغش في الألعاب التنافسية. FPS و GPU Temp آمنة تمامًا.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="detailsBlackBoxSubOptions" class="opacity-40 pointer-events-none space-y-3 pt-3 border-t border-white/10">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-gauge-high text-cyan-400 text-xs"></i>
+                                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxFps">FPS + Frame Time</span>
+                                </div>
+                                <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-temperature-half text-orange-400 text-xs"></i>
+                                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxGpuTemp">حرارة كرت الشاشة GPU</span>
+                                </div>
+                                <span class="safe-badge">✓ NVML</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-memory text-purple-400 text-xs"></i>
+                                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxRam">RAM / VRAM</span>
+                                </div>
+                                <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
+                            </div>
+                        </div>
+
+                        <div id="detailsBlackBoxActions" class="hidden flex items-center gap-2 pt-3 border-t border-white/10">
+                            <button onclick="openPerformanceReport()" class="backup-btn primary flex-1 justify-center" tabindex="0">
+                                <i class="fa-solid fa-chart-column"></i>
+                                <span data-t="detailsBlackBoxViewReport">عرض التقرير</span>
+                                <span id="detailsBlackBoxSessionCount" class="text-[10px] opacity-80 font-mono">(0)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl space-y-3">
+                        <h4 class="text-sm font-bold text-cyan-200 border-b border-white/10 pb-2" data-t="detailsCompanionsOptions">خيارات البرامج المرافقة</h4>
+                        <div id="detailsCompanionsList" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-radial" class="tab-content hidden space-y-5">
+            <div class="glass-panel p-5 rounded-2xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-palette text-amber-400"></i>
+                    <span data-t="designTitle">تخصيص التصميم والنمط</span>
+                </h2>
             </div>
 
             <div class="glass-panel p-4 rounded-2xl">
-              <h4 class="text-xs font-bold text-gray-300 mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                <span data-t="playStatsTitle">إحصاءات اللعب</span>
-              </h4>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div class="bg-black/30 rounded-xl p-3">
-                  <div class="text-[10px] text-gray-400" data-t="statsTotalTime">إجمالي وقت اللعب</div>
-                  <div id="statTotalTime" class="text-base font-bold text-emerald-300 mt-1">—</div>
-                </div>
-                <div class="bg-black/30 rounded-xl p-3">
-                  <div class="text-[10px] text-gray-400" data-t="statsLastPlayed">آخر مرة لعبت</div>
-                  <div id="statLastPlayed" class="text-base font-bold text-cyan-300 mt-1">—</div>
-                </div>
-                <div class="bg-black/30 rounded-xl p-3">
-                  <div class="text-[10px] text-gray-400" data-t="statsSessions">عدد الجلسات</div>
-                  <div id="statSessions" class="text-base font-bold text-fuchsia-300 mt-1">—</div>
-                </div>
-              </div>
-              <div class="mt-3 flex justify-end">
-                <button onclick="resetGamePlayTime()" class="text-[10px] text-gray-400 hover:text-red-300 border border-white/10 hover:border-red-500/40 rounded-lg px-3 py-1 transition" data-t="statsReset" tabindex="0">تصفير الإحصاءات</button>
-              </div>
+                <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-swatchbook" style="color: var(--accent-2);"></i>
+                    <span data-t="presetsTitle">ثيم اللوحة</span>
+                </h3>
+                <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من الثيمات الجاهزة أو صمم ثيمك الخاص.</p>
+                <div id="presetsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3"></div>
+
+                <!-- زر تصميم ثيم مخصص -->
+                <button onclick="openCustomThemeModal()" class="mt-4 w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition active:scale-95" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); color:#fff;">
+                    <i class="fa-solid fa-palette"></i>
+                    <span data-t="designCustomThemeBtn">تصميم ثيمي الخاص</span>
+                </button>
             </div>
 
-            <div id="quickAccessBar" class="glass-panel p-3 rounded-2xl">
-              <div class="flex items-center gap-2 mb-2">
-                <i class="fa-solid fa-bolt text-yellow-400 text-xs"></i>
-                <span class="text-xs font-bold text-gray-200" data-t="quickAccessTitle">الوصول السريع</span>
-                <span class="text-[10px] text-gray-500 ms-auto hidden md:inline" data-t="quickAccessHint">انقر للانتقال</span>
-              </div>
-              <div id="quickAccessChips"></div>
+            <div class="glass-panel p-4 rounded-2xl">
+                <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-nodes text-purple-400"></i>
+                    <span data-t="radialTitle">نمط رسم الدائرة</span>
+                </h3>
+                <div id="radialStylesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+
+                <!-- زر تصميم نمط مخصص -->
+                <button onclick="openCustomStyleModal()" class="mt-4 w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition active:scale-95" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); color:#fff;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span data-t="designCustomStyleBtn">تصميم نمطك الخاص</span>
+                </button>
             </div>
 
-            <div id="detailGameOptions" class="glass-panel p-4 rounded-2xl space-y-4 transition-all duration-300">
-              <h4 class="text-sm font-bold border-b border-white/10 pb-2" style="color: var(--accent-2);" data-t="detailsGameOptions">خيارات اللعبة الرئيسية</h4>
-
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-eye text-emerald-400 text-xs"></i>
-                  <span class="text-xs text-gray-200" data-t="detailsShowInRadial">إظهار في دائرة الألعاب</span>
-                </div>
-                <button id="detailsShowInRadialToggle" onclick="toggleGameShowInRadial()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-200" data-t="detailsRunAsAdmin">التشغيل كمسؤول (Run as Admin)</span>
-                <button id="detailsRunAsAdminToggle" onclick="toggleGameRunAsAdmin()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-              </div>
-
-              <div>
-                <label class="text-xs text-gray-200 block mb-1.5" data-t="detailsLaunchArgs">معاملات التشغيل (Launch Arguments)</label>
-                <input id="detailsLaunchArgsInput" type="text" dir="ltr" tabindex="0"
-                       class="w-full bg-slate-900/80 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-white/40"
-                       placeholder="-windowed --server=x">
-              </div>
-
-              <div>
-                <label class="text-xs text-gray-200 block mb-2 flex items-center gap-2">
-                  <i class="fa-solid fa-palette text-fuchsia-400 text-xs"></i>
-                  <span data-t="detailsItemColor">لون الإطار / التوهج في الدائرة</span>
-                </label>
-                <div class="flex items-center gap-3 flex-wrap">
-                  <div id="detailsColorPreview"
-                       class="w-12 h-12 rounded-full border-2 border-white/30 shadow-lg shrink-0"
-                       style="background:#2ea6da;"></div>
-                  <div class="flex flex-col gap-1.5">
-                    <button onclick="pickCustomColor()"
-                            class="backup-btn primary text-xs">
-                      <i class="fa-solid fa-eye-dropper"></i>
-                      <span data-t="detailsPickCustomColor">اختيار لون مخصص…</span>
+            <!-- ✅ بطاقة حجم الدائرة (3 سلايدرز) -->
+            <div class="glass-panel p-4 rounded-2xl space-y-5 max-w-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-cyan-400"></i>
+                        <span data-t="radialScaleTitle">حجم دائرة الألعاب</span>
+                    </h3>
+                    <button onclick="resetRadialScale()" class="text-[10px] text-gray-400 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 rounded-lg px-3 py-1 transition flex items-center gap-1" tabindex="0">
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                        <span data-t="radialScaleReset">إعادة الضبط</span>
                     </button>
-                    <span class="text-[10px] text-gray-500 font-mono" id="detailsColorHex">#2EA6DA</span>
-                  </div>
                 </div>
-              </div>
 
-              <div class="border-t border-white/10 pt-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="flex-1">
-                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
-                      <i class="fa-solid fa-hashtag text-purple-400 text-xs"></i>
-                      <span data-t="detailsQuickSlot">اختصار الفتح السريع</span>
-                    </h4>
-                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsQuickSlotHint">اضغط الرقم داخل الدائرة لفتح اللعبة مباشرة.</p>
-                  </div>
-                  <select id="detailsQuickSlotSelect" class="sort-select" onchange="onQuickSlotChange(this.value)" style="min-width:120px;">
-                    <option value="0" data-t="quickSlotNone">بدون اختصار</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                  </select>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-200" data-t="radialScaleIcon">حجم الأيقونات</span>
+                        <span class="text-xs font-mono" style="color: var(--accent-2);" id="scaleIconVal">42 px</span>
+                    </div>
+                    <input type="range" id="scaleIconSlider" min="30" max="60" step="1" value="42" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
                 </div>
-              </div>
 
-              <div class="border-t border-white/10 pt-4">
-                <h4 class="text-xs text-gray-200 flex items-center gap-2 mb-2">
-                  <i class="fa-solid fa-language text-amber-400 text-xs"></i>
-                  <span data-t="detailsGameLanguage">لغة اللعبة داخل التطبيق</span>
-                </h4>
-                <p class="text-[10px] text-gray-500 mb-3" data-t="detailsGameLanguageHint">عند تشغيل اللعبة، سيتم تبديل لغة الكيبورد تلقائياً ثم إرجاعها عند الخروج.</p>
-                <div id="detailsLangSegments" class="lang-segments" role="group">
-                  <button type="button" class="lang-segment" data-lang="0" onclick="setGameLanguage(0)" tabindex="0">
-                    <i class="fa-solid fa-ban"></i>
-                    <span data-t="langOff">بدون تبديل</span>
-                  </button>
-                  <button type="button" class="lang-segment" data-lang="1" onclick="setGameLanguage(1)" tabindex="0">
-                    <i class="fa-solid fa-kaaba"></i>
-                    <span data-t="langArabic">عربي</span>
-                  </button>
-                  <button type="button" class="lang-segment" data-lang="2" onclick="setGameLanguage(2)" tabindex="0">
-                    <i class="fa-solid fa-e"></i>
-                    <span data-t="langEnglish">English</span>
-                  </button>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-200" data-t="radialScaleHub">حجم زر الوسط (Hub)</span>
+                        <span class="text-xs font-mono" style="color: var(--accent-2);" id="scaleHubVal">46 px</span>
+                    </div>
+                    <input type="range" id="scaleHubSlider" min="30" max="60" step="1" value="46" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
                 </div>
-              </div>
 
-              <div class="border-t border-white/10 pt-4">
-                <label class="text-xs text-gray-200 block mb-3 flex items-center gap-2">
-                  <i class="fa-solid fa-image text-fuchsia-400 text-xs"></i>
-                  <span data-t="detailsRadialBg">خلفية دائرية مخصصة في دائرة الألعاب</span>
-                </label>
-                <div class="flex items-center gap-4 flex-wrap">
-                  <div id="detailsRadialBgPreviewWrap">
-                    <div id="detailsRadialBgPreview" class="radial-bg-empty">
-                      <i class="fa-solid fa-image"></i>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-200" data-t="radialScaleOrbit">مسافة الألعاب من المركز</span>
+                        <span class="text-xs font-mono" style="color: var(--accent-2);" id="scaleOrbitVal">118 px</span>
                     </div>
-                  </div>
-                  <div class="flex flex-col gap-2 flex-1 min-w-[180px]">
-                    <p class="text-[11px] text-gray-400" data-t="detailsRadialBgHint">اختر صورة لتظهر دائرية خلف أيقونة هذه اللعبة.</p>
-                    <div class="flex gap-2 flex-wrap">
-                      <button onclick="chooseGameRadialBg()" class="backup-btn" data-t="detailsRadialBgChoose" tabindex="0">اختيار صورة…</button>
-                      <button id="detailsRadialBgClearBtn" onclick="clearGameRadialBg()" class="backup-btn" data-t="detailsRadialBgClear" tabindex="0">إزالة الخلفية</button>
-                    </div>
-                    <div id="detailsHideIconRow" style="display:none;" class="flex items-center justify-between mt-1 pt-2 border-t border-white/10">
-                      <span class="text-[11px] text-gray-300" data-t="detailsHideOriginalIcon">إخفاء أيقونة اللعبة الأصلية</span>
-                      <button id="detailsHideIconToggle" onclick="toggleGameHideOriginalIcon()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-                    </div>
-                  </div>
+                    <input type="range" id="scaleOrbitSlider" min="90" max="180" step="2" value="118" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
                 </div>
-              </div>
             </div>
 
-            <div id="detailPerformanceOptions" class="glass-panel p-4 rounded-2xl space-y-4">
-              <h4 class="text-sm font-bold border-b border-white/10 pb-2 flex items-center gap-2" style="color: var(--accent-2);">
-                <i class="fa-solid fa-microchip"></i>
-                <span data-t="detailsPerformanceTitle">خيارات الأداء (متقدمة)</span>
-              </h4>
-              <div>
-                <label class="text-xs text-gray-200 block mb-2 flex items-center gap-2">
-                  <i class="fa-solid fa-gauge-high text-orange-400 text-xs"></i>
-                  <span data-t="detailsPriorityLabel">أولوية العملية (Process Priority)</span>
-                </label>
-                <select id="detailsPrioritySelect" class="styled-select" onchange="onPriorityChange(this.value)"></select>
-              </div>
-              <div class="border-t border-white/10 pt-3">
-                <div class="flex items-center justify-between mb-3">
-                  <label class="text-xs text-gray-200 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-cyan-400 text-xs"></i>
-                    <span data-t="detailsAffinityLabel">تقييد الأنوية (CPU Affinity)</span>
-                  </label>
-                  <button id="detailsAffinityToggle" onclick="toggleGameAffinity()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-                </div>
-                <div id="detailsCpuCoresWrap" class="opacity-40 pointer-events-none">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] text-gray-400" id="cpuCountLabel">—</span>
-                    <div class="flex gap-2 text-[10px]">
-                      <button onclick="selectAllCores()" style="color: var(--accent-2);" class="font-bold" data-t="selectAllCores">تحديد الكل</button>
-                      <span class="text-gray-600">•</span>
-                      <button onclick="clearAllCores()" class="text-gray-400 hover:text-gray-200 font-bold" data-t="clearAllCores">مسح</button>
-                    </div>
-                  </div>
-                  <div id="detailsCpuCoresGrid" class="cpu-cores-grid"></div>
-                </div>
-              </div>
-
-              <!-- ✅ قسم Boost FPS -->
-              <div class="border-t border-white/10 pt-4 space-y-3">
+            <div class="glass-panel p-4 rounded-2xl space-y-5 max-w-2xl">
+                <h3 class="font-bold text-white text-sm border-b border-white/10 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-image text-cyan-400"></i>
+                    <span data-t="backgroundsTitle">الخلفيات العامة</span>
+                </h3>
                 <div class="flex items-center justify-between">
-                  <div class="flex-1 min-w-0">
-                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
-                      <i class="fa-solid fa-rocket text-pink-400 text-xs"></i>
-                      <span data-t="boostFpsTitle">Boost FPS</span>
-                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30 font-mono">BETA</span>
-                    </h4>
-                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="boostFpsDesc">تحسينات تلقائية عند تشغيل اللعبة، تتراجع عند الإغلاق.</p>
-                  </div>
-                  <button id="detailsBoostFpsToggle" onclick="toggleBoostFps()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-                </div>
-
-                <div id="boostFpsOptions" class="opacity-40 pointer-events-none space-y-2 ps-3 border-s-2 border-pink-500/30">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-gray-300" data-t="boostDisableCore0">تعطيل Core 0</span>
-                    <button id="boostDisableCore0Toggle" onclick="toggleBoostDisableCore0()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-gray-300" data-t="boostHighPriority">رفع الأولوية إلى High</span>
-                    <button id="boostHighPriorityToggle" onclick="toggleBoostHighPriority()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-gray-300" data-t="boostStopStats">إيقاف الإحصائيات والـ Overlay</span>
-                    <button id="boostStopStatsToggle" onclick="toggleBoostStopStats()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-gray-300" data-t="boostTimerResolution">تحسين دقة المؤقت (Timer 1ms)</span>
-                    <button id="boostTimerResolutionToggle" onclick="toggleBoostTimerResolution()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="text-[11px] text-gray-300" data-t="boostSystemResponsiveness">SystemResponsiveness</span>
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                    <div>
+                        <h4 class="font-bold text-white text-sm" data-t="bgPanelTitle">خلفية لوحة التحكم</h4>
                     </div>
-                    <button id="boostSystemResponsivenessToggle" onclick="toggleBoostSystemResponsiveness()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="text-[11px] text-gray-300" data-t="boostMmcss">MMCSS Game Priority</span>
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                    <div class="flex gap-2">
+                        <button onclick="nativeAction('browsePanelBackground')" class="backup-btn" data-t="bgPanelChoose" tabindex="0">اختيار صورة…</button>
+                        <button onclick="nativeAction('clearPanelBackground')" class="backup-btn" data-t="bgPanelClear" tabindex="0">إرجاع الافتراضية</button>
                     </div>
-                    <button id="boostMmcssToggle" onclick="toggleBoostMmcss()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
-                  </div>
-                </div>
-
-                <div class="info-box text-[10px]">
-                  <i class="fa-solid fa-circle-info me-1"></i>
-                  <span data-t="boostFpsHint">قد تختلف نتائج Boost من لعبة لأخرى. بعض الخيارات تحتاج صلاحيات Admin.</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Performance Black Box -->
-            <div id="detailBlackBoxOptions" class="glass-panel p-4 rounded-2xl space-y-4">
-              <h4 class="text-sm font-bold border-b border-white/10 pb-2 flex items-center gap-2" style="color: var(--accent-2);">
-                <i class="fa-solid fa-chart-line"></i>
-                <span data-t="detailsBlackBoxTitle">مراقبة الأداء (Black Box)</span>
-                <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono">SAFE</span>
-              </h4>
-
-              <div class="flex items-center justify-between">
-                <div class="flex-1 min-w-0">
-                  <h5 class="text-xs text-gray-200 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-play text-emerald-400 text-xs"></i>
-                    <span data-t="detailsBlackBoxEnable">تفعيل مراقبة الأداء لهذه اللعبة</span>
-                  </h5>
-                  <p class="text-[10px] text-gray-500 mt-0.5" data-t="detailsBlackBoxEnableHint">يجمع FPS والحرارة والاستهلاك أثناء اللعب لعرض تقرير مفصل.</p>
-                </div>
-                <button id="detailsBlackBoxToggle" onclick="toggleGameBlackBox()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-              </div>
-
-              <div id="detailsBlackBoxWarning" class="hidden warning-box">
-                <div class="flex items-start gap-2">
-                  <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
-                  <div class="flex-1" data-t="detailsBlackBoxWarning">
-                    تنبيه: قراءة حرارة المعالج (CPU) قد تتعارض مع برامج مكافحة الغش في الألعاب التنافسية. FPS و GPU Temp آمنة تمامًا.
-                  </div>
-                </div>
-              </div>
-
-              <div id="detailsBlackBoxSubOptions" class="opacity-40 pointer-events-none space-y-3 pt-3 border-t border-white/10">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-gauge-high text-cyan-400 text-xs"></i>
-                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxFps">FPS + Frame Time</span>
-                  </div>
-                  <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
                 </div>
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-temperature-half text-orange-400 text-xs"></i>
-                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxGpuTemp">حرارة كرت الشاشة GPU</span>
-                  </div>
-                  <span class="safe-badge">✓ NVML</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-memory text-purple-400 text-xs"></i>
-                    <span class="text-xs text-gray-200" data-t="detailsBlackBoxRam">RAM / VRAM</span>
-                  </div>
-                  <span class="safe-badge">✓ <span data-t="detailsBlackBoxSafe">آمن</span></span>
-                </div>
-              </div>
-
-              <div id="detailsBlackBoxActions" class="hidden flex items-center gap-2 pt-3 border-t border-white/10">
-                <button onclick="openPerformanceReport()" class="backup-btn primary flex-1 justify-center" tabindex="0">
-                  <i class="fa-solid fa-chart-column"></i>
-                  <span data-t="detailsBlackBoxViewReport">عرض التقرير</span>
-                  <span id="detailsBlackBoxSessionCount" class="text-[10px] opacity-80 font-mono">(0)</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="glass-panel p-4 rounded-2xl space-y-3">
-              <h4 class="text-sm font-bold text-cyan-200 border-b border-white/10 pb-2" data-t="detailsCompanionsOptions">خيارات البرامج المرافقة</h4>
-              <div id="detailsCompanionsList" class="space-y-3"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-radial" class="tab-content hidden space-y-5">
-        <div class="glass-panel p-5 rounded-2xl">
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-palette text-amber-400"></i>
-            <span data-t="designTitle">تخصيص التصميم والنمط</span>
-          </h2>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl">
-          <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-swatchbook" style="color: var(--accent-2);"></i>
-            <span data-t="presetsTitle">ثيم اللوحة</span>
-          </h3>
-          <p class="text-xs text-gray-400 mb-4" data-t="presetsDesc">اختر من 33 ثيمًا جاهزًا.</p>
-          <div id="presetsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3"></div>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl">
-          <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-circle-nodes text-purple-400"></i>
-            <span data-t="radialTitle">نمط رسم الدائرة</span>
-            <span class="text-[10px] text-gray-500 font-mono">(20)</span>
-          </h3>
-          <div id="radialStylesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl max-w-2xl">
-          <div class="flex items-center justify-between">
-            <div class="flex-1 min-w-0 pe-3">
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-circle-half-stroke text-cyan-400"></i>
-                <span data-t="radialNoGlowTitle">أيقونات صافية (بدون إطار)</span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="radialNoGlowDesc">إخفاء الإطار والتوهج والظلال — الأيقونة فقط.</p>
-            </div>
-            <button id="radialNoGlowToggle" onclick="toggleRadialNoGlow()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-        </div>
-
-        <div class="glass-panel p-4 rounded-2xl space-y-5 max-w-2xl">
-          <h3 class="font-bold text-white text-sm border-b border-white/10 pb-2 flex items-center gap-2">
-            <i class="fa-solid fa-image text-cyan-400"></i>
-            <span data-t="backgroundsTitle">الخلفيات العامة</span>
-          </h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="bgPanelTitle">خلفية لوحة التحكم</h4>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="nativeAction('browsePanelBackground')" class="backup-btn" data-t="bgPanelChoose" tabindex="0">اختيار صورة…</button>
-              <button onclick="nativeAction('clearPanelBackground')" class="backup-btn" data-t="bgPanelClear" tabindex="0">إرجاع الافتراضية</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="bgRadialTitle">خلفية دائرة الألعاب</h4>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="nativeAction('browseRadialBackground')" class="backup-btn" data-t="bgRadialChoose" tabindex="0">اختيار صورة…</button>
-              <button onclick="nativeAction('clearRadialBackground')" class="backup-btn" data-t="bgRadialClear" tabindex="0">إرجاع الافتراضية</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-5 rounded-2xl space-y-5 max-w-2xl">
-          <h3 class="font-bold text-white text-sm border-b border-white/10 pb-2 flex items-center gap-2">
-            <i class="fa-solid fa-droplet text-blue-400"></i>
-            <span data-t="transparencyTitle">الشفافية</span>
-          </h3>
-
-          <div class="flex items-center justify-between pb-4 border-b border-white/10">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-square-full text-cyan-400"></i>
-                <span data-t="panelGlassTitle">مظهر زجاجي حقيقي للوحة التحكم</span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="panelGlassDesc">تأثير Acrylic شفاف يُظهر خلفية سطح المكتب من خلف اللوحة.</p>
-            </div>
-            <button id="panelGlassToggle" onclick="togglePanelGlass()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-gray-200" data-t="uiOpacityTitle">شفافية لوحة التحكم</span>
-              <span class="text-xs font-mono" style="color: var(--accent-2);" id="opacityVal">32%</span>
-            </div>
-            <input type="range" id="opacitySlider" min="0.10" max="0.85" step="0.05" value="0.32" oninput="changeGlassOpacity(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
-          </div>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-gray-200" data-t="radialOpacityLabel">شفافية خلفية دائرة الألعاب</span>
-              <span class="text-xs font-mono" style="color: var(--accent-2);" id="radialOpacityVal">72%</span>
-            </div>
-            <input type="range" id="radialOpacitySlider" min="0" max="1" step="0.02" value="0.72" oninput="changeRadialOpacity(this.value)" onchange="changeRadialOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
-            <p class="text-[10px] text-gray-500" data-t="radialOpacityHint">تؤثر على الصورة المخصصة كخلفية لدائرة الألعاب.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-settings" class="tab-content hidden space-y-5">
-        <div class="glass-panel p-5 rounded-2xl">
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-rose-400"></i>
-            <span data-t="settingsTitle">الإعدادات العامة</span>
-          </h2>
-        </div>
-
-        <!-- قسم 1: الاختصارات -->
-        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-            <i class="fa-solid fa-keyboard text-yellow-400"></i>
-            <span data-t="settingsSectionHotkeys">الاختصارات</span>
-          </h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="hotkeySettingTitle">اختصار استدعاء دائرة الألعاب</h4>
-              <p class="text-xs text-gray-400" data-t="hotkeySettingDesc">يدعم مفتاحًا مفردًا. يُطبَّق فورًا.</p>
-            </div>
-            <button onclick="startHotkeyCapture()" id="hotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
-          </div>
-          <div id="hotkeyWarning" class="hidden warning-box" data-t="hotkeySingleKeyWarning">
-            تنبيه: المفتاح دون Ctrl/Alt/Shift سيُحجز بالكامل.
-          </div>
-          <div class="flex items-center justify-between border-t border-white/10 pt-4">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-volume-xmark text-red-400"></i>
-                <span data-t="muteEnableTitle">تفعيل اختصار الكتم السريع</span>
-              </h4>
-            </div>
-            <button id="muteEnabledToggle" onclick="toggleMuteEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="muteHotkeyTitle">اختصار الكتم السريع</h4>
-            </div>
-            <button onclick="startMuteHotkeyCapture()" id="muteHotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
-          </div>
-          <div class="flex items-center justify-between border-t border-white/10 pt-4">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
-                <span data-t="overlayHotkeyTitle">اختصار إظهار/إخفاء الـ Overlay</span>
-              </h4>
-            </div>
-            <button onclick="startOverlayHotkeyCapture()" id="overlayHotkeyCaptureBtn" class="hotkey-record-btn" tabindex="0">—</button>
-          </div>
-        </div>
-
-        <!-- قسم 2: يد التحكم -->
-        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-            <i class="fa-solid fa-gamepad text-purple-400"></i>
-            <span data-t="settingsSectionController">يد التحكم (Xbox)</span>
-          </h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="controllerEnableTitle">تفعيل يد التحكم (Xbox)</h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerEnableDesc">يتيح لك فتح دائرة الألعاب بزر من يد Xbox.</p>
-            </div>
-            <button id="controllerEnabledToggle" onclick="toggleControllerEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div id="controllerButtonRow" class="flex items-center justify-between opacity-40 pointer-events-none">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="controllerButtonTitle">الزر الذي يفتح الدائرة</h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerButtonDesc">الافتراضي: زر Start.</p>
-            </div>
-            <select id="controllerButtonSelect" class="sort-select" onchange="onControllerButtonChange(this.value)">
-              <option value="0x0010" data-t="ctrlBtnStart">Start</option>
-              <option value="0x0020" data-t="ctrlBtnBack">Back</option>
-              <option value="0x1000" data-t="ctrlBtnA">A</option>
-              <option value="0x2000" data-t="ctrlBtnB">B</option>
-              <option value="0x4000" data-t="ctrlBtnX">X</option>
-              <option value="0x8000" data-t="ctrlBtnY">Y</option>
-              <option value="0x0100" data-t="ctrlBtnLB">LB</option>
-              <option value="0x0200" data-t="ctrlBtnRB">RB</option>
-              <option value="0x0040" data-t="ctrlBtnLS">Left Stick</option>
-              <option value="0x0080" data-t="ctrlBtnRS">Right Stick</option>
-              <option value="0x0400" data-t="ctrlBtnGuide">Xbox (Guide)</option>
-            </select>
-          </div>
-          <div id="controllerToggleModeRow" class="flex items-center justify-between border-t border-white/10 pt-4 opacity-40 pointer-events-none">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="controllerToggleModeTitle">وضع التبديل (فتح/إغلاق)</h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerToggleModeDesc">عند التفعيل: الضغط مرة أخرى يغلق الدائرة.</p>
-            </div>
-            <button id="controllerToggleModeBtn" onclick="toggleControllerToggleMode()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div id="controllerDuringGameRow" class="flex items-center justify-between border-t border-white/10 pt-4 opacity-40 pointer-events-none">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="controllerDuringGameTitle">استدعاء الدائرة أثناء اللعب</h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="controllerDuringGameDesc">يسمح بزر اليد بفتح الدائرة أثناء اللعب.</p>
-            </div>
-            <button id="controllerDuringGameBtn" onclick="toggleAllowControllerDuringGame()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div class="info-box">
-            <div class="flex items-start gap-2">
-              <i class="fa-solid fa-circle-info mt-0.5"></i>
-              <div class="flex-1">
-                <div class="font-bold mb-1" data-t="shareInfoTitle">بخصوص زر Share في يد Xbox Series</div>
-                <div data-t="shareInfoBody">زر Share غير مدعوم في XInput. يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- قسم 3: المظهر والواجهة -->
-        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-            <i class="fa-solid fa-paintbrush text-pink-400"></i>
-            <span data-t="settingsSectionAppearance">المظهر والواجهة</span>
-          </h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-circle-dot text-yellow-400"></i>
-                <span data-t="hubAlwaysVisibleTitle">إظهار زر الـ Hub دائمًا</span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="hubAlwaysVisibleDesc">عرض زر فتح اللوحة في منتصف الدائرة بدون الحاجة لتمرير الماوس فوقه.</p>
-            </div>
-            <button id="hubAlwaysVisibleToggle" onclick="toggleHubAlwaysVisible()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div class="flex items-center justify-between border-t border-white/10 pt-4">
-            <div><h4 class="font-bold text-white text-sm" data-t="langSettingTitle">لغة الواجهة</h4></div>
-            <select id="langSelect" onchange="nativeAction('setLang', {lang: this.value})" class="sort-select" tabindex="0">
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- قسم 4: النظام -->
-        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-            <i class="fa-solid fa-microchip text-cyan-400"></i>
-            <span data-t="settingsSectionSystem">النظام</span>
-          </h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white text-sm" data-t="autoStartTitle">التشغيل مع بداية ويندوز</h4>
-              <p class="text-xs text-gray-400" data-t="autoStartDesc">يشغّل GameLauncher تلقائيًا عند تسجيل الدخول.</p>
-            </div>
-            <button id="autoStartToggle" onclick="toggleAutoStart()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div class="flex items-center justify-between border-t border-white/10 pt-4">
-            <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-orange-400"></i>
-                <span data-t="restartAsAdminTitle">تشغيل كمسؤول</span>
-                <span id="adminBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30 font-mono"></span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="restartAsAdminDesc">مطلوب لتفعيل FPS. لا يؤثر على الألعاب المفتوحة.</p>
-            </div>
-            <button id="restartAsAdminBtn" onclick="requestRestartAsAdmin()" class="backup-btn primary shrink-0" tabindex="0">
-              <i class="fa-solid fa-rotate-right"></i>
-              <span data-t="restartAsAdminBtn">إعادة التشغيل كمسؤول</span>
-            </button>
-          </div>
-          <div class="flex items-center justify-between border-t border-white/10 pt-4">
-            <div>
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-gauge-high text-emerald-400"></i>
-                <span data-t="overlayEnableTitle">تفعيل الـ Overlay (CPU / RAM)</span>
-              </h4>
-              <p class="text-xs text-gray-400 mt-0.5" data-t="overlayEnableDesc">نافذة صغيرة شفافة تعرض معلومات النظام أثناء اللعب.</p>
-            </div>
-            <button id="overlayEnabledToggle" onclick="toggleOverlayEnabled()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-          </div>
-          <div id="overlayOptionsWrap" class="space-y-3 border-t border-white/10 pt-4 opacity-40 pointer-events-none">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-white text-sm" data-t="overlayShowOnLaunchTitle">إظهاره تلقائياً عند تشغيل لعبة</h4>
-              </div>
-              <button id="overlayShowOnLaunchToggle" onclick="toggleOverlayShowOnLaunch()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
-            </div>
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-200" data-t="overlayOpacityLabel">شفافية الـ Overlay</span>
-                <span class="text-xs font-mono" style="color: var(--accent-2);" id="overlayOpacityVal">85%</span>
-              </div>
-              <input type="range" id="overlayOpacitySlider" min="0.20" max="1" step="0.05" value="0.85" oninput="changeOverlayOpacity(this.value)" onchange="changeOverlayOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
-            </div>
-          </div>
-        </div>
-
-        <!-- قسم 5: الأدوات والإدارة -->
-        <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-            <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-                <i class="fa-solid fa-toolbox text-amber-400"></i>
-                <span data-t="settingsSectionTools">الأدوات والإدارة</span>
-            </h3>
-
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-volume-xmark text-red-400"></i>
-                        <span data-t="mutedAppsTitle">التطبيقات المكتومة حاليًا</span>
-                        <span id="mutedAppsCount" class="text-[10px] text-gray-400 font-mono">(0)</span>
-                    </h4>
-                    <button onclick="refreshMutedApps()" class="icon-action-btn" tabindex="0"><i class="fa-solid fa-rotate-right text-sm"></i></button>
-                </div>
-                <div id="mutedAppsList" class="space-y-2">
-                    <div class="text-center py-3 text-gray-500 text-xs" data-t="noMutedApps">لا توجد تطبيقات مكتومة.</div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm" data-t="bgRadialTitle">خلفية دائرة الألعاب</h4>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="nativeAction('browseRadialBackground')" class="backup-btn" data-t="bgRadialChoose" tabindex="0">اختيار صورة…</button>
+                        <button onclick="nativeAction('clearRadialBackground')" class="backup-btn" data-t="bgRadialClear" tabindex="0">إرجاع الافتراضية</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="border-t border-white/10 pt-4 space-y-3">
-                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-database text-cyan-400"></i>
-                    <span data-t="backupTitle">النسخ الاحتياطي</span>
-                </h4>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="nativeAction('exportBackup')" class="backup-btn primary" tabindex="0"><i class="fa-solid fa-download"></i><span data-t="backupExportBtn">حفظ نسخة احتياطية</span></button>
-                    <button onclick="nativeAction('importBackup')" class="backup-btn" tabindex="0"><i class="fa-solid fa-upload"></i><span data-t="backupImportBtn">استيراد نسخة</span></button>
+            <div class="glass-panel p-5 rounded-2xl space-y-5 max-w-2xl">
+                <h3 class="font-bold text-white text-sm border-b border-white/10 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-droplet text-blue-400"></i>
+                    <span data-t="transparencyTitle">الشفافية</span>
+                </h3>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-200" data-t="radialOpacityLabel">شفافية خلفية دائرة الألعاب</span>
+                        <span class="text-xs font-mono" style="color: var(--accent-2);" id="radialOpacityVal">72%</span>
+                    </div>
+                    <input type="range" id="radialOpacitySlider" min="0" max="1" step="0.02" value="0.72" oninput="changeRadialOpacity(this.value)" onchange="changeRadialOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
+                    <p class="text-[10px] text-gray-500" data-t="radialOpacityHint">تؤثر على الصورة المخصصة كخلفية لدائرة الألعاب.</p>
                 </div>
             </div>
+        </section>
 
-            <div class="border-t border-white/10 pt-4 space-y-3">
-                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-pink-400"></i>
-                    <span data-t="boostRestoreTitle">استرجاع إعدادات Boost</span>
-                </h4>
-                <p class="text-[10px] text-gray-500 leading-relaxed" data-t="boostRestoreDesc">إذا لاحظت أن إعدادات نظامية تغيّرت بسبب Boost، اضغط الزر لاسترجاع القيم الأصلية فوراً.</p>
-                <button onclick="restoreBoostDefaults()" class="backup-btn" tabindex="0">
-                    <i class="fa-solid fa-rotate-left"></i>
-                    <span data-t="boostRestoreBtn">استرجاع إعدادات النظام</span>
-                </button>
+
+        <section id="tab-settings" class="tab-content hidden space-y-4">
+
+            <div class="glass-panel p-4 rounded-2xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-rose-400"></i>
+                    <span data-t="settingsTitle">الإعدادات العامة</span>
+                </h2>
             </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start content-start">
 
-            <div class="border-t border-white/10 pt-4 space-y-3">
-                <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-file-lines text-amber-400"></i>
-                    <span data-t="logTitle">ملف السجل التشخيصي</span>
-                </h4>
-                <button onclick="nativeAction('openLogFile')" class="backup-btn" tabindex="0"><i class="fa-solid fa-folder-open"></i><span data-t="logOpenBtn">فتح ملف السجل</span></button>
+                <!-- ═══ الاختصارات ═══ -->
+                <div class="glass-panel rounded-2xl self-start p-4">
+                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-white/5">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(168,85,247,0.15);color:#c084fc;">
+                            <i class="fa-solid fa-keyboard"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-[13px]" data-t="settingsSectionHotkeys">الاختصارات</h3>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="hotkeySettingTitle">اختصار استدعاء دائرة الألعاب</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="hotkeySettingDesc">يدعم مفتاحًا مفردًا. يُطبَّق فورًا.</p>
+                        </div>
+                        <button onclick="startHotkeyCapture()" id="hotkeyCaptureBtn" class="hotkey-record-btn shrink-0" tabindex="0">—</button>
+                    </div>
+
+                    <div id="hotkeyWarning" class="hidden warning-box mt-2" data-t="hotkeySingleKeyWarning">
+                        تنبيه: المفتاح دون Ctrl/Alt/Shift سيُحجز بالكامل.
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="muteEnableTitle">تفعيل اختصار الكتم السريع</p>
+                        </div>
+                        <button id="muteEnabledToggle" onclick="toggleMuteEnabled()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="muteHotkeyTitle">اختصار الكتم السريع</p>
+                        </div>
+                        <button onclick="startMuteHotkeyCapture()" id="muteHotkeyCaptureBtn" class="hotkey-record-btn shrink-0" tabindex="0">—</button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="overlayHotkeyTitle">اختصار إظهار/إخفاء الـ Overlay</p>
+                        </div>
+                        <button onclick="startOverlayHotkeyCapture()" id="overlayHotkeyCaptureBtn" class="hotkey-record-btn shrink-0" tabindex="0">—</button>
+                    </div>
+                </div>
+
+                <!-- ═══ يد التحكم ═══ -->
+                <div class="glass-panel rounded-2xl self-start p-4">
+                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-white/5">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(59,130,246,0.15);color:#60a5fa;">
+                            <i class="fa-solid fa-gamepad"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-[13px]" data-t="settingsSectionController">يد التحكم (Xbox)</h3>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="controllerEnableTitle">تفعيل يد التحكم (Xbox)</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="controllerEnableDesc">يتيح لك فتح الدائرة بزر من يد Xbox.</p>
+                        </div>
+                        <button id="controllerEnabledToggle" onclick="toggleControllerEnabled()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+
+                    <div id="controllerButtonRow" class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5 opacity-40 pointer-events-none">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="controllerButtonTitle">الزر الذي يفتح الدائرة</p>
+                        </div>
+                        <select id="controllerButtonSelect" class="sort-select shrink-0" onchange="onControllerButtonChange(this.value)">
+                            <option value="0x0010" data-t="ctrlBtnStart">Start</option>
+                            <option value="0x0020" data-t="ctrlBtnBack">Back</option>
+                            <option value="0x1000" data-t="ctrlBtnA">A</option>
+                            <option value="0x2000" data-t="ctrlBtnB">B</option>
+                            <option value="0x4000" data-t="ctrlBtnX">X</option>
+                            <option value="0x8000" data-t="ctrlBtnY">Y</option>
+                            <option value="0x0100" data-t="ctrlBtnLB">LB</option>
+                            <option value="0x0200" data-t="ctrlBtnRB">RB</option>
+                            <option value="0x0040" data-t="ctrlBtnLS">Left Stick</option>
+                            <option value="0x0080" data-t="ctrlBtnRS">Right Stick</option>
+                            <option value="0x0400" data-t="ctrlBtnGuide">Xbox (Guide)</option>
+                        </select>
+                    </div>
+
+                    <div id="controllerToggleModeRow" class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5 opacity-40 pointer-events-none">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="controllerToggleModeTitle">وضع التبديل (فتح/إغلاق)</p>
+                        </div>
+                        <button id="controllerToggleModeBtn" onclick="toggleControllerToggleMode()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+
+                    <div id="controllerDuringGameRow" class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5 opacity-40 pointer-events-none">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="controllerDuringGameTitle">استدعاء الدائرة أثناء اللعب</p>
+                        </div>
+                        <button id="controllerDuringGameBtn" onclick="toggleAllowControllerDuringGame()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+                </div>
+
+                <!-- ═══ المظهر والواجهة ═══ -->
+                <div class="glass-panel rounded-2xl self-start p-4">
+                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-white/5">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(236,72,153,0.15);color:#f472b6;">
+                            <i class="fa-solid fa-paintbrush"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-[13px]" data-t="settingsSectionAppearance">المظهر والواجهة</h3>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-b border-white/5">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-white" data-t="hubAlwaysVisibleTitle">إظهار زر الـ Hub دائمًا</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="hubAlwaysVisibleDesc">عرض زر فتح اللوحة في منتصف الدائرة.</p>
+                            </div>
+                            <button id="hubAlwaysVisibleToggle" onclick="toggleHubAlwaysVisible()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-b border-white/5">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-white" data-t="langSettingTitle">لغة الواجهة</p>
+                            </div>
+                            <select id="langSelect" onchange="nativeAction('setLang', {lang: this.value})" class="sort-select shrink-0" tabindex="0">
+                                <option value="ar">العربية</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-b border-white/5">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-white" data-t="radialNoGlowTitle">أيقونات صافية (بدون إطار)</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="radialNoGlowDesc">إخفاء الإطار والتوهج والظلال — الأيقونة فقط.</p>
+                            </div>
+                            <button id="radialNoGlowToggle" onclick="toggleRadialNoGlow()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-b border-white/5">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-white" data-t="panelGlassTitle">مظهر زجاجي حقيقي للوحة التحكم</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="panelGlassDesc">تأثير Acrylic شفاف يُظهر خلفية سطح المكتب.</p>
+                            </div>
+                            <button id="panelGlassToggle" onclick="togglePanelGlass()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 py-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-white" data-t="uiOpacityTitle">شفافية لوحة التحكم</span>
+                                <span class="text-[10px] font-mono" style="color: var(--accent-2);" id="opacityVal">32%</span>
+                            </div>
+                            <input type="range" id="opacitySlider" min="0.10" max="0.85" step="0.05" value="0.32" oninput="changeGlassOpacity(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ النظام ═══ -->
+                <div class="glass-panel rounded-2xl self-start p-4">
+                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-white/5">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(249,115,22,0.15);color:#fb923c;">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-[13px]" data-t="settingsSectionSystem">النظام</h3>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="autoStartTitle">التشغيل مع بداية ويندوز</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="autoStartDesc">يشغّل GameLauncher تلقائيًا عند تسجيل الدخول.</p>
+                        </div>
+                        <button id="autoStartToggle" onclick="toggleAutoStart()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                <p class="text-xs font-bold text-white" data-t="restartAsAdminTitle">تشغيل كمسؤول</p>
+                                <span id="adminBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30 font-mono"></span>
+                            </div>
+                            <p class="text-[10px] text-gray-500" data-t="restartAsAdminDesc">مطلوب لتفعيل FPS.</p>
+                        </div>
+                        <button id="restartAsAdminBtn" onclick="requestRestartAsAdmin()" class="backup-btn primary shrink-0" tabindex="0">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span data-t="restartAsAdminBtn">إعادة كمسؤول</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white" data-t="overlayEnableTitle">تفعيل الـ Overlay (CPU / RAM)</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" data-t="overlayEnableDesc">نافذة صغيرة شفافة أثناء اللعب.</p>
+                        </div>
+                        <button id="overlayEnabledToggle" onclick="toggleOverlayEnabled()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                    </div>
+
+                    <div id="overlayOptionsWrap" class="opacity-40 pointer-events-none">
+                        <div class="flex items-center justify-between gap-3 py-2 min-h-[44px] border-t border-white/5">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-white" data-t="overlayShowOnLaunchTitle">إظهاره تلقائياً عند تشغيل لعبة</p>
+                            </div>
+                            <button id="overlayShowOnLaunchToggle" onclick="toggleOverlayShowOnLaunch()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+                        </div>
+                        <div class="flex flex-col gap-1.5 py-2.5 border-t border-white/5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-gray-300" data-t="overlayOpacityLabel">شفافية الـ Overlay</span>
+                                <span class="text-[10px] font-mono" style="color: var(--accent-2);" id="overlayOpacityVal">85%</span>
+                            </div>
+                            <input type="range" id="overlayOpacitySlider" min="0.20" max="1" step="0.05" value="0.85" oninput="changeOverlayOpacity(this.value)" onchange="changeOverlayOpacityCommit(this.value)" class="w-full cursor-pointer" style="accent-color: var(--accent-2);" tabindex="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ الأدوات ═══ -->
+                <div class="glass-panel rounded-2xl self-start p-4 lg:col-span-2">
+                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-white/5">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(16,185,129,0.15);color:#34d399;">
+                            <i class="fa-solid fa-toolbox"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-[13px]" data-t="settingsSectionTools">الأدوات والإدارة</h3>
+                    </div>
+
+                    <div class="flex flex-col gap-2 py-2.5 border-t border-white/5">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-volume-xmark text-red-400 text-xs"></i>
+                                <span class="text-xs font-bold text-white" data-t="mutedAppsTitle">التطبيقات المكتومة حاليًا</span>
+                                <span id="mutedAppsCount" class="text-[10px] text-gray-400 font-mono">(0)</span>
+                            </div>
+                            <button onclick="refreshMutedApps()" class="icon-action-btn" tabindex="0"><i class="fa-solid fa-rotate-right text-sm"></i></button>
+                        </div>
+                        <div id="mutedAppsList" class="space-y-2">
+                            <div class="text-center py-3 text-gray-500 text-xs" data-t="noMutedApps">لا توجد تطبيقات مكتومة.</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 mt-1 border-t border-white/5">
+                        <div class="flex flex-col gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-database text-cyan-400 text-sm"></i>
+                                <span class="text-xs font-bold text-white" data-t="backupTitle">النسخ الاحتياطي</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 leading-tight" data-t="backupDesc">احفظ إعداداتك كملف، أو استعد من نسخة سابقة.</p>
+                            <div class="flex gap-2 mt-auto pt-1">
+                                <button onclick="nativeAction('exportBackup')" class="backup-btn primary flex-1 justify-center" tabindex="0"><i class="fa-solid fa-download"></i><span data-t="backupExportBtn">حفظ</span></button>
+                                <button onclick="nativeAction('importBackup')" class="backup-btn flex-1 justify-center" tabindex="0"><i class="fa-solid fa-upload"></i><span data-t="backupImportBtn">استيراد</span></button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-rocket text-amber-400 text-sm"></i>
+                                <span class="text-xs font-bold text-white" data-t="boostRestoreTitle">استرجاع إعدادات Boost</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 leading-tight" data-t="boostRestoreDesc">استعد القيم الأصلية التي عدّلها Boost تلقائياً.</p>
+                            <button onclick="restoreBoostDefaults()" class="backup-btn flex-1 justify-center mt-auto" tabindex="0">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span data-t="boostRestoreBtn">استرجاع إعدادات النظام</span>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col gap-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-file-lines text-purple-400 text-sm"></i>
+                                <span class="text-xs font-bold text-white" data-t="logTitle">ملف السجل التشخيصي</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 leading-tight" data-t="logDesc">افتح السجل لتشخيص مشاكل التشغيل والأخطاء.</p>
+                            <button onclick="nativeAction('openLogFile')" class="backup-btn flex-1 justify-center mt-auto" tabindex="0">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span data-t="logOpenBtn">فتح السجل</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </div>
-      </section>
+        </section>
+
 
     </main>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 1: تأكيد عام
+═══════════════════════════════════════════════════════ -->
 <div id="confirmModalOverlay" class="modal-overlay hidden">
   <div class="glass-panel rounded-2xl p-5 max-w-sm w-full text-center">
     <div id="confirmModalIconWrap" class="w-12 h-12 mx-auto rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mb-3">
@@ -859,6 +928,9 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 2: exe list
+═══════════════════════════════════════════════════════ -->
 <div id="exeListModalOverlay" class="modal-overlay hidden">
   <div class="glass-panel rounded-2xl p-5 max-w-2xl w-full flex flex-col max-h-[85vh]">
     <div class="flex items-start gap-3 mb-4">
@@ -886,6 +958,9 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 3: تقرير الأداء
+═══════════════════════════════════════════════════════ -->
 <div id="perfReportModalOverlay" class="modal-overlay hidden">
   <div class="glass-panel rounded-2xl p-5 max-w-5xl w-full flex flex-col max-h-[90vh]">
     <div class="flex items-start justify-between gap-3 mb-4">
@@ -902,7 +977,6 @@
         <i class="fa-solid fa-xmark text-base"></i>
       </button>
     </div>
-
     <div class="flex-1 grid grid-cols-12 gap-4 overflow-hidden min-h-0">
       <aside class="col-span-4 xl:col-span-3 border-e border-white/10 pe-3 overflow-y-auto">
         <div class="flex items-center justify-between mb-2 px-1">
@@ -917,13 +991,235 @@
         </div>
         <div id="perfSessionList" class="space-y-1.5"></div>
       </aside>
-
       <div class="col-span-8 xl:col-span-9 overflow-y-auto pe-1" id="perfSessionDetail">
         <div class="text-center py-8 text-gray-500 text-sm">
           <i class="fa-solid fa-chart-line text-3xl mb-3 opacity-30"></i>
           <p data-t="perfSelectSessionHint">اختر جلسة من القائمة لعرض تفاصيلها</p>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 4: سجل الجلسات
+═══════════════════════════════════════════════════════ -->
+<div id="sessionHistoryModalOverlay" class="modal-overlay hidden">
+  <div class="glass-panel rounded-2xl p-5 max-w-3xl w-full flex flex-col max-h-[85vh]">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style="background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3);">
+          <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-2);"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-white truncate" id="sessionHistoryGameName">—</h3>
+          <p id="sessionHistorySubtitle" class="text-xs text-gray-400 mt-0.5 truncate" dir="ltr"></p>
+        </div>
+      </div>
+      <button onclick="closeSessionHistory()" class="icon-action-btn shrink-0" tabindex="0" title="إغلاق">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+    <div class="flex items-center justify-between gap-3 mb-3 px-1 flex-wrap">
+      <div class="flex items-center gap-4 text-xs flex-wrap">
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-calendar-day text-purple-400"></i>
+          <span class="text-gray-400" data-t="statsHistoryDays">الأيام:</span>
+          <span class="font-bold text-white font-mono" id="sessionHistoryDaysCount">0</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-gamepad text-cyan-400"></i>
+          <span class="text-gray-400" data-t="statsHistorySessions">الجلسات:</span>
+          <span class="font-bold text-white font-mono" id="sessionHistorySessionsCount">0</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-hourglass-half text-emerald-400"></i>
+          <span class="text-gray-400" data-t="statsHistoryTotal">الإجمالي:</span>
+          <span class="font-bold text-emerald-300 font-mono" id="sessionHistoryTotalTime">—</span>
+        </div>
+      </div>
+      <button onclick="clearSessionHistory()" id="sessionHistoryClearBtn" class="text-[10px] text-gray-400 hover:text-red-300 border border-white/10 hover:border-red-500/40 rounded-lg px-3 py-1 transition flex items-center gap-1" tabindex="0">
+        <i class="fa-solid fa-trash text-[10px]"></i>
+        <span data-t="statsHistoryClear">حذف السجل</span>
+      </button>
+    </div>
+    <div id="sessionHistoryList" class="flex-1 overflow-y-auto space-y-3 pe-1">
+      <div class="text-center py-8 text-gray-500 text-sm">
+        <i class="fa-solid fa-clock-rotate-left text-3xl mb-3 opacity-30"></i>
+        <p data-t="statsHistoryLoading">جاري التحميل...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 5: تصميم ثيم مخصص
+═══════════════════════════════════════════════════════ -->
+<div id="customThemeModalOverlay" class="modal-overlay hidden">
+  <div class="glass-panel rounded-2xl p-5 max-w-2xl w-full flex flex-col max-h-[90vh] overflow-y-auto">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style="background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3);">
+          <i class="fa-solid fa-palette" style="color: var(--accent-2);"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-white" data-t="customThemeTitle">تصميم ثيمي الخاص</h3>
+          <p class="text-xs text-gray-400 mt-0.5" data-t="customThemeSubtitle">اختر 4 ألوان + اضبط 3 قيم</p>
+        </div>
+      </div>
+      <button onclick="closeCustomThemeModal()" class="icon-action-btn shrink-0" tabindex="0" title="إغلاق">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+
+    <!-- 4 ألوان -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <button onclick="pickCustomThemeColor('accent')" id="pickAccentBtn" class="w-12 h-12 rounded-lg border-2 border-white/20 shrink-0 cursor-pointer transition hover:scale-110" style="background:#7c3aed;"></button>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-white" data-t="customThemeAccent">اللون الأساسي</p>
+          <p class="text-[10px] text-gray-500 mt-0.5 font-mono" id="accentHexVal">#7c3aed</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <button onclick="pickCustomThemeColor('secondary')" id="pickSecondaryBtn" class="w-12 h-12 rounded-lg border-2 border-white/20 shrink-0 cursor-pointer transition hover:scale-110" style="background:#a855f7;"></button>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-white" data-t="customThemeSecondary">اللون الثانوي</p>
+          <p class="text-[10px] text-gray-500 mt-0.5 font-mono" id="secondaryHexVal">#a855f7</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <button onclick="pickCustomThemeColor('bg')" id="pickBgBtn" class="w-12 h-12 rounded-lg border-2 border-white/20 shrink-0 cursor-pointer transition hover:scale-110" style="background:#150f2c;"></button>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-white" data-t="customThemeBg">الخلفية</p>
+          <p class="text-[10px] text-gray-500 mt-0.5 font-mono" id="bgHexVal">#150f2c</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <button onclick="pickCustomThemeColor('card')" id="pickCardBtn" class="w-12 h-12 rounded-lg border-2 border-white/20 shrink-0 cursor-pointer transition hover:scale-110" style="background:#1e1636;"></button>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-white" data-t="customThemeCard">البطاقات</p>
+          <p class="text-[10px] text-gray-500 mt-0.5 font-mono" id="cardHexVal">#1e1636</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 سلايدرز -->
+    <div class="space-y-4 mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customThemeCardOpacity">شفافية البطاقات</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="ctCardOpacityVal">32%</span>
+        </div>
+        <input type="range" id="ctCardOpacitySlider" min="0.10" max="0.85" step="0.01" value="0.32" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customThemeAccentStrength">قوة التمييز</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="ctAccentStrengthVal">70%</span>
+        </div>
+        <input type="range" id="ctAccentStrengthSlider" min="0" max="1" step="0.05" value="0.70" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customThemeBgGlow">توهج الخلفية</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="ctBgGlowVal">40%</span>
+        </div>
+        <input type="range" id="ctBgGlowSlider" min="0" max="1" step="0.05" value="0.40" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+    </div>
+
+    <!-- معاينة -->
+    <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 mb-4">
+      <p class="text-xs font-bold text-white mb-2" data-t="customThemePreview">معاينة</p>
+      <div class="flex items-center gap-3">
+        <div class="flex gap-1">
+          <div class="w-8 h-8 rounded-md border border-white/10" id="previewAccent"></div>
+          <div class="w-8 h-8 rounded-md border border-white/10" id="previewSecondary"></div>
+          <div class="w-8 h-8 rounded-md border border-white/10" id="previewBg"></div>
+          <div class="w-8 h-8 rounded-md border border-white/10" id="previewCard"></div>
+        </div>
+        <button class="px-3 py-1.5 rounded-lg text-xs font-bold text-white" id="previewPrimaryBtn" data-t="customThemePreviewBtn">زر أساسي</button>
+        <button class="px-3 py-1.5 rounded-lg text-xs font-bold text-white" id="previewSecondaryBtn" data-t="customThemePreviewBtn2">زر ثانوي</button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-3 border-t border-white/10">
+      <button onclick="resetCustomTheme()" class="py-2 px-4 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 transition" data-t="customThemeReset">مسح</button>
+      <div class="flex-1"></div>
+      <button onclick="closeCustomThemeModal()" class="py-2 px-4 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-gray-200 transition" data-t="confirmCancel">إلغاء</button>
+      <button onclick="saveCustomTheme()" class="py-2 px-6 rounded-xl text-xs font-bold text-white transition" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2));" data-t="customThemeSave">حفظ وتفعيل</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL 6: تصميم نمط مخصص
+═══════════════════════════════════════════════════════ -->
+<div id="customStyleModalOverlay" class="modal-overlay hidden">
+  <div class="glass-panel rounded-2xl p-5 max-w-2xl w-full flex flex-col max-h-[90vh] overflow-y-auto">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style="background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3);">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-2);"></i>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-white" data-t="customStyleTitle">تصميم نمطك الخاص</h3>
+          <p class="text-xs text-gray-400 mt-0.5" data-t="customStyleSubtitle">اضبط 5 قيم لإنشاء نمط الدائرة</p>
+        </div>
+      </div>
+      <button onclick="closeCustomStyleModal()" class="icon-action-btn shrink-0" tabindex="0" title="إغلاق">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customStyleRingCount">عدد الحلقات</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="csRingCountVal">2</span>
+        </div>
+        <input type="range" id="csRingCountSlider" min="1" max="4" step="1" value="2" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customStyleRingThickness">سماكة الحلقة</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="csRingThicknessVal">2 px</span>
+        </div>
+        <input type="range" id="csRingThicknessSlider" min="1" max="8" step="1" value="2" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+
+      <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+        <div>
+          <p class="text-xs font-bold text-white" data-t="customStyleDashed">حلقة متقطعة</p>
+          <p class="text-[10px] text-gray-500 mt-0.5" data-t="customStyleDashedHint">عند التفعيل تظهر الحلقات كنقاط متقطعة</p>
+        </div>
+        <button id="csDashedToggle" onclick="toggleCustomStyleDashed()" class="pill-switch shrink-0" tabindex="0"><span class="pill-switch-knob"></span></button>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customStyleGlowLayers">طبقات التوهج</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="csGlowLayersVal">1</span>
+        </div>
+        <input type="range" id="csGlowLayersSlider" min="0" max="3" step="1" value="1" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-200" data-t="customStyleGlowStrength">شدة التوهج</span>
+          <span class="text-xs font-mono" style="color: var(--accent-2);" id="csGlowStrengthVal">60%</span>
+        </div>
+        <input type="range" id="csGlowStrengthSlider" min="0" max="1" step="0.05" value="0.60" class="w-full cursor-pointer" style="accent-color: var(--accent-2);">
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-4 mt-4 border-t border-white/10">
+      <button onclick="resetCustomRadialStyle()" class="py-2 px-4 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 transition" data-t="customStyleReset">مسح</button>
+      <div class="flex-1"></div>
+      <button onclick="closeCustomStyleModal()" class="py-2 px-4 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-gray-200 transition" data-t="confirmCancel">إلغاء</button>
+      <button onclick="saveCustomRadialStyle()" class="py-2 px-6 rounded-xl text-xs font-bold text-white transition" style="background: linear-gradient(90deg, var(--accent-1), var(--accent-2));" data-t="customStyleSave">حفظ وتفعيل</button>
     </div>
   </div>
 </div>

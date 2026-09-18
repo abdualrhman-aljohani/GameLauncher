@@ -4,63 +4,27 @@
  * Licensed under PolyForm Noncommercial 1.0.0
  * ----------------------------------------------------------------------- */
 
-const RADIAL_META = [
-  { icon: 'fa-circle-notch',   descAr: 'حلقة بسيطة محيطة بالأيقونة.',              descEn: 'Simple outline ring.' },
-  { icon: 'fa-bolt',           descAr: 'توهّج نيون متعدد الطبقات.',                 descEn: 'Layered neon glow.' },
-  { icon: 'fa-swatchbook',     descAr: 'حلقة بتدرج لوني ناعم.',                      descEn: 'Soft gradient ring.' },
-  { icon: 'fa-minus',          descAr: 'دون أي إطار — ظل خفيف فقط.',                descEn: 'Just a soft shadow.' },
-  { icon: 'fa-shapes',         descAr: 'إطار سداسي بدل الدائري.',                    descEn: 'Hexagon frame.' },
-  { icon: 'fa-meteor',         descAr: 'قوس مضيء جزئي حركي.',                        descEn: 'Bright partial arc.' },
-  { icon: 'fa-burst',          descAr: 'انفجاري — أشعة وشظايا (أكشن).',              descEn: 'Burst — rays and sparks (action).' },
-  { icon: 'fa-spa',            descAr: 'ساكورا — بتلات وردية (أنمي).',               descEn: 'Sakura — pink petals (anime).' },
-  { icon: 'fa-cube',           descAr: 'زجاج مصنفر — لمعة وملمس شفاف.',              descEn: 'Frosted glass — glossy finish.' },
-  { icon: 'fa-hurricane',      descAr: 'دوامة — أقواس دوّارة.',                       descEn: 'Vortex — swirling arcs.' },
-  { icon: 'fa-circle',         descAr: 'حلقة نظيفة واحدة — بدون أي ظل أو توهّج.',    descEn: 'One clean ring — zero shadow, zero glow.' },
-  { icon: 'fa-rainbow',        descAr: 'توهّج شفقي بتدرج متعدد الألوان.',            descEn: 'Aurora — flowing multicolor gradient glow.' },
-  { icon: 'fa-satellite-dish', descAr: 'هالة تقنية منقّطة بإحساس واجهة سايبر.',      descEn: 'HUD halo — dotted sci-fi ring with tick marks.' },
-  { icon: 'fa-water',          descAr: 'موجات متداخلة — 3 حلقات داخل بعض.',          descEn: 'Ripple — three concentric waves.' },
-  { icon: 'fa-gem',            descAr: 'بلّورة سداسية بخطوط داخلية.',                descEn: 'Crystal — faceted hexagon with inner lines.' },
-  { icon: 'fa-atom',           descAr: 'حقل بلازما بتوهّج متدرج.',                   descEn: 'Plasma — glowing polar gradient field.' },
-  { icon: 'fa-satellite',      descAr: 'حلقة مدارية بنقاط تدور حولها.',              descEn: 'Orbit — main ring with rotating dots.' },
-  { icon: 'fa-table-cells',    descAr: 'إطار بكسل — 8 مربعات على المحيط.',           descEn: 'Pixel — eight small squares on the edge.' },
-  { icon: 'fa-microchip',      descAr: 'لوحة إلكترونية — عقد وخطوط.',                descEn: 'Circuit — board with nodes and traces.' },
-  { icon: 'fa-fire',           descAr: 'لهب — أقواس نارية للأعلى.',                   descEn: 'Flame — fire arcs pointing up.' },
-];
+// ✅ 6 أنماط دائرة فقط (5 + 1 مخصص)
+const RADIAL_META = {
+  13: { icon: 'fa-water',          descAr: 'موجات متداخلة — 3 حلقات داخل بعض.', descEn: 'Ripple — three concentric waves.' },
+  19: { icon: 'fa-fire',           descAr: 'لهب — أقواس نارية للأعلى.',          descEn: 'Flame — fire arcs pointing up.' },
+  1:  { icon: 'fa-bolt',           descAr: 'توهّج نيون متعدد الطبقات.',          descEn: 'Layered neon glow.' },
+  2:  { icon: 'fa-swatchbook',     descAr: 'حلقة بتدرج لوني ناعم.',              descEn: 'Soft gradient ring.' },
+  11: { icon: 'fa-rainbow',        descAr: 'توهّج شفقي بتدرج متعدد الألوان.',   descEn: 'Aurora — flowing multicolor gradient glow.' },
+  20: { icon: 'fa-wand-magic-sparkles', descAr: 'نمط مخصص من تصميمك.',           descEn: 'Custom — designed by you.' },
+};
 
+// ✅ قائمة الأنماط المرئية (بترتيب العرض)
+const VISIBLE_RADIAL_STYLES = [13, 19, 1, 2, 11, 20];
+
+// ✅ 6 ثيمات فقط + 1 مخصص
 const PANEL_PRESETS = [
-  { id: 'purple',     nameAr: 'بنفسجي',    nameEn: 'Purple',     colors: ['#7c3aed', '#a855f7'], icon: 'fa-star' },
-  { id: 'cyber',      nameAr: 'سيبراني',   nameEn: 'Cyber',      colors: ['#0ea5e9', '#22d3ee'], icon: 'fa-bolt' },
-  { id: 'ember',      nameAr: 'جمر',       nameEn: 'Ember',      colors: ['#dc2626', '#f97316'], icon: 'fa-fire' },
-  { id: 'forest',     nameAr: 'غابة',      nameEn: 'Forest',     colors: ['#059669', '#10b981'], icon: 'fa-leaf' },
-  { id: 'gray',       nameAr: 'رمادي',     nameEn: 'Gray',       colors: ['#64748b', '#cbd5e1'], icon: 'fa-moon' },
-  { id: 'dracula',    nameAr: 'دراكولا',   nameEn: 'Dracula',    colors: ['#bd93f9', '#ff79c6'], icon: 'fa-ghost' },
-  { id: 'nord',       nameAr: 'نورد',      nameEn: 'Nord',       colors: ['#88c0d0', '#5e81ac'], icon: 'fa-snowflake' },
-  { id: 'catppuccin', nameAr: 'كاتبوتشين', nameEn: 'Catppuccin', colors: ['#cba6f7', '#f5c2e7'], icon: 'fa-cat' },
-  { id: 'synthwave',  nameAr: 'ريترو',     nameEn: 'Synthwave',  colors: ['#f92aad', '#36f9f6'], icon: 'fa-compact-disc' },
-  { id: 'tokyo',      nameAr: 'طوكيو',     nameEn: 'Tokyo Night',colors: ['#7aa2f7', '#bb9af7'], icon: 'fa-city' },
-  { id: 'gruvbox',    nameAr: 'غروب',      nameEn: 'Gruvbox',    colors: ['#d79921', '#b8bb26'], icon: 'fa-wheat-awn' },
-  { id: 'rosepine',   nameAr: 'وردة',      nameEn: 'Rosé Pine',  colors: ['#ebbcba', '#c4a7e7'], icon: 'fa-rose' },
-  { id: 'solarized',  nameAr: 'مشمس',      nameEn: 'Solarized',  colors: ['#268bd2', '#2aa198'], icon: 'fa-sun' },
-  { id: 'obsidian',   nameAr: 'أوبسيديان', nameEn: 'Obsidian',   colors: ['#6366f1', '#818cf8'], icon: 'fa-gem' },
-  { id: 'sunset',     nameAr: 'غروب',      nameEn: 'Sunset',     colors: ['#fb923c', '#f472b6'], icon: 'fa-cloud-sun' },
-  { id: 'ocean',      nameAr: 'محيط',      nameEn: 'Ocean',      colors: ['#0891b2', '#3b82f6'], icon: 'fa-water' },
-  { id: 'royal',      nameAr: 'ملكي',      nameEn: 'Royal',      colors: ['#a855f7', '#eab308'], icon: 'fa-crown' },
-  { id: 'blossom',    nameAr: 'إزهار',     nameEn: 'Blossom',    colors: ['#fb7185', '#fda4af'], icon: 'fa-heart' },
-  { id: 'midnight',   nameAr: 'منتصف الليل', nameEn: 'Midnight', colors: ['#38bdf8', '#60a5fa'], icon: 'fa-moon' },
-  { id: 'cherry',     nameAr: 'كرز',        nameEn: 'Cherry',    colors: ['#dc2626', '#f87171'], icon: 'fa-heart' },
-  { id: 'lavender',   nameAr: 'خزامي',      nameEn: 'Lavender',  colors: ['#a78bfa', '#c4b5fd'], icon: 'fa-spa' },
-  { id: 'coffee',     nameAr: 'قهوة',       nameEn: 'Coffee',    colors: ['#d4a373', '#f2cc8f'], icon: 'fa-mug-hot' },
-  { id: 'matrix',     nameAr: 'ماتريكس',    nameEn: 'Matrix',    colors: ['#22c55e', '#4ade80'], icon: 'fa-code' },
-  { id: 'ice',        nameAr: 'ثلج',        nameEn: 'Ice',       colors: ['#60a5fa', '#93c5fd'], icon: 'fa-snowflake' },
-  { id: 'volcano',    nameAr: 'بركان',      nameEn: 'Volcano',   colors: ['#ea580c', '#fbbf24'], icon: 'fa-fire-flame-curved' },
-  { id: 'cyberpunk',  nameAr: 'سايبربانك',  nameEn: 'Cyberpunk', colors: ['#facc15', '#ec4899'], icon: 'fa-bolt' },
-  { id: 'sakura-dawn',nameAr: 'فجر الساكورا', nameEn: 'Sakura Dawn', colors: ['#f9a8d4', '#c4b5fd'], icon: 'fa-fan' },
-  { id: 'deep-ocean', nameAr: 'محيط عميق',  nameEn: 'Deep Ocean',colors: ['#0d9488', '#5eead4'], icon: 'fa-water' },
-  { id: 'vapor',      nameAr: 'فيبورويف',   nameEn: 'Vapor',     colors: ['#f472b6', '#67e8f9'], icon: 'fa-cassette-tape' },
-  { id: 'emerald',    nameAr: 'زمرد',       nameEn: 'Emerald',   colors: ['#10b981', '#eab308'], icon: 'fa-gem' },
-  { id: 'monochrome', nameAr: 'أحادي',      nameEn: 'Monochrome',colors: ['#a1a1aa', '#f4f4f5'], icon: 'fa-circle-half-stroke' },
-  { id: 'nebula',     nameAr: 'سديم',       nameEn: 'Nebula',    colors: ['#8b5cf6', '#ec4899'], icon: 'fa-star' },
-  { id: 'sunset-beach',nameAr: 'شاطئ الغروب',nameEn: 'Sunset Beach',colors: ['#f97316', '#fbbf24'], icon: 'fa-sun' },
+  { id: 'ember',     nameAr: 'جمر',       nameEn: 'Ember',     colors: ['#dc2626', '#f97316'], icon: 'fa-fire' },
+  { id: 'nord',      nameAr: 'نورد',      nameEn: 'Nord',      colors: ['#88c0d0', '#5e81ac'], icon: 'fa-snowflake' },
+  { id: 'obsidian',  nameAr: 'أوبسيديان', nameEn: 'Obsidian',  colors: ['#6366f1', '#818cf8'], icon: 'fa-gem' },
+  { id: 'royal',     nameAr: 'ملكي',      nameEn: 'Royal',     colors: ['#a855f7', '#eab308'], icon: 'fa-crown' },
+  { id: 'cherry',    nameAr: 'كرز',       nameEn: 'Cherry',    colors: ['#dc2626', '#f87171'], icon: 'fa-heart' },
+  { id: 'nebula',    nameAr: 'سديم',      nameEn: 'Nebula',    colors: ['#8b5cf6', '#ec4899'], icon: 'fa-star' },
 ];
 
 const I18N = {
@@ -74,7 +38,7 @@ const I18N = {
     gamesListTitle: 'الألعاب', companionsTitle: 'البرامج المرافقة',
     selectGameHint: 'اختر لعبةً من القائمة أولًا.', addCompanionBtn: 'إضافة برنامج مرافق',
     designTitle: 'تخصيص التصميم والنمط', presetsTitle: 'ثيم اللوحة',
-    presetsDesc: 'اختر من 33 ثيمًا جاهزًا.',
+    presetsDesc: 'اختر من الثيمات الجاهزة أو صمم ثيمك الخاص.',
     radialTitle: 'نمط رسم الدائرة', backgroundsTitle: 'الخلفيات العامة',
     transparencyTitle: 'الشفافية',
     uiOpacityTitle: 'شفافية لوحة التحكم',
@@ -165,6 +129,7 @@ const I18N = {
     runningLabel: 'قيد التشغيل',
     openFolderTooltip: 'افتح مجلد ملف اللعبة',
     backupTitle: 'النسخ الاحتياطي',
+    backupDesc: 'احفظ إعداداتك كملف، أو استعد من نسخة سابقة.',
     backupExportBtn: 'حفظ نسخة احتياطية',
     backupImportBtn: 'استيراد نسخة',
     mutedAppsTitle: 'التطبيقات المكتومة حاليًا',
@@ -173,6 +138,7 @@ const I18N = {
     hubAlwaysVisibleTitle: 'إظهار زر الـ Hub دائمًا',
     hubAlwaysVisibleDesc: 'عرض زر فتح اللوحة في منتصف الدائرة بدون الحاجة لتمرير الماوس فوقه.',
     logTitle: 'ملف السجل التشخيصي',
+    logDesc: 'افتح السجل لتشخيص مشاكل التشغيل والأخطاء.',
     logOpenBtn: 'فتح ملف السجل',
     controllerEnableTitle: 'تفعيل يد التحكم (Xbox)',
     controllerEnableDesc: 'يتيح لك فتح الدائرة بزر من يد Xbox.',
@@ -193,12 +159,10 @@ const I18N = {
     ctrlBtnA: 'A', ctrlBtnB: 'B', ctrlBtnX: 'X', ctrlBtnY: 'Y',
     ctrlBtnLB: 'LB (Left Shoulder)', ctrlBtnRB: 'RB (Right Shoulder)',
     ctrlBtnLS: 'Left Stick', ctrlBtnRS: 'Right Stick', ctrlBtnGuide: 'Xbox (Guide)',
-    shareInfoTitle: 'بخصوص زر Share في يد Xbox Series',
-    shareInfoBody: 'زر Share غير مدعوم في XInput (واجهة ويندوز الرسمية). يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي من مايكروسوفت على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.',
-       boostRestoreTitle: 'استرجاع إعدادات Boost',
-       boostRestoreDesc: 'إذا لاحظت أن إعدادات نظامية تغيّرت بسبب Boost، اضغط الزر لاسترجاع القيم الأصلية فوراً.',
-       boostRestoreBtn: 'استرجاع إعدادات النظام',
-       boostRestoreConfirm: 'هل تريد استرجاع القيم الأصلية لإعدادات النظام التي عدّلها Boost؟',
+    boostRestoreTitle: 'استرجاع إعدادات Boost',
+    boostRestoreDesc: 'إذا لاحظت أن إعدادات نظامية تغيّرت بسبب Boost، اضغط الزر لاسترجاع القيم الأصلية فوراً.',
+    boostRestoreBtn: 'استرجاع إعدادات النظام',
+    boostRestoreConfirm: 'هل تريد استرجاع القيم الأصلية لإعدادات النظام التي عدّلها Boost؟',
     detailsBlackBoxTitle: 'مراقبة الأداء (Black Box)',
     detailsBlackBoxEnable: 'تفعيل مراقبة الأداء لهذه اللعبة',
     detailsBlackBoxEnableHint: 'يجمع FPS والحرارة والاستهلاك أثناء اللعب لعرض تقرير مفصل.',
@@ -209,19 +173,12 @@ const I18N = {
     detailsBlackBoxAdmin: 'Admin',
     detailsBlackBoxSafe: 'آمن',
     detailsBlackBoxViewReport: 'عرض التقرير',
-    detailsBlackBoxExportCsv: 'تصدير CSV',
-    blackBoxComingSoon: 'هذه الميزة قيد التطوير — قريبًا بإذن الله!',
     restartAsAdminTitle: 'تشغيل كمسؤول',
     restartAsAdminDesc: 'مطلوب لتفعيل FPS. لا يؤثر على الألعاب المفتوحة.',
     restartAsAdminBtn: 'إعادة التشغيل كمسؤول',
     adminYes: 'Admin',
     adminNo: 'ليس Admin',
-    adminRestarting: 'جاري إعادة التشغيل...',
-    adminAlreadyOk: 'أنت بالفعل تشغل كمسؤول ✅',
-    adminRestartFailed: 'فشل إعادة التشغيل. جرّب يدويًا: Right-click → Run as Administrator.',
-    adminNotRunning: 'المحرك متوقف. سيتم تشغيله كمسؤول.',
     blackBoxNeedsAdmin: 'لتفعيل FPS، يحتاج GameLauncher صلاحيات المسؤول. اضغط "إعادة التشغيل كمسؤول" في الإعدادات أو استمر بدون FPS.',
-    // ✅ Boost FPS
     boostFpsTitle: 'Boost FPS',
     boostFpsDesc: 'تحسينات تلقائية عند تشغيل اللعبة، تتراجع عند الإغلاق.',
     boostDisableCore0: 'تعطيل Core 0',
@@ -271,7 +228,50 @@ const I18N = {
     perfChartFpsTitle: 'FPS + Frame Time عبر الزمن',
     perfChartTempTitle: 'الحرارة (CPU + GPU)',
     perfChartRamTitle: 'استهلاك RAM / VRAM',
+    statsHistory: 'سجل الجلسات',
+    statsHistoryTitle: 'سجل الجلسات',
+    statsHistoryLoading: 'جاري التحميل...',
+    statsHistoryEmpty: 'لا توجد جلسات محفوظة بعد. ابدأ اللعب ليسجل تلقائياً.',
+    statsHistoryDays: 'الأيام:',
+    statsHistorySessions: 'الجلسات:',
+    statsHistorySessionsShort: 'جلسة',
+    statsHistoryTotal: 'الإجمالي:',
+    statsHistoryClear: 'حذف السجل',
+    statsHistoryClearConfirm: 'هل تريد حذف سجل الجلسات لهذه اللعبة بالكامل؟ لا يمكن التراجع.',
+    // ✅ تصميم مخصص
+    designCustomThemeBtn: 'تصميم ثيمي الخاص',
+    designCustomStyleBtn: 'تصميم نمطك الخاص',
+    radialScaleTitle: 'حجم دائرة الألعاب',
+    radialScaleReset: 'إعادة الضبط',
+    radialScaleIcon: 'حجم الأيقونات',
+    radialScaleHub: 'حجم زر الوسط (Hub)',
+    radialScaleOrbit: 'مسافة الألعاب من المركز',
+    customThemeTitle: 'تصميم ثيمي الخاص',
+    customThemeSubtitle: 'اختر 4 ألوان + اضبط 3 قيم',
+    customThemeAccent: 'اللون الأساسي',
+    customThemeSecondary: 'اللون الثانوي',
+    customThemeBg: 'الخلفية',
+    customThemeCard: 'البطاقات',
+    customThemeCardOpacity: 'شفافية البطاقات',
+    customThemeAccentStrength: 'قوة التمييز',
+    customThemeBgGlow: 'توهج الخلفية',
+    customThemePreview: 'معاينة',
+    customThemePreviewBtn: 'زر أساسي',
+    customThemePreviewBtn2: 'زر ثانوي',
+    customThemeReset: 'مسح',
+    customThemeSave: 'حفظ وتفعيل',
+    customStyleTitle: 'تصميم نمطك الخاص',
+    customStyleSubtitle: 'اضبط 5 قيم لإنشاء نمط الدائرة',
+    customStyleRingCount: 'عدد الحلقات',
+    customStyleRingThickness: 'سماكة الحلقة',
+    customStyleDashed: 'حلقة متقطعة',
+    customStyleDashedHint: 'عند التفعيل تظهر الحلقات كنقاط متقطعة',
+    customStyleGlowLayers: 'طبقات التوهج',
+    customStyleGlowStrength: 'شدة التوهج',
+    customStyleReset: 'مسح',
+    customStyleSave: 'حفظ وتفعيل',
   },
+
   en: {
     appTitle: 'GameLauncher — Control Panel', hotkeyLabel: 'Hotkey:', muteHotkeyLabel: 'Mute:',
     tabDashboard: 'Games & Companions', tabDesign: 'Design', tabSettings: 'Settings',
@@ -282,7 +282,7 @@ const I18N = {
     gamesListTitle: 'Games', companionsTitle: 'Companion Programs',
     selectGameHint: 'Select a game first.', addCompanionBtn: 'Add Companion',
     designTitle: 'Design & Style', presetsTitle: 'Panel Theme',
-    presetsDesc: 'Choose from 33 ready themes.',
+    presetsDesc: 'Choose a ready theme or design your own.',
     radialTitle: 'Radial Drawing Style', backgroundsTitle: 'Global Backgrounds',
     transparencyTitle: 'Transparency',
     uiOpacityTitle: 'Control panel transparency',
@@ -330,10 +330,6 @@ const I18N = {
     quickSlotNone: 'No shortcut',
     detailsGameLanguage: 'Game language inside the app',
     detailsGameLanguageHint: 'When you launch this game, keyboard layout will switch automatically and revert on exit.',
-       boostRestoreTitle: 'Restore Boost Settings',
-       boostRestoreDesc: 'If you notice system settings were changed by Boost, click to restore original values.',
-       boostRestoreBtn: 'Restore System Defaults',
-       boostRestoreConfirm: 'Restore the original system values modified by Boost?',
     langOff: 'No switch',
     langArabic: 'Arabic',
     langEnglish: 'English',
@@ -377,6 +373,7 @@ const I18N = {
     runningLabel: 'Running',
     openFolderTooltip: 'Open the game file location',
     backupTitle: 'Backup',
+    backupDesc: 'Save your settings as a file, or restore from a previous backup.',
     backupExportBtn: 'Save backup',
     backupImportBtn: 'Import backup',
     mutedAppsTitle: 'Currently muted applications',
@@ -385,6 +382,7 @@ const I18N = {
     hubAlwaysVisibleTitle: 'Always show Hub button',
     hubAlwaysVisibleDesc: 'Show the open-panel button in the center without hovering.',
     logTitle: 'Diagnostic log file',
+    logDesc: 'Open the log to diagnose launch issues and errors.',
     logOpenBtn: 'Open log file',
     controllerEnableTitle: 'Enable Xbox Controller',
     controllerEnableDesc: 'Allows opening the circle with an Xbox button.',
@@ -405,8 +403,10 @@ const I18N = {
     ctrlBtnA: 'A', ctrlBtnB: 'B', ctrlBtnX: 'X', ctrlBtnY: 'Y',
     ctrlBtnLB: 'LB (Left Shoulder)', ctrlBtnRB: 'RB (Right Shoulder)',
     ctrlBtnLS: 'Left Stick', ctrlBtnRS: 'Right Stick', ctrlBtnGuide: 'Xbox (Guide)',
-    shareInfoTitle: 'About the Share button on Xbox Series controllers',
-    shareInfoBody: 'Share button is not supported in XInput (Microsoft\'s official Windows API). You can remap it via the official Xbox Accessories app to any key (e.g. F13), then register that key as the open-circle hotkey above.',
+    boostRestoreTitle: 'Restore Boost Settings',
+    boostRestoreDesc: 'If you notice system settings were changed by Boost, click to restore original values.',
+    boostRestoreBtn: 'Restore System Defaults',
+    boostRestoreConfirm: 'Restore the original system values modified by Boost?',
     detailsBlackBoxTitle: 'Performance Monitor (Black Box)',
     detailsBlackBoxEnable: 'Enable performance monitoring for this game',
     detailsBlackBoxEnableHint: 'Collects FPS, temperature and usage during play for a detailed report.',
@@ -417,19 +417,12 @@ const I18N = {
     detailsBlackBoxAdmin: 'Admin',
     detailsBlackBoxSafe: 'Safe',
     detailsBlackBoxViewReport: 'View Report',
-    detailsBlackBoxExportCsv: 'Export CSV',
-    blackBoxComingSoon: 'This feature is under development — coming soon!',
     restartAsAdminTitle: 'Run as Administrator',
     restartAsAdminDesc: 'Required for FPS. Does not affect running games.',
     restartAsAdminBtn: 'Restart as Administrator',
     adminYes: 'Admin',
     adminNo: 'Not Admin',
-    adminRestarting: 'Restarting...',
-    adminAlreadyOk: 'Already running as Administrator ✅',
-    adminRestartFailed: 'Restart failed. Try manually: Right-click → Run as Administrator.',
-    adminNotRunning: 'Engine stopped. Will launch as Administrator.',
     blackBoxNeedsAdmin: 'To enable FPS, GameLauncher needs Administrator rights. Click "Restart as Administrator" in Settings, or continue without FPS.',
-    // ✅ Boost FPS
     boostFpsTitle: 'Boost FPS',
     boostFpsDesc: 'Automatic optimizations on game launch, reverted on exit.',
     boostDisableCore0: 'Disable Core 0',
@@ -479,12 +472,53 @@ const I18N = {
     perfChartFpsTitle: 'FPS + Frame Time over time',
     perfChartTempTitle: 'Temperature (CPU + GPU)',
     perfChartRamTitle: 'RAM / VRAM Usage',
+    statsHistory: 'Session History',
+    statsHistoryTitle: 'Session History',
+    statsHistoryLoading: 'Loading...',
+    statsHistoryEmpty: 'No sessions logged yet. Play the game to start logging.',
+    statsHistoryDays: 'Days:',
+    statsHistorySessions: 'Sessions:',
+    statsHistorySessionsShort: 'sessions',
+    statsHistoryTotal: 'Total:',
+    statsHistoryClear: 'Clear History',
+    statsHistoryClearConfirm: 'Delete ALL session history for this game? This cannot be undone.',
+    designCustomThemeBtn: 'Design My Own Theme',
+    designCustomStyleBtn: 'Design My Own Style',
+    radialScaleTitle: 'Game Circle Scale',
+    radialScaleReset: 'Reset',
+    radialScaleIcon: 'Icon size',
+    radialScaleHub: 'Hub button size',
+    radialScaleOrbit: 'Orbit distance',
+    customThemeTitle: 'Design My Theme',
+    customThemeSubtitle: 'Choose 4 colors + adjust 3 values',
+    customThemeAccent: 'Accent Color',
+    customThemeSecondary: 'Secondary Color',
+    customThemeBg: 'Background',
+    customThemeCard: 'Cards',
+    customThemeCardOpacity: 'Card opacity',
+    customThemeAccentStrength: 'Accent strength',
+    customThemeBgGlow: 'Background glow',
+    customThemePreview: 'Preview',
+    customThemePreviewBtn: 'Primary',
+    customThemePreviewBtn2: 'Secondary',
+    customThemeReset: 'Reset',
+    customThemeSave: 'Save & Activate',
+    customStyleTitle: 'Design My Style',
+    customStyleSubtitle: 'Adjust 5 values to build your ring',
+    customStyleRingCount: 'Ring count',
+    customStyleRingThickness: 'Ring thickness',
+    customStyleDashed: 'Dashed ring',
+    customStyleDashedHint: 'When enabled, rings appear as dashed segments',
+    customStyleGlowLayers: 'Glow layers',
+    customStyleGlowStrength: 'Glow strength',
+    customStyleReset: 'Reset',
+    customStyleSave: 'Save & Activate',
   }
 };
 
 let state = { lang: 'ar', hotkey: '—', muteHotkey: '—', muteEnabled: false,
               engineRunning: false, autoStart: false,
-              radialStyle: 0, radialStyleNames: [], games: [],
+              radialStyle: 1, radialStyleNames: [], games: [],
               panelBackground: '', radialBackground: '', panelPreset: 'purple',
               controllerEnabled: false, controllerButton: 0x0010, controllerButtonName: 'Start',
               controllerToggleMode: true,
@@ -492,7 +526,11 @@ let state = { lang: 'ar', hotkey: '—', muteHotkey: '—', muteEnabled: false,
               panelGlassEffect: false,
               overlayEnabled: false, overlayHotkey: '—', overlayShowOnGameLaunch: false, overlayOpacity: 0.85,
               cpuCoreCount: 8, processPriorityNames: [], radialTransparency: 0.72,
-              hubAlwaysVisible: false, isAdmin: false, radialNoGlow: false };
+              hubAlwaysVisible: false, isAdmin: false, radialNoGlow: false,
+              radialScale: { iconSize: 42, hubSize: 46, orbitDist: 118 },
+              customTheme: { accent:'7c3aed', secondary:'a855f7', bg:'150f2c', card:'1e1636', cardOpacity:0.32, accentStrength:0.70, bgGlow:0.40, isActive:false },
+              customRadialStyle: { ringCount:2, ringThickness:2, dashed:false, glowLayers:1, glowStrength:0.60, isActive:false } };
+
 let selectedGameIndex = -1;
 let selectedGamePath = null;
 let reorderDragIndex = null;
@@ -515,6 +553,17 @@ let perfReportGamePath = '';
 let perfReportSessions = [];
 let perfReportCurrentFile = '';
 let perfCharts = [];
+
+// Session History state
+let sessionHistoryGameIndex = -1;
+let sessionHistoryData = [];
+
+// Custom Theme draft state
+let customThemeDraft = { accent:'7c3aed', secondary:'a855f7', bg:'150f2c', card:'1e1636',
+                          cardOpacity:0.32, accentStrength:0.70, bgGlow:0.40 };
+
+// Custom Radial Style draft state
+let customStyleDraft = { ringCount:2, ringThickness:2, dashed:false, glowLayers:1, glowStrength:0.60 };
 
 function t(key) { return (I18N[state.lang] || I18N.ar)[key] || key; }
 function tFormat(key, params) {
@@ -540,7 +589,68 @@ function formatRelativeTime(unixSeconds) {
   if (diff < 86400) return tFormat('hoursAgo', { n: Math.floor(diff / 3600) });
   return tFormat('daysAgo', { n: Math.floor(diff / 86400) });
 }
-function applyPreset(presetId) { document.documentElement.setAttribute('data-preset', presetId || 'purple'); }
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ✅ تطبيق preset الثيم (جاهز أو مخصص)
+function applyPreset(presetId) {
+  const root = document.documentElement;
+  if (presetId === 'custom') {
+    const ct = state.customTheme || {};
+    // حساب قيم accent-2 و accent-3 (نسخ أفتح/أغمق)
+    const hexToRgb = (hex) => {
+      hex = (hex || '').replace('#','');
+      if (hex.length < 6) return { r:124, g:58, b:237 };
+      return { r: parseInt(hex.substr(0,2),16), g: parseInt(hex.substr(2,2),16), b: parseInt(hex.substr(4,2),16) };
+    };
+    const rgbToHex = (r,g,b) => '#' + [r,g,b].map(v => Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+    const lighten = (hex, amt) => { const c = hexToRgb(hex); return rgbToHex(c.r + (255-c.r)*amt, c.g + (255-c.g)*amt, c.b + (255-c.b)*amt); };
+    const darken  = (hex, amt) => { const c = hexToRgb(hex); return rgbToHex(c.r*(1-amt), c.g*(1-amt), c.b*(1-amt)); };
+
+    const accent    = '#' + (ct.accent    || '7c3aed');
+    const secondary = '#' + (ct.secondary || 'a855f7');
+    const bg        = '#' + (ct.bg        || '150f2c');
+    const card      = '#' + (ct.card      || '1e1636');
+    const strength  = (ct.accentStrength ?? 0.70);
+
+    const accent2 = lighten(accent, 0.15 * strength + 0.05);
+    const accent3 = darken(accent, 0.10);
+
+    // bg-1/bg-2/bg-3 : نشتق تدرجات من لون الخلفية
+    const bg1 = bg;
+    const bg2 = darken(bg, 0.15);
+    const bg3 = lighten(bg, 0.05);
+
+    // panel-tint / card-tint
+    const panelRgb = hexToRgb(card.replace('#',''));
+    const cardRgb = hexToRgb(card.replace('#',''));
+    const accentRgb = hexToRgb(accent.replace('#',''));
+    const accentHiRgb = hexToRgb(accent2.replace('#',''));
+
+    root.style.setProperty('--accent-1', accent);
+    root.style.setProperty('--accent-2', accent2);
+    root.style.setProperty('--accent-3', accent3);
+    root.style.setProperty('--bg-1', bg1);
+    root.style.setProperty('--bg-2', bg2);
+    root.style.setProperty('--bg-3', bg3);
+    root.style.setProperty('--accent-rgb', `${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}`);
+    root.style.setProperty('--accent-hi-rgb', `${accentHiRgb.r}, ${accentHiRgb.g}, ${accentHiRgb.b}`);
+    root.style.setProperty('--panel-tint', `${panelRgb.r}, ${panelRgb.g}, ${panelRgb.b}`);
+    root.style.setProperty('--card-tint', `${cardRgb.r}, ${cardRgb.g}, ${cardRgb.b}`);
+    root.style.setProperty('--glass-opacity', ct.cardOpacity ?? 0.32);
+    root.style.setProperty('--card-border', '255, 255, 255');
+    root.setAttribute('data-preset', 'custom');
+  } else {
+    // preset جاهز — نشيل أي خصائص inline مضافة من custom
+    ['--accent-1','--accent-2','--accent-3','--bg-1','--bg-2','--bg-3',
+     '--accent-rgb','--accent-hi-rgb','--panel-tint','--card-tint','--card-border'].forEach(p => {
+      root.style.removeProperty(p);
+    });
+    root.setAttribute('data-preset', presetId || 'purple');
+  }
+}
 
 function showConfirmModal(message, onConfirm, opts) {
   opts = opts || {};
@@ -592,7 +702,10 @@ window.chrome.webview.addEventListener('message', (e) => {
   else if (msg.type === 'mutedAppsList') { renderMutedApps(msg.apps || []); }
   else if (msg.type === 'perfSessions') { renderPerformanceSessions(msg.sessions || []); }
   else if (msg.type === 'perfReport') { renderPerformanceReport(msg.report || null); }
+  else if (msg.type === 'playSessions') { renderSessionHistory(msg.sessions || []); }
+  else if (msg.type === 'customThemeColorResult') { onCustomThemeColorResult(msg.which, msg.hex); }
 });
+
 
 function updateGameStats(stats) {
   let needsRunningRerender = false;
@@ -740,8 +853,10 @@ function applyI18nStaticText() {
     if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) el.setAttribute('placeholder', t(key));
     else el.innerText = t(key);
   });
-  document.getElementById('langSelect').value = state.lang;
+  const langSel = document.getElementById('langSelect');
+  if (langSel) langSel.value = state.lang;
 }
+
 function onStateUpdated() {
   applyPreset(state.panelPreset || 'purple');
   applyI18nStaticText();
@@ -813,11 +928,42 @@ function onStateUpdated() {
   }
   document.getElementById('autoStartToggle').classList.toggle('on', !!state.autoStart);
   document.getElementById('totalGamesCount').innerText = state.games.length + ' ' + t('gamesUnit');
+
   const rt = typeof state.radialTransparency === 'number' ? state.radialTransparency : 0.72;
   const rSlider = document.getElementById('radialOpacitySlider');
   if (rSlider && document.activeElement !== rSlider) {
     rSlider.value = rt;
     document.getElementById('radialOpacityVal').innerText = Math.round(rt * 100) + '%';
+  }
+
+  // ✅ radial scale — تحديث السلايدرز
+  if (state.radialScale) {
+    const rs = state.radialScale;
+    const sliders = [
+      { id: 'scaleIconSlider',  valId: 'scaleIconVal',  v: rs.iconSize,  unit: ' px' },
+      { id: 'scaleHubSlider',   valId: 'scaleHubVal',   v: rs.hubSize,   unit: ' px' },
+      { id: 'scaleOrbitSlider', valId: 'scaleOrbitVal', v: rs.orbitDist, unit: ' px' },
+    ];
+    sliders.forEach(({ id, valId, v, unit }) => {
+      const el = document.getElementById(id);
+      const valEl = document.getElementById(valId);
+      if (el && document.activeElement !== el) el.value = v;
+      if (valEl) valEl.innerText = v + unit;
+    });
+  }
+
+  // ✅ custom theme — تحديث الحالة الداخلية
+  if (state.customTheme) {
+    state.customTheme = Object.assign(
+      { accent:'7c3aed', secondary:'a855f7', bg:'150f2c', card:'1e1636', cardOpacity:0.32, accentStrength:0.70, bgGlow:0.40, isActive:false },
+      state.customTheme
+    );
+  }
+  if (state.customRadialStyle) {
+    state.customRadialStyle = Object.assign(
+      { ringCount:2, ringThickness:2, dashed:false, glowLayers:1, glowStrength:0.60, isActive:false },
+      state.customRadialStyle
+    );
   }
 
   const adminBadge = document.getElementById('adminBadge');
@@ -851,6 +997,7 @@ function onStateUpdated() {
     renderGameDetails();
   }
 }
+
 function onSearchChange(value) { searchQuery = (value || '').toLowerCase().trim(); renderGamesList(); }
 
 function restoreBoostDefaults() {
@@ -862,8 +1009,6 @@ function restoreBoostDefaults() {
       iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
       iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
 }
-
-
 
 function onSortChange(value) { sortMode = value || 'manual'; renderGamesList(); }
 function getSortedFilteredGames() {
@@ -985,33 +1130,46 @@ function renderCompanions() {
     list.appendChild(item);
   });
 }
+
+// ✅ عرض الأنماط — 6 فقط (بناءً على VISIBLE_RADIAL_STYLES)
 function renderRadialStyles() {
   const grid = document.getElementById('radialStylesGrid');
   grid.innerHTML = '';
-  state.radialStyleNames.forEach((name, i) => {
-    const meta = RADIAL_META[i] || { icon: 'fa-circle', descAr: '', descEn: '' };
-    const selected = i === state.radialStyle;
+  VISIBLE_RADIAL_STYLES.forEach((styleId) => {
+    const meta = RADIAL_META[styleId] || { icon: 'fa-circle', descAr: '', descEn: '' };
+    const selected = styleId === state.radialStyle;
     const card = document.createElement('div');
     card.className = 'glass-card p-3 rounded-xl cursor-pointer border ' + (selected ? '' : 'border-white/5');
     if (selected) card.style.borderColor = 'var(--accent-2)';
     card.tabIndex = 0;
-    card.onclick = () => nativeAction('setRadialStyle', { style: i });
+    card.onclick = () => nativeAction('setRadialStyle', { style: styleId });
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
+    const nameKey = styleId === 20 ? 'مخصص' : (state.lang === 'en' ? meta.descEn.split(' — ')[0] : '');
+    let displayName = '';
+    if (styleId === 13) displayName = state.lang === 'en' ? 'Ripple' : 'موجات متداخلة';
+    else if (styleId === 19) displayName = state.lang === 'en' ? 'Flame' : 'لهب';
+    else if (styleId === 1) displayName = state.lang === 'en' ? 'Neon' : 'نيون';
+    else if (styleId === 2) displayName = state.lang === 'en' ? 'Gradient' : 'حلقة متدرجة';
+    else if (styleId === 11) displayName = state.lang === 'en' ? 'Aurora' : 'توهج الشفق';
+    else if (styleId === 20) displayName = state.lang === 'en' ? 'Custom' : 'مخصص';
+
     card.innerHTML = `
       <div class="w-9 h-9 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center mb-2">
         <i class="fa-solid ${meta.icon}" style="color: var(--accent-2); font-size: 14px;"></i>
       </div>
-      <h3 class="font-bold text-white text-xs">${escapeHtml(name)}</h3>
+      <h3 class="font-bold text-white text-xs">${escapeHtml(displayName)}</h3>
       <p class="text-[10px] text-gray-400 mt-1 leading-tight">${escapeHtml(state.lang === 'en' ? meta.descEn : meta.descAr)}</p>`;
     grid.appendChild(card);
   });
 }
+
+// ✅ عرض الثيمات — 6 جاهزة + زر مخصص (الزر خارج الشبكة في HTML)
 function renderPresets() {
   const grid = document.getElementById('presetsGrid');
   if (!grid) return;
   grid.innerHTML = '';
   PANEL_PRESETS.forEach(preset => {
-    const selected = preset.id === (state.panelPreset || 'purple');
+    const selected = preset.id === (state.panelPreset || '');
     const card = document.createElement('div');
     card.className = 'preset-card' + (selected ? ' selected' : '');
     card.tabIndex = 0;
@@ -1024,7 +1182,22 @@ function renderPresets() {
       <div class="preset-label">${escapeHtml(state.lang === 'en' ? preset.nameEn : preset.nameAr)}</div>`;
     grid.appendChild(card);
   });
+  // ✅ لو الثيم الحالي هو "custom"، نضيف كارت خاص
+  if (state.panelPreset === 'custom' && state.customTheme) {
+    const ct = state.customTheme;
+    const card = document.createElement('div');
+    card.className = 'preset-card selected';
+    card.tabIndex = 0;
+    card.onclick = () => openCustomThemeModal();
+    card.innerHTML = `
+      <div class="preset-swatch" style="background: linear-gradient(135deg, #${ct.accent}, #${ct.secondary});">
+        <i class="fa-solid fa-palette"></i>
+      </div>
+      <div class="preset-label">${state.lang === 'en' ? 'Custom' : 'مخصص'}</div>`;
+    grid.appendChild(card);
+  }
 }
+
 function openGameDetails(gameIndex) { detailsGameIndex = gameIndex; qaActiveTarget = 'game'; switchTab('details'); renderGameDetails(); }
 function renderDetailsSidebar() {
   const sidebar = document.getElementById('detailsGameSidebar');
@@ -1138,7 +1311,8 @@ function setGameLanguage(langValue) {
   if (game.gameLanguage === langValue) return;
   nativeAction('setGameLanguage', { index: game.index, language: langValue });
 }
-// ✅ Boost FPS — دوال التبديل
+
+
 function toggleBoostFps() {
   const game = state.games.find(g => g.index === detailsGameIndex);
   if (!game) return;
@@ -1226,7 +1400,6 @@ function renderLangSegments(game) {
     btn.classList.toggle('active', val === cur);
   });
 }
-// ✅ Boost FPS — تحديث واجهة القسم
 function renderBoostFpsSection(game) {
   const mainToggle = document.getElementById('detailsBoostFpsToggle');
   if (!mainToggle) return;
@@ -1328,12 +1501,20 @@ function renderBlackBoxSection(game) {
   if (!mainToggle) return;
 
   const enabled = !!game.performanceMonitor;
-
   mainToggle.classList.toggle('on', enabled);
+
   if (enabled) {
     warning.classList.remove('hidden');
     if (!state.isAdmin) {
-      warning.innerHTML = '<div class="flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i><div>' + t('blackBoxNeedsAdmin') + '</div></div>';
+      warning.innerHTML =
+        '<div class="flex items-start gap-2">' +
+          '<i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>' +
+          '<div class="flex-1">' + t('blackBoxNeedsAdmin') + '</div>' +
+          '<button onclick="requestRestartAsAdmin()" class="backup-btn primary shrink-0" tabindex="0">' +
+            '<i class="fa-solid fa-shield-halved"></i>' +
+            '<span>' + t('restartAsAdminBtn') + '</span>' +
+          '</button>' +
+        '</div>';
       warning.style.background = 'rgba(239, 68, 68, 0.1)';
       warning.style.borderColor = 'rgba(239, 68, 68, 0.4)';
       warning.style.color = '#fca5a5';
@@ -1356,7 +1537,6 @@ function renderBlackBoxSection(game) {
   }
   if (sessionCount) sessionCount.innerText = '(' + (game.perfSessionCount || 0) + ')';
 }
-
 function toggleGameBlackBox() {
   const game = state.games.find(g => g.index === detailsGameIndex);
   if (!game) return;
@@ -1379,7 +1559,6 @@ function openPerformanceReport() {
   document.getElementById('perfReportModalOverlay').classList.remove('hidden');
   nativeAction('getPerformanceSessions', { index: game.index });
 }
-
 function closePerformanceReport() {
   document.getElementById('perfReportModalOverlay').classList.add('hidden');
   perfReportGameIndex = -1;
@@ -1389,7 +1568,6 @@ function closePerformanceReport() {
   perfCharts.forEach(c => { try { c.destroy(); } catch(e) {} });
   perfCharts = [];
 }
-
 function renderPerformanceSessions(sessions) {
   perfReportSessions = sessions || [];
   const countEl = document.getElementById('perfSessionsCount');
@@ -1450,7 +1628,6 @@ function renderPerformanceSessions(sessions) {
   });
   if (perfReportSessions.length > 0) selectPerformanceSession(0);
 }
-
 function selectPerformanceSession(idx) {
   document.querySelectorAll('#perfSessionList .perf-session-item').forEach((el, i) => {
     el.classList.toggle('selected', i === idx);
@@ -1464,7 +1641,6 @@ function selectPerformanceSession(idx) {
   if (detail) detail.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">...</div>';
   nativeAction('getPerformanceReport', { file: s.filePath });
 }
-
 function perfStatCard(labelKey, value, sub, icon, iconColor) {
   if (value === null || value === undefined || value === '') return '';
   return `
@@ -1477,7 +1653,6 @@ function perfStatCard(labelKey, value, sub, icon, iconColor) {
       ${sub ? `<div class="perf-stat-sub">${escapeHtml(sub)}</div>` : ''}
     </div>`;
 }
-
 function renderPerformanceReport(report) {
   const detail = document.getElementById('perfSessionDetail');
   if (!detail) return;
@@ -1485,7 +1660,6 @@ function renderPerformanceReport(report) {
     detail.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">Failed to load session.</div>';
     return;
   }
-
   const hasFps = report.avgFps >= 0;
   const hasCpuTemp = report.avgCpuTemp >= 0;
   const hasGpuTemp = report.avgGpuTemp >= 0;
@@ -1495,7 +1669,6 @@ function renderPerformanceReport(report) {
   const date = new Date(report.sessionStartUnix * 1000);
   const loc = state.lang === 'en' ? 'en-US' : 'ar-SA-u-ca-gregory-nu-latn';
   const dateStr = date.toLocaleDateString(loc) + ' ' + date.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
-
   const fmt1 = (v) => (v >= 0) ? v.toFixed(1) : '—';
   const fmt0 = (v) => (v >= 0) ? v.toFixed(0) : '—';
   const fmtMB = (v) => {
@@ -1504,9 +1677,7 @@ function renderPerformanceReport(report) {
     return v + ' MB';
   };
 
-  let html = '';
-  html += '<div class="space-y-4">';
-
+  let html = '<div class="space-y-4">';
   html += `
     <div class="info-box flex items-center gap-3">
       <i class="fa-solid fa-calendar-day"></i>
@@ -1518,12 +1689,8 @@ function renderPerformanceReport(report) {
 
   if (!hasFps) {
     const warnMsg = state.isAdmin ? t('perfFpsEtwFailed') : t('perfFpsNeedsAdmin');
-    html += `<div class="warning-box flex items-start gap-2">
-      <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
-      <div>${escapeHtml(warnMsg)}</div>
-    </div>`;
+    html += `<div class="warning-box flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i><div>${escapeHtml(warnMsg)}</div></div>`;
   }
-
   if (hasFps) {
     html += '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">';
     html += perfStatCard('perfAvgFps',      fmt1(report.avgFps) + ' FPS', null, 'fa-gauge-high', '#10b981');
@@ -1534,27 +1701,17 @@ function renderPerformanceReport(report) {
     html += perfStatCard('perfStutters',    report.stutterCount, null, 'fa-triangle-exclamation', '#ef4444');
     html += '</div>';
   }
-
   html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
   html += perfStatCard('perfAvgCpuUsage', fmt0(report.avgCpuUsage) + '%', 'Max: ' + fmt0(report.maxCpuUsage) + '%', 'fa-microchip', '#f59e0b');
   html += perfStatCard('perfAvgGpuUsage', fmt0(report.avgGpuUsage) + '%', 'Max: ' + fmt0(report.maxGpuUsage) + '%', 'fa-video', '#8b5cf6');
   html += perfStatCard('perfAvgRam',  fmtMB(report.avgRamMB),  'Max: ' + fmtMB(report.maxRamMB),  'fa-memory', '#3b82f6');
   html += perfStatCard('perfAvgVram', fmtMB(report.avgVramMB), 'Max: ' + fmtMB(report.maxVramMB), 'fa-layer-group', '#06b6d4');
   html += '</div>';
-
   html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
-  if (hasGpuTemp) {
-    html += perfStatCard('perfAvgGpuTemp', fmt0(report.avgGpuTemp) + '°C', 'Max: ' + fmt0(report.maxGpuTemp) + '°C', 'fa-temperature-half', '#f97316');
-  }
-  if (hasCpuTemp) {
-    html += perfStatCard('perfAvgCpuTemp', fmt0(report.avgCpuTemp) + '°C', 'Max: ' + fmt0(report.maxCpuTemp) + '°C', 'fa-fire', '#ef4444');
-  }
-  if (hasGpuPower) {
-    html += perfStatCard('perfAvgGpuPower', fmt0(report.avgGpuPower) + ' W', 'Max: ' + fmt0(report.maxGpuPower) + ' W', 'fa-bolt', '#facc15');
-  }
-  if (hasCpuPower) {
-    html += perfStatCard('perfAvgCpuPower', fmt0(report.avgCpuPower) + ' W', 'Max: ' + fmt0(report.maxCpuPower) + ' W', 'fa-bolt', '#fde047');
-  }
+  if (hasGpuTemp) html += perfStatCard('perfAvgGpuTemp', fmt0(report.avgGpuTemp) + '°C', 'Max: ' + fmt0(report.maxGpuTemp) + '°C', 'fa-temperature-half', '#f97316');
+  if (hasCpuTemp) html += perfStatCard('perfAvgCpuTemp', fmt0(report.avgCpuTemp) + '°C', 'Max: ' + fmt0(report.maxCpuTemp) + '°C', 'fa-fire', '#ef4444');
+  if (hasGpuPower) html += perfStatCard('perfAvgGpuPower', fmt0(report.avgGpuPower) + ' W', 'Max: ' + fmt0(report.maxGpuPower) + ' W', 'fa-bolt', '#facc15');
+  if (hasCpuPower) html += perfStatCard('perfAvgCpuPower', fmt0(report.avgCpuPower) + ' W', 'Max: ' + fmt0(report.maxCpuPower) + ' W', 'fa-bolt', '#fde047');
   html += '</div>';
 
   const hasSamples = report.samples && report.samples.length > 0;
@@ -1562,47 +1719,11 @@ function renderPerformanceReport(report) {
     const hasFpsData = report.samples.some(s => s[1] >= 0);
     const hasTempData = report.samples.some(s => s[6] >= 0 || s[5] >= 0);
     const hasRamData = report.samples.some(s => s[9] > 0);
-
-    if (hasFpsData) {
-      html += `
-        <div class="pt-3 border-t border-white/10">
-          <h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-gauge-high text-emerald-400"></i>
-            <span>${escapeHtml(t('perfChartFpsTitle'))}</span>
-          </h4>
-          <div id="perfChartFps" style="height:220px;"></div>
-        </div>`;
-    }
-    if (hasTempData) {
-      html += `
-        <div class="pt-3 border-t border-white/10">
-          <h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-temperature-half text-orange-400"></i>
-            <span>${escapeHtml(t('perfChartTempTitle'))}</span>
-          </h4>
-          <div id="perfChartTemp" style="height:220px;"></div>
-        </div>`;
-    }
-    if (hasRamData) {
-      html += `
-        <div class="pt-3 border-t border-white/10">
-          <h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-memory text-blue-400"></i>
-            <span>${escapeHtml(t('perfChartRamTitle'))}</span>
-          </h4>
-          <div id="perfChartRam" style="height:220px;"></div>
-        </div>`;
-    }
+    if (hasFpsData) html += `<div class="pt-3 border-t border-white/10"><h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-emerald-400"></i><span>${escapeHtml(t('perfChartFpsTitle'))}</span></h4><div id="perfChartFps" style="height:220px;"></div></div>`;
+    if (hasTempData) html += `<div class="pt-3 border-t border-white/10"><h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2"><i class="fa-solid fa-temperature-half text-orange-400"></i><span>${escapeHtml(t('perfChartTempTitle'))}</span></h4><div id="perfChartTemp" style="height:220px;"></div></div>`;
+    if (hasRamData) html += `<div class="pt-3 border-t border-white/10"><h4 class="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2"><i class="fa-solid fa-memory text-blue-400"></i><span>${escapeHtml(t('perfChartRamTitle'))}</span></h4><div id="perfChartRam" style="height:220px;"></div></div>`;
   }
-
-  html += `
-    <div class="flex gap-2 pt-3 border-t border-white/10">
-      <button id="perfExportBtn" class="backup-btn primary" tabindex="0">
-        <i class="fa-solid fa-file-csv"></i>
-        <span>${escapeHtml(t('perfExportCsvBtn'))}</span>
-      </button>
-    </div>`;
-
+  html += `<div class="flex gap-2 pt-3 border-t border-white/10"><button id="perfExportBtn" class="backup-btn primary" tabindex="0"><i class="fa-solid fa-file-csv"></i><span>${escapeHtml(t('perfExportCsvBtn'))}</span></button></div>`;
   html += '</div>';
   detail.innerHTML = html;
 
@@ -1613,26 +1734,28 @@ function renderPerformanceReport(report) {
       nativeAction('exportPerformanceCsv', { file: perfReportCurrentFile });
     };
   }
-
-  if (hasSamples) {
-    setTimeout(() => renderPerfCharts(report), 50);
-  }
+  if (hasSamples) setTimeout(() => renderPerfCharts(report), 50);
 }
-
 function downsampleSamples(samples, maxPoints) {
   if (!samples || samples.length <= maxPoints) return samples;
   const step = samples.length / maxPoints;
   const out = [];
-  for (let i = 0; i < maxPoints; i++) {
-    out.push(samples[Math.floor(i * step)]);
-  }
+  for (let i = 0; i < maxPoints; i++) out.push(samples[Math.floor(i * step)]);
   return out;
 }
-
 function renderPerfCharts(report) {
   if (!report || !report.samples || report.samples.length === 0) return;
+
+  // ✅ Lazy load ApexCharts
   if (typeof ApexCharts === 'undefined') {
-    console.warn('[Charts] ApexCharts not loaded');
+    if (!window.__apexLoading) {
+      window.__apexLoading = true;
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
+      script.onload = () => { window.__apexLoading = false; renderPerfCharts(report); };
+      script.onerror = () => { window.__apexLoading = false; console.warn('[Charts] Failed to load ApexCharts'); };
+      document.head.appendChild(script);
+    }
     return;
   }
 
@@ -1641,35 +1764,18 @@ function renderPerfCharts(report) {
 
   const samples = downsampleSamples(report.samples, 1500);
   const timestamps = samples.map(s => s[0] / 1000);
-
   const gridColor = 'rgba(148, 163, 184, 0.1)';
   const labelColor = '#94a3b8';
-  const tooltipTheme = 'dark';
 
   const baseOptions = {
-    chart: {
-      background: 'transparent',
-      foreColor: labelColor,
-      toolbar: { show: false },
-      animations: { enabled: false },
-      zoom: { enabled: false },
-      fontFamily: 'Cairo, Tajawal, sans-serif',
-    },
+    chart: { background: 'transparent', foreColor: labelColor, toolbar: { show: false }, animations: { enabled: false }, zoom: { enabled: false }, fontFamily: 'Cairo, Tajawal, sans-serif' },
     theme: { mode: 'dark' },
     grid: { borderColor: gridColor, strokeDashArray: 3 },
-    tooltip: { theme: tooltipTheme, x: { formatter: (v) => formatSecToTime(v) } },
+    tooltip: { theme: 'dark', x: { formatter: (v) => formatSecToTime(v) } },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
     legend: { labels: { colors: labelColor } },
-    xaxis: {
-      type: 'numeric',
-      labels: {
-        style: { colors: labelColor, fontSize: '10px' },
-        formatter: (v) => formatSecToTime(v),
-      },
-      axisBorder: { color: gridColor },
-      axisTicks: { color: gridColor },
-    },
+    xaxis: { type: 'numeric', labels: { style: { colors: labelColor, fontSize: '10px' }, formatter: (v) => formatSecToTime(v) }, axisBorder: { color: gridColor }, axisTicks: { color: gridColor } },
     yaxis: { labels: { style: { colors: labelColor, fontSize: '10px' } } },
   };
 
@@ -1679,9 +1785,7 @@ function renderPerfCharts(report) {
     const el1 = document.getElementById('perfChartFps');
     if (el1) {
       const opts = JSON.parse(JSON.stringify(baseOptions));
-      opts.chart.id = 'perfChartFps';
-      opts.chart.type = 'line';
-      opts.chart.height = 220;
+      opts.chart.id = 'perfChartFps'; opts.chart.type = 'line'; opts.chart.height = 220;
       opts.series = [
         { name: 'FPS', data: timestamps.map((t, i) => ({ x: t, y: fpsSeries[i] })) },
         { name: 'Frame Time (ms)', data: timestamps.map((t, i) => ({ x: t, y: ftSeries[i] })) },
@@ -1692,86 +1796,46 @@ function renderPerfCharts(report) {
         { title: { text: 'FPS', style: { color: '#10b981', fontSize: '10px' } }, labels: { style: { colors: '#10b981', fontSize: '10px' } } },
         { opposite: true, title: { text: 'Frame Time (ms)', style: { color: '#f59e0b', fontSize: '10px' } }, labels: { style: { colors: '#f59e0b', fontSize: '10px' } } },
       ];
-      try {
-        const chart = new ApexCharts(el1, opts);
-        chart.render();
-        perfCharts.push(chart);
-      } catch(e) { console.warn('FPS chart error:', e); }
+      try { const chart = new ApexCharts(el1, opts); chart.render(); perfCharts.push(chart); } catch(e) {}
     }
   }
-
   const gpuTemp = samples.map(s => (s[6] >= 0) ? s[6] : null);
   const cpuTemp = samples.map(s => (s[5] >= 0) ? s[5] : null);
   if (gpuTemp.some(v => v !== null) || cpuTemp.some(v => v !== null)) {
     const el2 = document.getElementById('perfChartTemp');
     if (el2) {
       const opts = JSON.parse(JSON.stringify(baseOptions));
-      opts.chart.id = 'perfChartTemp';
-      opts.chart.type = 'area';
-      opts.chart.height = 220;
+      opts.chart.id = 'perfChartTemp'; opts.chart.type = 'area'; opts.chart.height = 220;
       const series = [];
       if (gpuTemp.some(v => v !== null)) series.push({ name: 'GPU Temp (°C)', data: timestamps.map((t, i) => ({ x: t, y: gpuTemp[i] })) });
       if (cpuTemp.some(v => v !== null)) series.push({ name: 'CPU Temp (°C)', data: timestamps.map((t, i) => ({ x: t, y: cpuTemp[i] })) });
       opts.series = series;
       opts.colors = ['#f97316', '#ef4444'];
       opts.stroke = { curve: 'smooth', width: 2 };
-      opts.fill = {
-        type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100] },
-      };
-      opts.yaxis = {
-        title: { text: '°C', style: { color: labelColor, fontSize: '10px' } },
-        labels: { style: { colors: labelColor, fontSize: '10px' }, formatter: (v) => v.toFixed(0) + '°' },
-      };
-      opts.annotations = {
-        yaxis: [{
-          y: 85,
-          borderColor: '#ef4444',
-          borderWidth: 1,
-          strokeDashArray: 4,
-          label: { text: '85°C', style: { color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)' } },
-        }],
-      };
-      try {
-        const chart = new ApexCharts(el2, opts);
-        chart.render();
-        perfCharts.push(chart);
-      } catch(e) { console.warn('Temp chart error:', e); }
+      opts.fill = { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100] } };
+      opts.yaxis = { title: { text: '°C', style: { color: labelColor, fontSize: '10px' } }, labels: { style: { colors: labelColor, fontSize: '10px' }, formatter: (v) => v.toFixed(0) + '°' } };
+      try { const chart = new ApexCharts(el2, opts); chart.render(); perfCharts.push(chart); } catch(e) {}
     }
   }
-
   const ramData = samples.map(s => (s[9] > 0) ? s[9] : null);
   const vramData = samples.map(s => (s[10] > 0) ? s[10] : null);
   if (ramData.some(v => v !== null) || vramData.some(v => v !== null)) {
     const el3 = document.getElementById('perfChartRam');
     if (el3) {
       const opts = JSON.parse(JSON.stringify(baseOptions));
-      opts.chart.id = 'perfChartRam';
-      opts.chart.type = 'area';
-      opts.chart.height = 220;
+      opts.chart.id = 'perfChartRam'; opts.chart.type = 'area'; opts.chart.height = 220;
       const series = [];
       if (ramData.some(v => v !== null)) series.push({ name: 'RAM', data: timestamps.map((t, i) => ({ x: t, y: ramData[i] })) });
       if (vramData.some(v => v !== null)) series.push({ name: 'VRAM', data: timestamps.map((t, i) => ({ x: t, y: vramData[i] })) });
       opts.series = series;
       opts.colors = ['#3b82f6', '#06b6d4'];
       opts.stroke = { curve: 'smooth', width: 2 };
-      opts.fill = {
-        type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] },
-      };
-      opts.yaxis = {
-        title: { text: 'MB', style: { color: labelColor, fontSize: '10px' } },
-        labels: { style: { colors: labelColor, fontSize: '10px' }, formatter: (v) => (v / 1024).toFixed(1) + ' GB' },
-      };
-      try {
-        const chart = new ApexCharts(el3, opts);
-        chart.render();
-        perfCharts.push(chart);
-      } catch(e) { console.warn('RAM chart error:', e); }
+      opts.fill = { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } };
+      opts.yaxis = { title: { text: 'MB', style: { color: labelColor, fontSize: '10px' } }, labels: { style: { colors: labelColor, fontSize: '10px' }, formatter: (v) => (v / 1024).toFixed(1) + ' GB' } };
+      try { const chart = new ApexCharts(el3, opts); chart.render(); perfCharts.push(chart); } catch(e) {}
     }
   }
 }
-
 function formatSecToTime(sec) {
   if (sec < 60) return sec.toFixed(0) + 's';
   const m = Math.floor(sec / 60);
@@ -1780,26 +1844,338 @@ function formatSecToTime(sec) {
   const h = Math.floor(m / 60);
   return h + ':' + String(m % 60).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 }
-
 function deleteAllPerformanceSessions() {
   if (perfReportGameIndex < 0) return;
+  const idx = perfReportGameIndex;
   showConfirmModal(
     t('perfConfirmDeleteAll'),
-    () => nativeAction('deleteAllPerformanceSessions', { index: perfReportGameIndex }),
+    () => {
+      nativeAction('deleteAllPerformanceSessions', { index: idx });
+      setTimeout(() => nativeAction('getPerformanceSessions', { index: idx }), 250);
+    },
     { okLabel: t('confirmDelete'),
       okColorClass: 'bg-red-600/80 hover:bg-red-600',
       iconWrapClass: 'bg-red-500/15 border border-red-500/30',
       iconClass: 'fa-trash', iconColorClass: 'text-red-400' });
 }
+function requestRestartAsAdmin() { nativeAction('restartAsAdmin'); }
+function toggleRadialNoGlow() { nativeAction('setRadialNoGlow', { enabled: state.radialNoGlow ? 0 : 1 }); }
 
-function requestRestartAsAdmin() {
-  nativeAction('restartAsAdmin');
+
+/* ============================================================
+ * ✅ Radial Scale (3 sliders)
+ * ============================================================ */
+let radialScaleSaveTimer = null;
+function onScaleIconChange(val) {
+  document.getElementById('scaleIconVal').innerText = val + ' px';
+  scheduleRadialScaleSave();
+}
+function onScaleHubChange(val) {
+  document.getElementById('scaleHubVal').innerText = val + ' px';
+  scheduleRadialScaleSave();
+}
+function onScaleOrbitChange(val) {
+  document.getElementById('scaleOrbitVal').innerText = val + ' px';
+  scheduleRadialScaleSave();
+}
+function scheduleRadialScaleSave() {
+  if (radialScaleSaveTimer) clearTimeout(radialScaleSaveTimer);
+  radialScaleSaveTimer = setTimeout(saveRadialScale, 250);
+}
+function saveRadialScale() {
+  const iconSize  = parseInt(document.getElementById('scaleIconSlider').value, 10) || 42;
+  const hubSize   = parseInt(document.getElementById('scaleHubSlider').value, 10) || 46;
+  const orbitDist = parseInt(document.getElementById('scaleOrbitSlider').value, 10) || 118;
+  nativeAction('setRadialScale', { iconSize, hubSize, orbitDist });
+}
+function resetRadialScale() {
+  document.getElementById('scaleIconSlider').value = 42;
+  document.getElementById('scaleHubSlider').value = 46;
+  document.getElementById('scaleOrbitSlider').value = 118;
+  document.getElementById('scaleIconVal').innerText = '42 px';
+  document.getElementById('scaleHubVal').innerText = '46 px';
+  document.getElementById('scaleOrbitVal').innerText = '118 px';
+  nativeAction('resetRadialScale');
 }
 
-function toggleRadialNoGlow() {
-  nativeAction('setRadialNoGlow', { enabled: state.radialNoGlow ? 0 : 1 });
+/* ============================================================
+ * ✅ Custom Theme Modal
+ * ============================================================ */
+function openCustomThemeModal() {
+  const ct = state.customTheme || {};
+  customThemeDraft = {
+    accent:    (ct.accent    || '7c3aed').replace('#',''),
+    secondary: (ct.secondary || 'a855f7').replace('#',''),
+    bg:        (ct.bg        || '150f2c').replace('#',''),
+    card:      (ct.card      || '1e1636').replace('#',''),
+    cardOpacity:    ct.cardOpacity    ?? 0.32,
+    accentStrength: ct.accentStrength ?? 0.70,
+    bgGlow:         ct.bgGlow         ?? 0.40,
+  };
+  document.getElementById('pickAccentBtn').style.background    = '#' + customThemeDraft.accent;
+  document.getElementById('pickSecondaryBtn').style.background = '#' + customThemeDraft.secondary;
+  document.getElementById('pickBgBtn').style.background        = '#' + customThemeDraft.bg;
+  document.getElementById('pickCardBtn').style.background      = '#' + customThemeDraft.card;
+  document.getElementById('accentHexVal').innerText    = '#' + customThemeDraft.accent;
+  document.getElementById('secondaryHexVal').innerText = '#' + customThemeDraft.secondary;
+  document.getElementById('bgHexVal').innerText        = '#' + customThemeDraft.bg;
+  document.getElementById('cardHexVal').innerText      = '#' + customThemeDraft.card;
+  document.getElementById('ctCardOpacitySlider').value    = customThemeDraft.cardOpacity;
+  document.getElementById('ctAccentStrengthSlider').value = customThemeDraft.accentStrength;
+  document.getElementById('ctBgGlowSlider').value         = customThemeDraft.bgGlow;
+  updateCTSlidersLabels();
+  updateCTPreview();
+  document.getElementById('customThemeModalOverlay').classList.remove('hidden');
+}
+function closeCustomThemeModal() {
+  document.getElementById('customThemeModalOverlay').classList.add('hidden');
+}
+function pickCustomThemeColor(which) {
+  nativeAction('browseCustomThemeColor', { which });
+}
+function onCustomThemeColorResult(which, hex) {
+  if (!hex) return;
+  hex = hex.replace('#','');
+  if (which === 'accent')         customThemeDraft.accent = hex;
+  else if (which === 'secondary') customThemeDraft.secondary = hex;
+  else if (which === 'bg')        customThemeDraft.bg = hex;
+  else if (which === 'card')      customThemeDraft.card = hex;
+
+  document.getElementById('pickAccentBtn').style.background    = '#' + customThemeDraft.accent;
+  document.getElementById('pickSecondaryBtn').style.background = '#' + customThemeDraft.secondary;
+  document.getElementById('pickBgBtn').style.background        = '#' + customThemeDraft.bg;
+  document.getElementById('pickCardBtn').style.background      = '#' + customThemeDraft.card;
+  document.getElementById('accentHexVal').innerText    = '#' + customThemeDraft.accent;
+  document.getElementById('secondaryHexVal').innerText = '#' + customThemeDraft.secondary;
+  document.getElementById('bgHexVal').innerText        = '#' + customThemeDraft.bg;
+  document.getElementById('cardHexVal').innerText      = '#' + customThemeDraft.card;
+  updateCTPreview();
+}
+function updateCTSlidersLabels() {
+  document.getElementById('ctCardOpacityVal').innerText    = Math.round(customThemeDraft.cardOpacity * 100) + '%';
+  document.getElementById('ctAccentStrengthVal').innerText = Math.round(customThemeDraft.accentStrength * 100) + '%';
+  document.getElementById('ctBgGlowVal').innerText         = Math.round(customThemeDraft.bgGlow * 100) + '%';
+}
+function updateCTPreview() {
+  document.getElementById('previewAccent').style.background    = '#' + customThemeDraft.accent;
+  document.getElementById('previewSecondary').style.background = '#' + customThemeDraft.secondary;
+  document.getElementById('previewBg').style.background        = '#' + customThemeDraft.bg;
+  document.getElementById('previewCard').style.background      = '#' + customThemeDraft.card;
+  document.getElementById('previewPrimaryBtn').style.background   = 'linear-gradient(90deg, #' + customThemeDraft.accent + ', #' + customThemeDraft.secondary + ')';
+  document.getElementById('previewSecondaryBtn').style.background = '#' + customThemeDraft.secondary;
+}
+function saveCustomTheme() {
+  nativeAction('saveCustomTheme', {
+    accent:    customThemeDraft.accent,
+    secondary: customThemeDraft.secondary,
+    bg:        customThemeDraft.bg,
+    card:      customThemeDraft.card,
+    cardOpacity:    String(customThemeDraft.cardOpacity),
+    accentStrength: String(customThemeDraft.accentStrength),
+    bgGlow:         String(customThemeDraft.bgGlow),
+  });
+  closeCustomThemeModal();
+}
+function resetCustomTheme() {
+  showConfirmModal(
+    state.lang === 'en' ? 'Reset custom theme to defaults?' : 'هل تريد إعادة ضبط الثيم المخصص للقيم الافتراضية؟',
+    () => {
+      customThemeDraft = { accent:'7c3aed', secondary:'a855f7', bg:'150f2c', card:'1e1636', cardOpacity:0.32, accentStrength:0.70, bgGlow:0.40 };
+      openCustomThemeModal();
+    },
+    { okLabel: t('confirmReset'),
+      okColorClass: 'bg-amber-600/80 hover:bg-amber-600',
+      iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
+      iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
 }
 
+/* ============================================================
+ * ✅ Custom Radial Style Modal
+ * ============================================================ */
+function openCustomStyleModal() {
+  const cs = state.customRadialStyle || {};
+  customStyleDraft = {
+    ringCount:     cs.ringCount     ?? 2,
+    ringThickness: cs.ringThickness ?? 2,
+    dashed:        cs.dashed        ?? false,
+    glowLayers:    cs.glowLayers    ?? 1,
+    glowStrength:  cs.glowStrength  ?? 0.60,
+  };
+  document.getElementById('csRingCountSlider').value     = customStyleDraft.ringCount;
+  document.getElementById('csRingThicknessSlider').value = customStyleDraft.ringThickness;
+  document.getElementById('csGlowLayersSlider').value    = customStyleDraft.glowLayers;
+  document.getElementById('csGlowStrengthSlider').value  = customStyleDraft.glowStrength;
+  document.getElementById('csDashedToggle').classList.toggle('on', customStyleDraft.dashed);
+  updateCSSlidersLabels();
+  document.getElementById('customStyleModalOverlay').classList.remove('hidden');
+}
+function closeCustomStyleModal() {
+  document.getElementById('customStyleModalOverlay').classList.add('hidden');
+}
+function toggleCustomStyleDashed() {
+  customStyleDraft.dashed = !customStyleDraft.dashed;
+  document.getElementById('csDashedToggle').classList.toggle('on', customStyleDraft.dashed);
+}
+function updateCSSlidersLabels() {
+  document.getElementById('csRingCountVal').innerText     = customStyleDraft.ringCount;
+  document.getElementById('csRingThicknessVal').innerText = customStyleDraft.ringThickness + ' px';
+  document.getElementById('csGlowLayersVal').innerText    = customStyleDraft.glowLayers;
+  document.getElementById('csGlowStrengthVal').innerText  = Math.round(customStyleDraft.glowStrength * 100) + '%';
+}
+function saveCustomRadialStyle() {
+  nativeAction('saveCustomRadialStyle', {
+    ringCount:     customStyleDraft.ringCount,
+    ringThickness: customStyleDraft.ringThickness,
+    dashed:        customStyleDraft.dashed,
+    glowLayers:    customStyleDraft.glowLayers,
+    glowStrength:  String(customStyleDraft.glowStrength),
+  });
+  closeCustomStyleModal();
+}
+function resetCustomRadialStyle() {
+  showConfirmModal(
+    state.lang === 'en' ? 'Reset custom style to defaults?' : 'هل تريد إعادة ضبط النمط المخصص للقيم الافتراضية؟',
+    () => {
+      customStyleDraft = { ringCount:2, ringThickness:2, dashed:false, glowLayers:1, glowStrength:0.60 };
+      openCustomStyleModal();
+    },
+    { okLabel: t('confirmReset'),
+      okColorClass: 'bg-amber-600/80 hover:bg-amber-600',
+      iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
+      iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
+}
+
+/* ============================================================
+ * ✅ Session History Viewer
+ * ============================================================ */
+function openSessionHistory() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  sessionHistoryGameIndex = game.index;
+  sessionHistoryData = [];
+  document.getElementById('sessionHistoryGameName').innerText = t('statsHistoryTitle') + ' — ' + game.name;
+  document.getElementById('sessionHistorySubtitle').innerText = game.path;
+  document.getElementById('sessionHistoryList').innerHTML =
+    '<div class="text-center py-8 text-gray-500 text-sm">' +
+    '<i class="fa-solid fa-clock-rotate-left text-3xl mb-3 opacity-30"></i>' +
+    '<p>' + t('statsHistoryLoading') + '</p></div>';
+  document.getElementById('sessionHistoryModalOverlay').classList.remove('hidden');
+  nativeAction('getPlaySessions', { index: game.index });
+}
+function closeSessionHistory() {
+  document.getElementById('sessionHistoryModalOverlay').classList.add('hidden');
+  sessionHistoryGameIndex = -1;
+  sessionHistoryData = [];
+}
+function clearSessionHistory() {
+  if (sessionHistoryGameIndex < 0) return;
+  const idx = sessionHistoryGameIndex;
+  showConfirmModal(
+    t('statsHistoryClearConfirm'),
+    () => {
+      nativeAction('clearPlaySessions', { index: idx });
+      setTimeout(() => nativeAction('getPlaySessions', { index: idx }), 250);
+    },
+    { okLabel: t('confirmDelete'),
+      okColorClass: 'bg-red-600/80 hover:bg-red-600',
+      iconWrapClass: 'bg-red-500/15 border border-red-500/30',
+      iconClass: 'fa-trash', iconColorClass: 'text-red-400' });
+}
+function formatDuration(sec) {
+  if (!sec || sec <= 0) return '0';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  if (state.lang === 'en') {
+    if (h > 0) return h + 'h ' + m + 'm';
+    if (m > 0) return m + 'm ' + s + 's';
+    return s + 's';
+  }
+  if (h > 0) return h + 'س ' + m + 'د';
+  if (m > 0) return m + 'د ' + s + 'ث';
+  return s + 'ث';
+}
+function renderSessionHistory(sessions) {
+  sessionHistoryData = sessions || [];
+  const list = document.getElementById('sessionHistoryList');
+  if (!list) return;
+  const groups = {};
+  sessionHistoryData.forEach(s => {
+    const d = new Date(s.startUnix * 1000);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    if (!groups[key]) groups[key] = { date: d, sessions: [] };
+    groups[key].sessions.push(s);
+  });
+  const days = Object.keys(groups).sort().reverse();
+  const totalSessions = sessionHistoryData.length;
+  const totalSec = sessionHistoryData.reduce((a, s) => a + (s.durationSec || 0), 0);
+  document.getElementById('sessionHistoryDaysCount').innerText = days.length;
+  document.getElementById('sessionHistorySessionsCount').innerText = totalSessions;
+  document.getElementById('sessionHistoryTotalTime').innerText = formatDuration(totalSec);
+  if (days.length === 0) {
+    list.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm border border-dashed border-white/10 rounded-xl">' + t('statsHistoryEmpty') + '</div>';
+    return;
+  }
+  const loc = state.lang === 'en' ? 'en-US' : 'ar-SA-u-ca-gregory-nu-latn';
+  list.innerHTML = '';
+  days.forEach(dayKey => {
+    const group = groups[dayKey];
+    const daySec = group.sessions.reduce((a, s) => a + (s.durationSec || 0), 0);
+    const dayName = group.date.toLocaleDateString(loc, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    group.sessions.sort((a, b) => b.startUnix - a.startUnix);
+    let sessionsHtml = '';
+    group.sessions.forEach(s => {
+      const startD = new Date(s.startUnix * 1000);
+      const endD = new Date((s.startUnix + s.durationSec) * 1000);
+      const startT = startD.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+      const endT = endD.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+      const dur = formatDuration(s.durationSec);
+      sessionsHtml +=
+        '<div class="flex items-center justify-between px-4 py-2 border-t border-white/5 hover:bg-white/[0.03] transition">' +
+          '<div class="flex items-center gap-3">' +
+            '<i class="fa-solid fa-circle-play text-cyan-400/70 text-xs"></i>' +
+            '<div class="flex items-center gap-2 text-xs font-mono">' +
+              '<span class="text-gray-300">' + startT + '</span>' +
+              '<i class="fa-solid fa-arrow-left text-gray-600 text-[9px]"></i>' +
+              '<span class="text-gray-400">' + endT + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center gap-2">' +
+            '<i class="fa-solid fa-hourglass-half text-emerald-400/70 text-[10px]"></i>' +
+            '<span class="text-xs font-bold text-emerald-300 font-mono">' + dur + '</span>' +
+          '</div>' +
+        '</div>';
+    });
+    const dayCard = document.createElement('div');
+    dayCard.className = 'glass-card rounded-xl overflow-hidden border border-white/5';
+    dayCard.innerHTML =
+      '<div class="flex items-center justify-between px-4 py-3 bg-white/[0.03] border-b border-white/10 flex-wrap gap-2">' +
+        '<div class="flex items-center gap-2.5">' +
+          '<div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0" style="background:rgba(168,85,247,0.15);color:#c084fc;">' +
+            '<i class="fa-solid fa-calendar-day"></i>' +
+          '</div>' +
+          '<h4 class="font-bold text-white text-[13px]">' + escapeHtml(dayName) + '</h4>' +
+        '</div>' +
+        '<div class="flex items-center gap-3">' +
+          '<div class="flex items-center gap-1.5 text-[11px]">' +
+            '<i class="fa-solid fa-gamepad text-cyan-400/70"></i>' +
+            '<span class="text-gray-300 font-bold">' + group.sessions.length + '</span>' +
+            '<span class="text-gray-500 text-[10px]">' + t('statsHistorySessionsShort') + '</span>' +
+          '</div>' +
+          '<div class="flex items-center gap-1.5 text-[11px]">' +
+            '<i class="fa-solid fa-hourglass-half text-emerald-400/70"></i>' +
+            '<span class="font-bold text-emerald-300 font-mono">' + formatDuration(daySec) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      sessionsHtml;
+    list.appendChild(dayCard);
+  });
+}
+
+/* ============================================================
+ * Render Game Details
+ * ============================================================ */
 function renderGameDetails() {
   const empty = document.getElementById('detailsEmpty');
   const content = document.getElementById('detailsContent');
@@ -1835,7 +2211,7 @@ function renderGameDetails() {
   const slotSel = document.getElementById('detailsQuickSlotSelect');
   if (slotSel) slotSel.value = String(game.quickSlot || 0);
   renderLangSegments(game);
-  renderBoostFpsSection(game);  // ✅ Boost FPS
+  renderBoostFpsSection(game);
   renderRadialBgPreview(game);
   renderQuickAccessBar(game);
   renderPrioritySelect(game);
@@ -1923,6 +2299,10 @@ function resetGamePlayTime() {
       iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
       iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
 }
+
+/* ============================================================
+ * Tabs & Controls
+ * ============================================================ */
 function switchTab(id) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById('tab-' + id).classList.remove('hidden');
@@ -1944,16 +2324,15 @@ function toggleHubAlwaysVisible() { nativeAction('setHubAlwaysVisible', { enable
 function onControllerButtonChange(value) { const btn = parseInt(value, 16) || 0x0010; nativeAction('setControllerButton', { button: btn }); }
 function changeGlassOpacity(val) {
   document.documentElement.style.setProperty('--glass-opacity', val);
-  document.getElementById('opacityVal').innerText = Math.round(val * 100) + '%';
+  const el = document.getElementById('opacityVal');
+  if (el) el.innerText = Math.round(val * 100) + '%';
+  if (state.customTheme) state.customTheme.cardOpacity = parseFloat(val);
 }
 function changeRadialOpacity(val) {
   document.getElementById('radialOpacityVal').innerText = Math.round(val * 100) + '%';
 }
 function changeRadialOpacityCommit(val) {
   nativeAction('setRadialTransparency', { value: String(val) });
-}
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function startHotkeyCapture() {
   capturingHotkey = true; capturingMuteHotkey = false; capturingOverlayHotkey = false;
@@ -2048,6 +2427,10 @@ document.addEventListener('drop', (e) => {
   try { window.chrome.webview.postMessageWithAdditionalObjects('addDroppedPaths', files); }
   catch (err) { showStatus(state.lang === 'en' ? 'WebView2 too old for drag & drop.' : 'نسخة WebView2 قديمة ما تدعم سحب الملفات.', 'warn'); }
 });
+
+/* ============================================================
+ * Init
+ * ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const argsInput = document.getElementById('detailsLaunchArgsInput');
   if (argsInput) {
@@ -2056,7 +2439,56 @@ document.addEventListener('DOMContentLoaded', () => {
       if (game) nativeAction('setGameLaunchArgs', { index: game.index, args: argsInput.value });
     });
   }
+
+  // ✅ Radial Scale sliders
+  const si = document.getElementById('scaleIconSlider');
+  if (si) si.addEventListener('input', (e) => onScaleIconChange(e.target.value));
+  const sh = document.getElementById('scaleHubSlider');
+  if (sh) sh.addEventListener('input', (e) => onScaleHubChange(e.target.value));
+  const so = document.getElementById('scaleOrbitSlider');
+  if (so) so.addEventListener('input', (e) => onScaleOrbitChange(e.target.value));
+
+  // ✅ Custom Theme sliders
+  const cto = document.getElementById('ctCardOpacitySlider');
+  if (cto) cto.addEventListener('input', (e) => {
+    customThemeDraft.cardOpacity = parseFloat(e.target.value);
+    updateCTSlidersLabels();
+  });
+  const cts = document.getElementById('ctAccentStrengthSlider');
+  if (cts) cts.addEventListener('input', (e) => {
+    customThemeDraft.accentStrength = parseFloat(e.target.value);
+    updateCTSlidersLabels();
+  });
+  const ctg = document.getElementById('ctBgGlowSlider');
+  if (ctg) ctg.addEventListener('input', (e) => {
+    customThemeDraft.bgGlow = parseFloat(e.target.value);
+    updateCTSlidersLabels();
+  });
+
+  // ✅ Custom Style sliders
+  const cr = document.getElementById('csRingCountSlider');
+  if (cr) cr.addEventListener('input', (e) => {
+    customStyleDraft.ringCount = parseInt(e.target.value, 10);
+    updateCSSlidersLabels();
+  });
+  const cth = document.getElementById('csRingThicknessSlider');
+  if (cth) cth.addEventListener('input', (e) => {
+    customStyleDraft.ringThickness = parseInt(e.target.value, 10);
+    updateCSSlidersLabels();
+  });
+  const cgl = document.getElementById('csGlowLayersSlider');
+  if (cgl) cgl.addEventListener('input', (e) => {
+    customStyleDraft.glowLayers = parseInt(e.target.value, 10);
+    updateCSSlidersLabels();
+  });
+  const cgs = document.getElementById('csGlowStrengthSlider');
+  if (cgs) cgs.addEventListener('input', (e) => {
+    customStyleDraft.glowStrength = parseFloat(e.target.value);
+    updateCSSlidersLabels();
+  });
 });
+
 switchTab('dashboard');
 changeGlassOpacity(0.32);
 nativeAction('ready');
+

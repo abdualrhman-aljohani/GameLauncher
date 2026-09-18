@@ -757,6 +757,38 @@ static std::wstring BuildStateJson() {
     j << L"\"radialStyle\":" << (int)LoadRadialStyle() << L",";
     j << L"\"radialTransparency\":" << LoadRadialTransparency() << L",";
     j << L"\"radialNoGlow\":" << (LoadRadialNoGlow() ? L"true" : L"false") << L",";
+    {
+        RadialScale rs = LoadRadialScale();
+        j << L"\"radialScale\":{"
+            << L"\"iconSize\":" << rs.iconSize
+            << L",\"hubSize\":" << rs.hubSize
+            << L",\"orbitDist\":" << rs.orbitDist
+            << L"},";
+    }
+    {
+        CustomTheme ct = LoadCustomTheme();
+        j << L"\"customTheme\":{"
+            << L"\"accent\":\"" << JsonEscape(ct.accentHex) << L"\""
+            << L",\"secondary\":\"" << JsonEscape(ct.secondaryHex) << L"\""
+            << L",\"bg\":\"" << JsonEscape(ct.bgHex) << L"\""
+            << L",\"card\":\"" << JsonEscape(ct.cardHex) << L"\""
+            << L",\"cardOpacity\":" << ct.cardOpacity
+            << L",\"accentStrength\":" << ct.accentStrength
+            << L",\"bgGlow\":" << ct.bgGlow
+            << L",\"isActive\":" << (ct.isActive ? L"true" : L"false")
+            << L"},";
+    }
+    {
+        CustomRadialStyle crs = LoadCustomRadialStyle();
+        j << L"\"customRadialStyle\":{"
+            << L"\"ringCount\":" << crs.ringCount
+            << L",\"ringThickness\":" << crs.ringThickness
+            << L",\"dashed\":" << (crs.dashed ? L"true" : L"false")
+            << L",\"glowLayers\":" << crs.glowLayers
+            << L",\"glowStrength\":" << crs.glowStrength
+            << L",\"isActive\":" << (crs.isActive ? L"true" : L"false")
+            << L"},";
+    }
     j << L"\"panelBackground\":\"" << JsonEscape(LoadPanelBackground()) << L"\",";
     j << L"\"radialBackground\":\"" << JsonEscape(LoadRadialBackground()) << L"\",";
     j << L"\"panelPreset\":\"" << JsonEscape(LoadPanelPreset()) << L"\",";
@@ -1293,6 +1325,26 @@ static void ChangeHotkeyFromJs(UINT modifiers, UINT vk) {
     PushStateToJs();
 }
 
+// ✅ تحويل hex string ↔ COLORREF
+static COLORREF HexToColorRef(const std::wstring& hex) {
+    if (hex.size() < 6) return RGB(124, 58, 237);
+    wchar_t r[3] = { hex[0], hex[1], 0 };
+    wchar_t g[3] = { hex[2], hex[3], 0 };
+    wchar_t b[3] = { hex[4], hex[5], 0 };
+    return RGB(
+        (BYTE)wcstol(r, nullptr, 16),
+        (BYTE)wcstol(g, nullptr, 16),
+        (BYTE)wcstol(b, nullptr, 16)
+    );
+}
+static std::wstring ColorRefToHex(COLORREF c) {
+    wchar_t buf[8];
+    wsprintfW(buf, L"%02x%02x%02x",
+        GetRValue(c), GetGValue(c), GetBValue(c));
+    return buf;
+}
+
+
 // ----------------------------- استقبال رسائل JS -----------------------------
 static void HandleWebMessage(const std::wstring& json) {
     std::wstring action = JsonGetString(json, L"action");
@@ -1314,7 +1366,7 @@ static void HandleWebMessage(const std::wstring& json) {
     }
     else if (action == L"setRadialStyle") {
         long s = JsonGetNumber(json, L"style", 0);
-        if (s >= 0 && s < RadialStyleCount()) SaveRadialStyle((RadialStyle)s);
+        if (s >= 0 && s <= 20) SaveRadialStyle((RadialStyle)s);
         PushStateToJs();
     }
     else if (action == L"setRadialNoGlow") {
@@ -1937,6 +1989,114 @@ static void HandleWebMessage(const std::wstring& json) {
             }
         }
     }
+    else if (action == L"setRadialScale") {
+        RadialScale rs;
+        rs.iconSize = (int)JsonGetNumber(json, L"iconSize", 42);
+        rs.hubSize = (int)JsonGetNumber(json, L"hubSize", 46);
+        rs.orbitDist = (int)JsonGetNumber(json, L"orbitDist", 118);
+        SaveRadialScale(rs);
+        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+        if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
+        PushStateToJs();
+    }
+    else if (action == L"resetRadialScale") {
+        RadialScale rs;  // defaults
+        SaveRadialScale(rs);
+        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+        if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
+        PushStateToJs();
+    }
+    else if (action == L"saveCustomTheme") {
+        CustomTheme ct;
+        ct.accentHex = JsonGetString(json, L"accent");
+        ct.secondaryHex = JsonGetString(json, L"secondary");
+        ct.bgHex = JsonGetString(json, L"bg");
+        ct.cardHex = JsonGetString(json, L"card");
+        ct.cardOpacity = (float)_wtof(JsonGetString(json, L"cardOpacity").c_str());
+        ct.accentStrength = (float)_wtof(JsonGetString(json, L"accentStrength").c_str());
+        ct.bgGlow = (float)_wtof(JsonGetString(json, L"bgGlow").c_str());
+        if (ct.accentHex.empty())    ct.accentHex = L"7c3aed";
+        if (ct.secondaryHex.empty()) ct.secondaryHex = L"a855f7";
+        if (ct.bgHex.empty())        ct.bgHex = L"150f2c";
+        if (ct.cardHex.empty())      ct.cardHex = L"1e1636";
+        ct.isActive = true;
+        SaveCustomTheme(ct);
+        SavePanelPreset(L"custom");
+        PushStateToJs();
+        }
+    else if (action == L"resetCustomTheme") {
+            CustomTheme ct;
+            ct.isActive = false;
+            SaveCustomTheme(ct);
+            if (LoadPanelPreset() == L"custom") SavePanelPreset(L"purple");
+            PushStateToJs();
+            }
+    else if (action == L"browseCustomThemeColor") {
+                std::wstring which = JsonGetString(json, L"which");
+                CustomTheme ct = LoadCustomTheme();
+                COLORREF initial = RGB(124, 58, 237);
+                if (which == L"accent")    initial = HexToColorRef(ct.accentHex);
+                else if (which == L"secondary") initial = HexToColorRef(ct.secondaryHex);
+                else if (which == L"bg")        initial = HexToColorRef(ct.bgHex);
+                else if (which == L"card")      initial = HexToColorRef(ct.cardHex);
+                COLORREF picked = initial;
+                if (BrowseForCustomColor(initial, picked)) {
+                    std::wstring hex = ColorRefToHex(picked);
+                    std::wstring resp = L"{\"type\":\"customThemeColorResult\",\"which\":\"" +
+                        JsonEscape(which) + L"\",\"hex\":\"" + hex + L"\"}";
+                    if (g_webview) g_webview->PostWebMessageAsString(resp.c_str());
+                }
+                }
+    else if (action == L"saveCustomRadialStyle") {
+                    CustomRadialStyle crs;
+                    crs.ringCount = (int)JsonGetNumber(json, L"ringCount", 2);
+                    crs.ringThickness = (int)JsonGetNumber(json, L"ringThickness", 2);
+                    crs.dashed = JsonGetBool(json, L"dashed", false);
+                    crs.glowLayers = (int)JsonGetNumber(json, L"glowLayers", 1);
+                    crs.glowStrength = (float)_wtof(JsonGetString(json, L"glowStrength").c_str());
+                    crs.isActive = true;
+                    SaveCustomRadialStyle(crs);
+                    // لو النمط المخصص هو المختار، أعد تحميل اللوحة
+                    if (LoadRadialStyle() == RadialStyle::Custom) {
+                        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+                        if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
+                    }
+                    PushStateToJs();
+                    }
+    else if (action == L"resetCustomRadialStyle") {
+                        CustomRadialStyle crs;
+                        crs.isActive = false;
+                        SaveCustomRadialStyle(crs);
+                        HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+                        if (h) PostMessageW(h, WM_APP_RELOAD_CONTROLLER, 0, 0);
+                        PushStateToJs();
+                        }
+
+    else if (action == L"getPlaySessions") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            std::wstring gameName;
+            auto sessions = LoadPlaySessions(g_games[idx].exePath, &gameName);
+            std::wstringstream j;
+            j << L"{\"type\":\"playSessions\",\"sessions\":[";
+            for (size_t i = 0; i < sessions.size(); i++) {
+                if (i) j << L",";
+                j << L"{\"startUnix\":" << sessions[i].startUnix
+                    << L",\"durationSec\":" << sessions[i].durationSec << L"}";
+            }
+            j << L"]}";
+            if (g_webview) g_webview->PostWebMessageAsString(j.str().c_str());
+        }
+    }
+    else if (action == L"clearPlaySessions") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            ClearPlaySessions(g_games[idx].exePath);
+        }
+        }
+
+
+
     else if (action == L"exportPerformanceCsv") {
         std::wstring file = JsonGetString(json, L"file");
         if (!file.empty()) {

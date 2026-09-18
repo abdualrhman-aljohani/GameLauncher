@@ -48,14 +48,20 @@ using namespace Gdiplus;
 
 static const wchar_t* APP_VERSION = L"1.7.0";
 
-static const int HUB_RADIUS      = 46;
-static const int GAME_RADIUS     = 42;
-static const int RADIAL_BG_CACHE_PX = (GAME_RADIUS + 4) * 2;
-static const int BASE_ORBIT      = 118;
+// ✅ قيم مقياس الدائرة (يتم تحميلها من config عند كل فتح للدائرة)
+static const int DEFAULT_HUB_RADIUS = 46;
+static const int DEFAULT_GAME_RADIUS = 42;
+static const int DEFAULT_BASE_ORBIT = 118;
 static const int ORBIT_PER_EXTRA = 16;
-static const int WINDOW_MARGIN   = 70;
+static const int RADIAL_BG_CACHE_PX = 128;
+static const int WINDOW_MARGIN = 70;
+
+static int g_hubRadius = DEFAULT_HUB_RADIUS;
+static int g_gameRadius = DEFAULT_GAME_RADIUS;
+static int g_baseOrbit = DEFAULT_BASE_ORBIT;
+
 static const wchar_t* HIDDEN_CLASS = HIDDEN_WINDOW_CLASS_NAME;
-static const wchar_t* POPUP_CLASS  = L"GameLauncherRadialWnd";
+static const wchar_t* POPUP_CLASS = L"GameLauncherRadialWnd";
 static const wchar_t* OVERLAY_CLASS = L"GameLauncherOverlayWnd";
 
 static Lang g_lang = Lang::AR;
@@ -91,7 +97,7 @@ static ControllerSettings g_controllerSettings;
 static OverlaySettings g_overlaySettings;
 static int             g_hover = -2;
 static POINT           g_center;
-static int             g_orbitDistance = BASE_ORBIT;
+static int             g_orbitDistance = DEFAULT_BASE_ORBIT;
 static bool            g_shouldClosePopup = false;
 
 static HANDLE          g_muteEvent = nullptr;
@@ -253,25 +259,22 @@ static void AutoCleanupOnVersionChange() {
     }
     if (stored == currentVersion) return;
     WriteLog(L"Version changed: '" + stored + L"' → '" + currentVersion + L"'");
-    std::wstring htmlPath = GetAppDataDir() + L"\\panel_ui.html";
-    DeleteFileW(htmlPath.c_str());
-    std::wstring webviewDir = GetAppDataDir() + L"\\WebView2Data";
-    std::wstring cmd = L"cmd.exe /c rmdir /S /Q \"" + webviewDir + L"\"";
-    STARTUPINFOW si = { sizeof(si) };
-    si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_HIDE;
-    PROCESS_INFORMATION pi = {};
-    std::vector<wchar_t> cmdLine(cmd.begin(), cmd.end());
-    cmdLine.push_back(0);
-    if (CreateProcessW(nullptr, cmdLine.data(), nullptr, nullptr, FALSE,
-                       CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
-        WaitForSingleObject(pi.hProcess, 3000);
-        CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-    }
+
+    // ✅ احذف فقط ملفات الواجهة (لكي تُستخرج من الموارد الجديدة)
+    // ❌ لا نحذف WebView2Data — لأن ذلك يمسح كاش CDN ويبطئ الفتحة الأولى بلا داعي
+    DeleteFileW((GetAppDataDir() + L"\\panel_ui.html").c_str());
+    DeleteFileW((GetAppDataDir() + L"\\panel_ui.css").c_str());
+    DeleteFileW((GetAppDataDir() + L"\\panel_ui.js").c_str());
+
+    // حدّث رقم الإصدار
+    std::wstring tmp = versionFile + L".tmp";
     {
-        std::wofstream vf(versionFile.c_str(), std::ios::trunc);
+        std::wofstream vf(tmp.c_str(), std::ios::trunc);
         if (vf.is_open()) vf << currentVersion << L"\n";
     }
+    MoveFileExW(tmp.c_str(), versionFile.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
+
 
 // ============================================================
 // ✅ Boost FPS — تنفيذ التحسينات (مع حفظ + استرجاع)
@@ -837,8 +840,9 @@ static void RebuildVisibleIndices() {
 static void ComputeOrbitDistance() {
     int n = (int)g_visibleGameIndices.size();
     int extra = (n > 6) ? (n - 6) : 0;
-    g_orbitDistance = BASE_ORBIT + extra * ORBIT_PER_EXTRA;
+    g_orbitDistance = g_baseOrbit + extra * ORBIT_PER_EXTRA;
 }
+
 
 static bool IsAnyTrackedGameRunning() {
     return !g_runningGames.empty();
@@ -1133,6 +1137,23 @@ static void PollRunningGames() {
         else if (!it->resolvedExeName.empty()) exited = !IsProcessRunningByExeName(it->resolvedExeName);
         else if (now - it->startTick > 300000ULL) exited = true;
         if (exited) {
+            // ✅ سجّل الجلسة في سجل الجلسات قبل الحذف
+            DWORD totalSec = (DWORD)it->totalSeconds;
+            if (totalSec >= 30) {
+                DWORD nowUnix = (DWORD)time(nullptr);
+                DWORD startUnix = (nowUnix > totalSec) ? (nowUnix - totalSec) : nowUnix;
+                std::wstring gname;
+                for (auto& gg : g_games) {
+                    if (_wcsicmp(gg.exePath.c_str(), it->gamePath.c_str()) == 0) {
+                        gname = gg.name;
+                        break;
+                    }
+                }
+                AppendPlaySession(it->gamePath, gname, startUnix, totalSec);
+                WriteLog(L"[Session] Recorded: " + std::to_wstring(totalSec) +
+                    L"s for " + gname);
+            }
+
             if (it->hProcess) CloseHandle(it->hProcess);
 
             // ✅ Boost FPS — استرجاع كامل
@@ -1214,9 +1235,24 @@ static void FlushPlayTimeOnExit() {
                 }
             }
         }
+        // ✅ سجّل الجلسة قبل الإغلاق
+        DWORD totalSec = (DWORD)(rg.totalSeconds + elapsed);
+        if (totalSec >= 30) {
+            DWORD nowUnix = (DWORD)time(nullptr);
+            DWORD startUnix = (nowUnix > totalSec) ? (nowUnix - totalSec) : nowUnix;
+            std::wstring gname;
+            for (auto& gg : g_games) {
+                if (_wcsicmp(gg.exePath.c_str(), rg.gamePath.c_str()) == 0) {
+                    gname = gg.name;
+                    break;
+                }
+            }
+            AppendPlaySession(rg.gamePath, gname, startUnix, totalSec);
+        }
         if (rg.hProcess) CloseHandle(rg.hProcess);
     }
     g_runningGames.clear();
+
     WriteRunningGamesFile();
     if (save) SaveGames(g_games);
 }
@@ -1375,12 +1411,31 @@ static void LaunchGame(const GameEntry& g) {
     if (g.boostFps && g.boostStopStats) {
         if (g_overlayWnd) HideOverlay();
         WriteLog(L"[Boost] Stats + Overlay suppressed");
-    } else if (g.performanceMonitor) {
-        PerfBlackBox::PerformanceMonitor::Instance().StartSession(
-            g.exePath, g.name, g.performanceCpuTemp, rg.pid);
-        WriteLog(L"  [BlackBox] Monitoring started for: " + g.name +
-            L" (PID: " + std::to_wstring(rg.pid) + L")");
     }
+
+    else if (g.performanceMonitor) {
+        auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
+
+        // ✅ إيقاف أي جلسة نشطة قسراً — يمنع تسرب بيانات اللعبة السابقة
+        if (pm.IsMonitoring()) {
+            WriteLog(L"  [BlackBox] Force-stopping stale session for: " +
+                pm.CurrentGameName() + L" before starting: " + g.name);
+            pm.StopSession();
+        }
+
+        bool started = pm.StartSession(
+            g.exePath, g.name, g.performanceCpuTemp, rg.pid);
+
+        if (started) {
+            WriteLog(L"  [BlackBox] Monitoring started for: " + g.name +
+                L" (PID: " + std::to_wstring(rg.pid) + L")");
+        }
+        else {
+            WriteLog(L"  [BlackBox] FAILED to start monitoring for: " + g.name +
+                L" — check log");
+        }
+    }
+
 
     if (wantLayoutWatch && pid && !isSteamGame && !isProtocolUri && rg.hProcess) {
         HANDLE hDup = nullptr;
@@ -1412,13 +1467,13 @@ static POINT GamePos(int index, int total) {
 }
 static int HitTest(POINT pt) {
     int dx = pt.x - g_center.x, dy = pt.y - g_center.y;
-    if (dx * dx + dy * dy <= HUB_RADIUS * HUB_RADIUS) return -1;
+    if (dx * dx + dy * dy <= g_hubRadius * g_hubRadius) return -1;
     int total = (int)g_visibleGameIndices.size();
     if (total == 0) return -2;
     for (int i = 0; i < total; i++) {
         POINT gp = GamePos(i, total);
         int gdx = pt.x - gp.x, gdy = pt.y - gp.y;
-        if (gdx * gdx + gdy * gdy <= GAME_RADIUS * GAME_RADIUS)
+        if (gdx * gdx + gdy * gdy <= g_gameRadius * g_gameRadius)
             return g_visibleGameIndices[i];
     }
     return -2;
@@ -1774,6 +1829,40 @@ static void StyleCircuit(Graphics& gfx, POINT c, int r, COLORREF color, bool hov
     SolidBrush center(Color(hover ? 255 : 180, R, G, B));
     gfx.FillEllipse(&center, (REAL)(c.x - 2), (REAL)(c.y - 2), (REAL)4, (REAL)4);
 }
+static void StyleCustom(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
+    CustomRadialStyle cs = LoadCustomRadialStyle();
+    int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
+
+    DrawSoftShadow(gfx, c, r);
+
+    // طبقات التوهج (خارج الحلقات)
+    for (int i = cs.glowLayers; i >= 1; i--) {
+        int alpha = (int)(cs.glowStrength * 70.0f) - i * 8;
+        if (alpha < 0) alpha = 0;
+        if (alpha > 255) alpha = 255;
+        REAL thickness = (REAL)(i * 2);
+        Pen glow(Color((BYTE)alpha, R, G, B), thickness);
+        int rr = r + i * 3 + (hover ? 2 : 0);
+        gfx.DrawEllipse(&glow, c.x - rr, c.y - rr, rr * 2, rr * 2);
+    }
+
+    // الحلقات
+    for (int i = 0; i < cs.ringCount; i++) {
+        int rr = r - i * 5;
+        if (rr <= 0) break;
+        REAL thickness = (REAL)cs.ringThickness + (hover ? 0.5f : 0.0f);
+        Pen ring(Color(255, R, G, B), thickness);
+        RectF rect((REAL)(c.x - rr), (REAL)(c.y - rr), (REAL)(rr * 2), (REAL)(rr * 2));
+        if (cs.dashed) {
+            for (float angle = 0.0f; angle < 360.0f; angle += 22.0f) {
+                gfx.DrawArc(&ring, rect, angle, 14.0f);
+            }
+        }
+        else {
+            gfx.DrawEllipse(&ring, c.x - rr, c.y - rr, rr * 2, rr * 2);
+        }
+    }
+}
 static void StyleFlame(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     BYTE r2 = (BYTE)min(255, R + 100);
@@ -1795,29 +1884,16 @@ static void StyleFlame(Graphics& gfx, POINT c, int r, COLORREF color, bool hover
 typedef void (*RadialStyleFn)(Graphics&, POINT, int, COLORREF, bool);
 static RadialStyleFn GetStyleFn(RadialStyle style) {
     switch (style) {
-        case RadialStyle::Neon:     return StyleNeon;
-        case RadialStyle::Gradient: return StyleGradient;
-        case RadialStyle::Minimal:  return StyleMinimal;
-        case RadialStyle::Hex:      return StyleHex;
-        case RadialStyle::Comet:    return StyleComet;
-        case RadialStyle::Burst:    return StyleBurst;
-        case RadialStyle::Sakura:   return StyleSakura;
-        case RadialStyle::Glass:    return StyleGlass;
-        case RadialStyle::Vortex:   return StyleVortex;
-        case RadialStyle::Simple:   return StyleSimple;
-        case RadialStyle::Aurora:   return StyleAurora;
-        case RadialStyle::Halo:     return StyleHalo;
-        case RadialStyle::Ripple:   return StyleRipple;
-        case RadialStyle::Crystal:  return StyleCrystal;
-        case RadialStyle::Plasma:   return StylePlasma;
-        case RadialStyle::Orbit:    return StyleOrbit;
-        case RadialStyle::Pixel:    return StylePixel;
-        case RadialStyle::Circuit:  return StyleCircuit;
-        case RadialStyle::Flame:    return StyleFlame;
-        case RadialStyle::Outline:
-        default:                    return StyleOutline;
+    case RadialStyle::Neon:     return StyleNeon;
+    case RadialStyle::Gradient: return StyleGradient;
+    case RadialStyle::Aurora:   return StyleAurora;
+    case RadialStyle::Ripple:   return StyleRipple;
+    case RadialStyle::Flame:    return StyleFlame;
+    case RadialStyle::Custom:   return StyleCustom;
+    default:                    return StyleNeon;
     }
 }
+
 
 static void DrawFavoriteBadge(Graphics& gfx, POINT c, int r) {
     REAL cx = (REAL)c.x;
@@ -1925,7 +2001,7 @@ static void DrawHub(Graphics& gfx, bool hover) {
     bool showFull = hover || g_hubAlwaysVisible || g_isFirstRun;
 
     if (!showFull) {
-        int r = HUB_RADIUS;
+        int r = g_hubRadius;
         SolidBrush invisible(Color(1, 0, 0, 0));
         gfx.FillEllipse(&invisible,
                         (REAL)(g_center.x - r), (REAL)(g_center.y - r),
@@ -1933,7 +2009,7 @@ static void DrawHub(Graphics& gfx, bool hover) {
         return;
     }
 
-    int r = HUB_RADIUS + 4;
+    int r = g_hubRadius + 4;
     SolidBrush shadow(Color(80, 0, 0, 0));
     gfx.FillEllipse(&shadow, (REAL)(g_center.x - r + 2), (REAL)(g_center.y - r + 4),
                     (REAL)(r * 2), (REAL)(r * 2));
@@ -2027,7 +2103,7 @@ static Bitmap* GetCachedRingBackground(const std::wstring& bgPath, int w, int h)
 }
 
 static void DrawDimBackdrop(Graphics& gfx, int w, int h) {
-    REAL ringR = (REAL)(g_orbitDistance + GAME_RADIUS + 40);
+    REAL ringR = (REAL)(g_orbitDistance + g_gameRadius + 40);
     GraphicsPath circlePath;
     circlePath.AddEllipse((REAL)g_center.x - ringR, (REAL)g_center.y - ringR,
                           ringR * 2, ringR * 2);
@@ -2045,7 +2121,7 @@ static void DrawCustomRadialBackground(Graphics& gfx, int w, int h) {
     if (bgPath.empty()) return;
     Bitmap* bmp = GetCachedRingBackground(bgPath, w, h);
     if (!bmp) return;
-    REAL ringR = (REAL)(g_orbitDistance + GAME_RADIUS + 18);
+    REAL ringR = (REAL)(g_orbitDistance + g_gameRadius + 18);
     GraphicsPath clipPath;
     clipPath.AddEllipse((REAL)g_center.x - ringR, (REAL)g_center.y - ringR, ringR * 2, ringR * 2);
     gfx.SetClip(&clipPath);
@@ -2086,8 +2162,8 @@ static void PaintPopup() {
             POINT p = GamePos(i, total);
             HICON ic = GetCachedIcon(g_games[idx].exePath);
             bool isMuted = g_muteCache.count(g_games[idx].exePath) > 0;
-            DrawCircleIcon(gfx, p, GAME_RADIUS, g_games[idx], ic,
-                           g_hover == idx, style, isMuted);
+            DrawCircleIcon(gfx, p, g_gameRadius, g_games[idx], ic,
+                g_hover == idx, style, isMuted);
         }
         DrawHub(gfx, g_hover == -1);
     }
@@ -2195,6 +2271,11 @@ static void ShowRadialPopup() {
     g_hubAlwaysVisible = LoadHubAlwaysVisible();
     g_isFirstRun = IsFirstRun();
 
+    RadialScale scale = LoadRadialScale();
+    g_hubRadius = scale.hubSize;
+    g_gameRadius = scale.iconSize;
+    g_baseOrbit = scale.orbitDist;
+
     RebuildVisibleIndices();
     ComputeOrbitDistance();
     DetectRunningGameProcesses();
@@ -2213,11 +2294,11 @@ static void ShowRadialPopup() {
     int monitorH = mi.rcWork.bottom - mi.rcWork.top;
 
     int maxWinSize = min(monitorW, monitorH) - 20;
-    int maxOrbit = maxWinSize / 2 - GAME_RADIUS - WINDOW_MARGIN;
-    if (maxOrbit < BASE_ORBIT) maxOrbit = BASE_ORBIT;
+    int maxOrbit = maxWinSize / 2 - g_gameRadius - WINDOW_MARGIN;
+    if (maxOrbit < g_baseOrbit) maxOrbit = g_baseOrbit;
     if (g_orbitDistance > maxOrbit) g_orbitDistance = maxOrbit;
 
-    int winSize = (g_orbitDistance + GAME_RADIUS + WINDOW_MARGIN) * 2;
+    int winSize = (g_orbitDistance + g_gameRadius + WINDOW_MARGIN) * 2;
     int wx = monitorX + (monitorW - winSize) / 2;
     int wy = monitorY + (monitorH - winSize) / 2;
 
@@ -2331,120 +2412,94 @@ static void PaintOverlay() {
         gfx.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
         gfx.Clear(Color(0, 0, 0, 0));
 
-        int alpha = (int)(g_overlaySettings.opacity * 255);
+        int alpha = (int)(g_overlaySettings.opacity * 180);
         if (alpha < 60) alpha = 60;
-        if (alpha > 255) alpha = 255;
+        if (alpha > 200) alpha = 200;
 
-        GraphicsPath panelPath;
-        panelPath.AddEllipse((REAL)0, (REAL)0, (REAL)w, (REAL)h);
-        SolidBrush panelBg(Color((BYTE)alpha, 12, 10, 24));
-        gfx.FillPath(&panelBg, &panelPath);
-        Pen panelBorder(Color(200, 168, 85, 247), 2.0f);
-        gfx.DrawPath(&panelBorder, &panelPath);
+        SolidBrush bgBrush(Color((BYTE)alpha, 8, 8, 14));
+        gfx.FillRectangle(&bgBrush, 0, 0, w, h);
 
         FontFamily ff(L"Segoe UI");
+        Font fontBig(&ff, 20.0f, FontStyleBold, UnitPixel);
         Font fontLabel(&ff, 10.0f, FontStyleRegular, UnitPixel);
-        Font fontValue(&ff, 15.0f, FontStyleBold, UnitPixel);
-        Font fontBig(&ff, 22.0f, FontStyleBold, UnitPixel);
-        SolidBrush labelBrush(Color(220, 200, 195, 230));
-        SolidBrush valueBrush(Color(255, 255, 255, 255));
+        Font fontValue(&ff, 12.0f, FontStyleBold, UnitPixel);
+
+        SolidBrush shadowBrush(Color(255, 0, 0, 0));
         SolidBrush greenBrush(Color(255, 16, 185, 129));
         SolidBrush orangeBrush(Color(255, 249, 115, 22));
         SolidBrush cyanBrush(Color(255, 6, 182, 212));
+        SolidBrush whiteBrush(Color(255, 255, 255, 255));
+        SolidBrush labelBrush(Color(200, 180, 180, 190));
 
-        StringFormat sfCenter;
-        sfCenter.SetAlignment(StringAlignmentCenter);
-        sfCenter.SetLineAlignment(StringAlignmentCenter);
+        REAL x = 12.0f;
+        REAL y = 8.0f;
 
-        if (hasLive && live.fps >= 0) {
-            wchar_t buf[64];
-            swprintf_s(buf, 64, L"%.0f", (double)live.fps);
-            gfx.DrawString(buf, -1, &fontBig,
-                RectF(0, (REAL)h * 0.14f, (REAL)w, 26.0f),
-                &sfCenter, &greenBrush);
-            gfx.DrawString(L"FPS", -1, &fontLabel,
-                RectF(0, (REAL)h * 0.24f, (REAL)w, 12.0f),
-                &sfCenter, &labelBrush);
-        }
-        else {
-            gfx.DrawString(L"FPS", -1, &fontLabel,
-                RectF(0, (REAL)h * 0.14f, (REAL)w, 12.0f),
-                &sfCenter, &labelBrush);
-            gfx.DrawString(L"—", -1, &fontBig,
-                RectF(0, (REAL)h * 0.19f, (REAL)w, 26.0f),
-                &sfCenter, &labelBrush);
-        }
-
-        wchar_t gpuBuf[64];
-        int gpuTemp = (hasLive && live.gpuTempC >= 0) ? (int)live.gpuTempC : -1;
-        int gpuUse = (hasLive && live.gpuUsage >= 0) ? (int)live.gpuUsage : -1;
-        if (gpuTemp >= 0 || gpuUse >= 0) {
-            swprintf_s(gpuBuf, 64, L"GPU  %d\x00B0C  %d%%",
-                gpuTemp >= 0 ? gpuTemp : 0,
-                gpuUse >= 0 ? gpuUse : 0);
-        }
-        else {
-            swprintf_s(gpuBuf, 64, L"GPU  \x2014");
-        }
-        gfx.DrawString(gpuBuf, -1, &fontLabel,
-            RectF(0, (REAL)h * 0.34f, (REAL)w, 14.0f),
-            &sfCenter, &orangeBrush);
-
-        if (hasLive && live.gpuPowerW >= 0) {
-            wchar_t pwBuf[48];
-            swprintf_s(pwBuf, 48, L"%.0f W", (double)live.gpuPowerW);
-            gfx.DrawString(pwBuf, -1, &fontLabel,
-                RectF(0, (REAL)h * 0.41f, (REAL)w, 14.0f),
-                &sfCenter, &orangeBrush);
-        }
-
-        wchar_t cpuBuf[64];
-        swprintf_s(cpuBuf, 64, L"CPU  %.0f%%", (double)g_cpuPercent);
-        gfx.DrawString(cpuBuf, -1, &fontLabel,
-            RectF(0, (REAL)h * 0.50f, (REAL)w, 14.0f),
-            &sfCenter, &cyanBrush);
-
-        wchar_t ramBuf[64];
-        swprintf_s(ramBuf, 64, L"RAM  %llu/%llu MB", g_ramUsedMB, g_ramTotalMB);
-        gfx.DrawString(ramBuf, -1, &fontLabel,
-            RectF(0, (REAL)h * 0.58f, (REAL)w, 14.0f),
-            &sfCenter, &labelBrush);
-
-        std::wstring gameLine = L"\x2014";
-        if (!g_runningGames.empty()) {
-            ULONGLONG total = 0;
-            for (auto& rg : g_runningGames) total += rg.totalSeconds;
-            ULONGLONG hh = total / 3600;
-            ULONGLONG mm = (total % 3600) / 60;
-            ULONGLONG ss = total % 60;
-            wchar_t tbuf[32];
-            swprintf_s(tbuf, 32, L"%02llu:%02llu:%02llu", hh, mm, ss);
-            gameLine = tbuf;
-        }
-        else {
-            gameLine = (g_lang == Lang::EN) ? L"No game" : L"\x0644\x0627 \x0644\x0639\x0628\x0629";
-        }
-        gfx.DrawString(gameLine.c_str(), -1, &fontValue,
-            RectF(0, (REAL)h * 0.68f, (REAL)w, 20.0f),
-            &sfCenter, &valueBrush);
-
-        if (hasLive && live.fps >= 0) {
-            REAL bx = (REAL)w * 0.20f, by = (REAL)h * 0.85f;
-            REAL bw = (REAL)w * 0.60f, bh = 4.0f;
-            SolidBrush barBg(Color(120, 0, 0, 0));
-            gfx.FillRectangle(&barBg, bx, by, bw, bh);
-            float pct = live.fps / 240.0f;
-            if (pct > 1.0f) pct = 1.0f;
-            if (pct < 0.0f) pct = 0.0f;
-            SolidBrush barFg(Color(255, 16, 185, 129));
-            gfx.FillRectangle(&barFg, bx, by, bw * pct, bh);
-        }
-
+        // FPS — كبير
         {
-            Pen closePen(Color(220, 255, 255, 255), 1.5f);
-            REAL cx = (REAL)w * 0.85f, cy = (REAL)h * 0.15f, rr = 5.0f;
-            gfx.DrawLine(&closePen, cx - rr, cy - rr, cx + rr, cy + rr);
-            gfx.DrawLine(&closePen, cx + rr, cy - rr, cx - rr, cy + rr);
+            std::wstring fpsStr = L"\x2014";
+            if (hasLive && live.fps >= 0) {
+                wchar_t buf[32]; swprintf_s(buf, 32, L"%.0f", (double)live.fps);
+                fpsStr = buf;
+            }
+            gfx.DrawString(fpsStr.c_str(), -1, &fontBig, PointF(x + 1, y + 1), &shadowBrush);
+            gfx.DrawString(fpsStr.c_str(), -1, &fontBig, PointF(x, y), &greenBrush);
+
+            gfx.DrawString(L"FPS", -1, &fontLabel, PointF(x + 61, y + 9), &shadowBrush);
+            gfx.DrawString(L"FPS", -1, &fontLabel, PointF(x + 60, y + 8), &labelBrush);
+            y += 28;
+        }
+
+        // GPU
+        {
+            int gpuTemp = (hasLive && live.gpuTempC >= 0) ? (int)live.gpuTempC : -1;
+            int gpuUse = (hasLive && live.gpuUsage >= 0) ? (int)live.gpuUsage : -1;
+            int gpuPow = (hasLive && live.gpuPowerW >= 0) ? (int)live.gpuPowerW : -1;
+            wchar_t buf[64];
+            if (gpuTemp >= 0 || gpuUse >= 0) {
+                if (gpuPow >= 0)
+                    swprintf_s(buf, 64, L"GPU  %d\x00B0""C   %d%%   %dW", gpuTemp, gpuUse, gpuPow);
+                else
+                    swprintf_s(buf, 64, L"GPU  %d\x00B0""C   %d%%", gpuTemp, gpuUse);
+            }
+            else {
+                swprintf_s(buf, 64, L"GPU  \x2014");
+            }
+            gfx.DrawString(buf, -1, &fontValue, PointF(x + 1, y + 1), &shadowBrush);
+            gfx.DrawString(buf, -1, &fontValue, PointF(x, y), &orangeBrush);
+            y += 18;
+        }
+
+        // CPU
+        {
+            wchar_t buf[64];
+            swprintf_s(buf, 64, L"CPU  %.0f%%", (double)g_cpuPercent);
+            gfx.DrawString(buf, -1, &fontValue, PointF(x + 1, y + 1), &shadowBrush);
+            gfx.DrawString(buf, -1, &fontValue, PointF(x, y), &cyanBrush);
+            y += 18;
+        }
+
+        // RAM
+        {
+            wchar_t buf[64];
+            swprintf_s(buf, 64, L"RAM  %llu / %llu MB", g_ramUsedMB, g_ramTotalMB);
+            gfx.DrawString(buf, -1, &fontValue, PointF(x + 1, y + 1), &shadowBrush);
+            gfx.DrawString(buf, -1, &fontValue, PointF(x, y), &whiteBrush);
+            y += 18;
+        }
+
+        // Playtime
+        {
+            std::wstring playStr = L"\x2014";
+            if (!g_runningGames.empty()) {
+                ULONGLONG total = 0;
+                for (auto& rg : g_runningGames) total += rg.totalSeconds;
+                ULONGLONG hh = total / 3600, mm = (total % 3600) / 60, ss = total % 60;
+                wchar_t tbuf[32];
+                swprintf_s(tbuf, 32, L"%02llu:%02llu:%02llu", hh, mm, ss);
+                playStr = tbuf;
+            }
+            gfx.DrawString(playStr.c_str(), -1, &fontValue, PointF(x + 1, y + 1), &shadowBrush);
+            gfx.DrawString(playStr.c_str(), -1, &fontValue, PointF(x, y), &labelBrush);
         }
     }
     POINT ptSrc = { 0, 0 };
@@ -2459,8 +2514,8 @@ static void PaintOverlay() {
     ReleaseDC(nullptr, screenDC);
 }
 
-static const int OVERLAY_W = 240;
-static const int OVERLAY_H = 240;
+static const int OVERLAY_W = 220;
+static const int OVERLAY_H = 116;
 
 static void RepaintOverlay() {
     if (g_overlayWnd) PaintOverlay();
@@ -2516,23 +2571,11 @@ static void UpdateOverlayContent() {
 }
 
 static void OverlayProc_Mouse(HWND hwnd, POINT pt) {
-    RECT rc; GetClientRect(hwnd, &rc);
-    int w = rc.right - rc.left;
-    int h = rc.bottom - rc.top;
-    int cx = (int)(w * 0.85f);
-    int cy = (int)(h * 0.15f);
-    int dx = pt.x - cx, dy = pt.y - cy;
-    if (dx * dx + dy * dy <= 12 * 12) {
-        HideOverlay();
-        return;
-    }
-    int ccx = w / 2, ccy = h / 2;
-    int ddx = pt.x - ccx, ddy = pt.y - ccy;
-    if ((ddx * ddx + ddy * ddy) <= (w / 2) * (w / 2)) {
-        ReleaseCapture();
-        SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
-    }
+    (void)pt;
+    ReleaseCapture();
+    SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 }
+
 
 static LRESULT CALLBACK OverlayProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     switch (msg) {
@@ -2709,11 +2752,17 @@ static void ReloadControllerNow(HWND /*hwnd*/) {
     g_controllerSettings = LoadControllerSettings();
     g_radialTransparency = LoadRadialTransparency();
     g_radialNoGlow = LoadRadialNoGlow();
-    WriteLog(L"Controller/transparency/noglow reloaded, enabled=" +
-             std::to_wstring(g_controllerSettings.enabled ? 1 : 0) +
-             L", toggleMode=" +
-             std::to_wstring(g_controllerSettings.toggleMode ? 1 : 0) +
-             L", noglow=" + std::to_wstring(g_radialNoGlow ? 1 : 0));
+
+    RadialScale scale = LoadRadialScale();
+    g_hubRadius = scale.hubSize;
+    g_gameRadius = scale.iconSize;
+    g_baseOrbit = scale.orbitDist;
+
+    WriteLog(L"Controller/transparency/noglow/scale reloaded, enabled=" +
+        std::to_wstring(g_controllerSettings.enabled ? 1 : 0) +
+        L", scale=" + std::to_wstring(scale.iconSize) + L"/" +
+        std::to_wstring(scale.hubSize) + L"/" +
+        std::to_wstring(scale.orbitDist));
 }
 
 static void ToggleMuteForeground() {

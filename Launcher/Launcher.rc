@@ -7,7 +7,6 @@ IDR_PANEL_HTML RCDATA "..\\Panel\\panel_ui.html"
 // ✅ جديد: ملفات CSS و JS المنفصلة (panel_ui.html يستدعيها بـ <link> و <script>)
 IDR_PANEL_CSS  RCDATA "..\\Panel\\panel_ui.css"
 IDR_PANEL_JS   RCDATA "..\\Panel\\panel_ui.js"
-
 IDI_APPICON ICON "../Common/app_icon.ico"
 
 // ✅ معلومات النسخة/حقوق النشر — تظهر في خصائص GameLauncher.exe (تبويب Details)

@@ -210,7 +210,9 @@ static VOID WINAPI EventRecordCallback(PEVENT_RECORD eventRecord) {
         }
     }
 
-    if (chosenPid == 0) {
+    // ✅ لا نتراجع إلى "أكبر عارض" عند وجود preferredPid
+    // السبب: قد يلتقط إطارات من لعبة أخرى تعمل في الخلفية
+    if (chosenPid == 0 && preferred == 0) {
         for (auto& kv : impl->tracks) {
             if ((nowTick - kv.second.lastSeenTick) >= kPidIdleTimeoutMs) continue;
             if (kv.second.presentsInWindow > chosenCount) {

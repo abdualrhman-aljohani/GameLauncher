@@ -8,10 +8,35 @@
 // -----------------------------------------------------------------------
 // Main.cpp — نقطة الدخول الموحدة للـ Engine والـ Panel
 #include "../Common/Config.h"
+#include <fstream>
+#include <string>
 
 // تعريفات مسبقة (معرّفة في Launcher.cpp و Panel.cpp)
 int RunEngineApp(HINSTANCE hInst);
 int RunPanelApp(HINSTANCE hInst);
+
+// ✅ هل العملية الحالية admin؟
+static bool IsCurrentProcessAdmin() {
+    BOOL isAdmin = FALSE;
+    PSID adminGroup = nullptr;
+    SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&ntAuth, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)) {
+        CheckTokenMembership(nullptr, adminGroup, &isAdmin);
+        FreeSid(adminGroup);
+    }
+    return isAdmin != FALSE;
+}
+
+// ✅ هل الـ Engine الحالي admin؟ (نقرأ من engine_admin.txt)
+static bool IsEngineAdmin() {
+    std::wstring adminFile = GetAppDataDir() + L"\\engine_admin.txt";
+    std::wifstream f(adminFile.c_str());
+    if (!f.is_open()) return false;
+    std::wstring line;
+    if (!std::getline(f, line)) return false;
+    return TrimString(line) == L"1";
+}
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR lpCmdLine, int) {
     // 1) طلب Panel صريح؟
@@ -19,7 +44,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR lpCmdLine, int) {
         return RunPanelApp(hInst);
     }
 
-    // ✅ 2) إعادة تشغيل كمسؤول — ننتظر حتى يتحرر الـ mutex
+    // 2) إعادة تشغيل كمسؤول — ننتظر حتى يتحرر الـ mutex
     //    (النسخة القديمة من Engine قد تكون ما زالت تُغلق نفسها)
     if (lpCmdLine && wcsstr(lpCmdLine, L"--restart-admin")) {
         for (int i = 0; i < 50; i++) {  // 50 × 200ms = 10 ثوانٍ كحد أقصى
@@ -31,10 +56,28 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR lpCmdLine, int) {
         return RunEngineApp(hInst);
     }
 
-    // 3) هل Engine شغال مسبقًا؟ لو نعم → افتح Panel
+    // 3) هل Engine شغال مسبقًا؟ لو نعم → افتح Panel (أو أعد تشغيله admin)
     HANDLE hEngine = OpenMutexW(SYNCHRONIZE, FALSE, SINGLE_INSTANCE_MUTEX_NAME);
     if (hEngine) {
         CloseHandle(hEngine);
+
+        // ✅ إذا نحن admin لكن الـ Engine ليس admin → أعِد تشغيله تلقائياً
+        if (IsCurrentProcessAdmin() && !IsEngineAdmin()) {
+            HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+            if (h) {
+                PostMessageW(h, WM_CLOSE, 0, 0);
+                // انتظر حتى يتحرر الـ mutex (حد أقصى 5 ثوان)
+                for (int i = 0; i < 25; i++) {
+                    Sleep(200);
+                    HANDLE h2 = OpenMutexW(SYNCHRONIZE, FALSE, SINGLE_INSTANCE_MUTEX_NAME);
+                    if (!h2) break;
+                    CloseHandle(h2);
+                }
+            }
+            // شغّل الـ Engine من جديد (نحن admin بالفعل، فلا يحتاج UAC)
+            return RunEngineApp(hInst);
+        }
+
         return RunPanelApp(hInst);
     }
 

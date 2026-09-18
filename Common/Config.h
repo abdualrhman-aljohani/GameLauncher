@@ -44,7 +44,7 @@ struct GameEntry {
     COLORREF color = RGB(46, 166, 218);
     std::wstring iconPath;
     int iconIndex = 0;
-    bool autoLangSwitch = true;  // legacy — غير مستخدم
+    bool autoLangSwitch = true;
     bool runAsAdmin = false;
     std::wstring launchArgs;
     bool showInRadial = true;
@@ -59,22 +59,16 @@ struct GameEntry {
     bool applyAffinity = false;
     unsigned long long affinityMask = 0;
     int quickSlot = 0;
-
-    // ✅ مراقبة الأداء (Performance Black Box)
     bool performanceMonitor = false;
     bool performanceCpuTemp = false;
-
-    // ✅ لغة اللعبة: 0 = بدون تبديل، 1 = عربي، 2 = إنجليزي
     int gameLanguage = 0;
-
-    // ✅ Boost FPS — تحسينات تلقائية عند التشغيل
-    bool boostFps = false;                       // المفتاح الرئيسي
-    bool boostDisableCore0 = true;               // تعطيل Core 0
-    bool boostHighPriority = true;               // رفع الأولوية إلى High
-    bool boostStopStats = true;                  // إيقاف الإحصائيات والـ Overlay
-    bool boostTimerResolution = false;           // Timer Resolution 1ms
-    bool boostSystemResponsiveness = false;      // SystemResponsiveness (Admin)
-    bool boostMmcss = false;                     // MMCSS Game Priority (Admin)
+    bool boostFps = false;
+    bool boostDisableCore0 = true;
+    bool boostHighPriority = true;
+    bool boostStopStats = true;
+    bool boostTimerResolution = false;
+    bool boostSystemResponsiveness = false;
+    bool boostMmcss = false;
 };
 
 struct HotkeySettings {
@@ -182,13 +176,14 @@ struct ResolvedDrop {
 };
 ResolvedDrop ResolveDroppedPath(const std::wstring& path);
 
-// ✅ 20 نمط رسم (13 قديمة + 7 جديدة)
+// ✅ 20 نمط رسم (نعرض 5 فقط الآن)
 enum class RadialStyle {
     Outline = 0, Neon = 1, Gradient = 2, Minimal = 3, Hex = 4, Comet = 5,
     Burst = 6, Sakura = 7, Glass = 8, Vortex = 9,
     Simple = 10, Aurora = 11, Halo = 12,
     Ripple = 13, Crystal = 14, Plasma = 15, Orbit = 16,
     Pixel = 17, Circuit = 18, Flame = 19,
+    Custom = 20,  // ✅ نمط مخصص يبنيه المستخدم
 };
 
 std::wstring ThemePath();
@@ -204,6 +199,55 @@ void SaveRadialTransparency(float t);
 std::wstring PanelPresetPath();
 std::wstring LoadPanelPreset();
 void SavePanelPreset(const std::wstring& preset);
+
+// ═════════════════════════════════════════════════════════════
+// ✅ الثيم المخصص للوحة (4 ألوان + 3 سلايدرز)
+// ═════════════════════════════════════════════════════════════
+struct CustomTheme {
+    // 4 ألوان (hex strings بدون #)
+    std::wstring accentHex    = L"7c3aed";  // اللون الأساسي
+    std::wstring secondaryHex = L"a855f7";  // اللون الثانوي
+    std::wstring bgHex        = L"150f2c";  // الخلفية
+    std::wstring cardHex      = L"1e1636";  // البطاقات
+    // 3 سلايدرز
+    float cardOpacity   = 0.32f;  // شفافية البطاقات 0.10..0.85
+    float accentStrength = 0.70f; // قوة التمييز 0..1
+    float bgGlow        = 0.40f;  // توهج الخلفية 0..1
+    bool isActive = false;         // هل الثيم المخصص هو المُفعّل حالياً؟
+};
+
+std::wstring CustomThemePath();
+CustomTheme LoadCustomTheme();
+void SaveCustomTheme(const CustomTheme& ct);
+
+// ═════════════════════════════════════════════════════════════
+// ✅ النمط المخصص للدائرة (5 تحكمات)
+// ═════════════════════════════════════════════════════════════
+struct CustomRadialStyle {
+    int ringCount     = 2;    // عدد الحلقات 1..4
+    int ringThickness = 2;    // سماكة الحلقة 1..8 px
+    bool dashed       = false; // متصل / متقطع
+    int glowLayers    = 1;    // طبقات التوهج 0..3
+    float glowStrength = 0.60f; // شدة التوهج 0..1
+    bool isActive     = false; // هل النمط المخصص مُفعّل حالياً؟
+};
+
+std::wstring CustomRadialStylePath();
+CustomRadialStyle LoadCustomRadialStyle();
+void SaveCustomRadialStyle(const CustomRadialStyle& cs);
+
+// ═════════════════════════════════════════════════════════════
+// ✅ مقياس الدائرة (3 سلايدرز)
+// ═════════════════════════════════════════════════════════════
+struct RadialScale {
+    int iconSize  = 42;   // نصف قطر أيقونة اللعبة 30..60
+    int hubSize   = 46;   // نصف قطر زر الـ Hub 30..60
+    int orbitDist = 118;  // مسافة الألعاب من المركز 90..180
+};
+
+std::wstring RadialScalePath();
+RadialScale LoadRadialScale();
+void SaveRadialScale(const RadialScale& rs);
 
 bool IsProcessRunningByExeName(const std::wstring& exeName);
 std::wstring GetFileNameFromPath(const std::wstring& path);
@@ -271,8 +315,23 @@ std::wstring PerformanceSettingsPath();
 bool LoadPerformanceGlobalEnabled();
 void SavePerformanceGlobalEnabled(bool enabled);
 
-// ✅ اسم اللغة داخل اللعبة (0=بدون، 1=AR، 2=EN)
 std::wstring LangCodeToLayoutName(int gameLanguage);
 
-// ✅ Boost FPS — حالة نظامية (Admin)
 bool IsProcessElevated();
+
+// ═════════════════════════════════════════════════════════════
+// ✅ سجل جلسات اللعب (Play Sessions History)
+// ═════════════════════════════════════════════════════════════
+struct PlaySessionEntry {
+    DWORD startUnix = 0;
+    DWORD durationSec = 0;
+};
+
+std::wstring PlaySessionsDir();
+void AppendPlaySession(const std::wstring& gamePath,
+                       const std::wstring& gameName,
+                       DWORD startUnix,
+                       DWORD durationSec);
+std::vector<PlaySessionEntry> LoadPlaySessions(const std::wstring& gamePath,
+                                                std::wstring* outGameName = nullptr);
+bool ClearPlaySessions(const std::wstring& gamePath);
