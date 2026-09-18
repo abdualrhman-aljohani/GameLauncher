@@ -298,7 +298,6 @@
                 </div>
               </div>
 
-              <!-- ✅ قسم لغة اللعبة الجديد -->
               <div class="border-t border-white/10 pt-4">
                 <h4 class="text-xs text-gray-200 flex items-center gap-2 mb-2">
                   <i class="fa-solid fa-language text-amber-400 text-xs"></i>
@@ -377,6 +376,59 @@
                     </div>
                   </div>
                   <div id="detailsCpuCoresGrid" class="cpu-cores-grid"></div>
+                </div>
+              </div>
+
+              <!-- ✅ قسم Boost FPS -->
+              <div class="border-t border-white/10 pt-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-xs text-gray-200 flex items-center gap-2">
+                      <i class="fa-solid fa-rocket text-pink-400 text-xs"></i>
+                      <span data-t="boostFpsTitle">Boost FPS</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30 font-mono">BETA</span>
+                    </h4>
+                    <p class="text-[10px] text-gray-500 mt-0.5" data-t="boostFpsDesc">تحسينات تلقائية عند تشغيل اللعبة، تتراجع عند الإغلاق.</p>
+                  </div>
+                  <button id="detailsBoostFpsToggle" onclick="toggleBoostFps()" class="pill-switch" tabindex="0"><span class="pill-switch-knob"></span></button>
+                </div>
+
+                <div id="boostFpsOptions" class="opacity-40 pointer-events-none space-y-2 ps-3 border-s-2 border-pink-500/30">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-gray-300" data-t="boostDisableCore0">تعطيل Core 0</span>
+                    <button id="boostDisableCore0Toggle" onclick="toggleBoostDisableCore0()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-gray-300" data-t="boostHighPriority">رفع الأولوية إلى High</span>
+                    <button id="boostHighPriorityToggle" onclick="toggleBoostHighPriority()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-gray-300" data-t="boostStopStats">إيقاف الإحصائيات والـ Overlay</span>
+                    <button id="boostStopStatsToggle" onclick="toggleBoostStopStats()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-gray-300" data-t="boostTimerResolution">تحسين دقة المؤقت (Timer 1ms)</span>
+                    <button id="boostTimerResolutionToggle" onclick="toggleBoostTimerResolution()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[11px] text-gray-300" data-t="boostSystemResponsiveness">SystemResponsiveness</span>
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                    </div>
+                    <button id="boostSystemResponsivenessToggle" onclick="toggleBoostSystemResponsiveness()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[11px] text-gray-300" data-t="boostMmcss">MMCSS Game Priority</span>
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">Admin</span>
+                    </div>
+                    <button id="boostMmcssToggle" onclick="toggleBoostMmcss()" class="pill-switch pill-switch-compact" tabindex="0"><span class="pill-switch-knob"></span></button>
+                  </div>
+                </div>
+
+                <div class="info-box text-[10px]">
+                  <i class="fa-solid fa-circle-info me-1"></i>
+                  <span data-t="boostFpsHint">قد تختلف نتائج Boost من لعبة لأخرى. بعض الخيارات تحتاج صلاحيات Admin.</span>
                 </div>
               </div>
             </div>
@@ -557,7 +609,7 @@
           </h2>
         </div>
 
-        <!-- ✅ قسم 1: الاختصارات -->
+        <!-- قسم 1: الاختصارات -->
         <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
           <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
             <i class="fa-solid fa-keyboard text-yellow-400"></i>
@@ -599,7 +651,7 @@
           </div>
         </div>
 
-        <!-- ✅ قسم 2: يد التحكم -->
+        <!-- قسم 2: يد التحكم -->
         <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
           <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
             <i class="fa-solid fa-gamepad text-purple-400"></i>
@@ -656,7 +708,7 @@
           </div>
         </div>
 
-        <!-- ✅ قسم 3: المظهر والواجهة -->
+        <!-- قسم 3: المظهر والواجهة -->
         <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
           <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
             <i class="fa-solid fa-paintbrush text-pink-400"></i>
@@ -681,7 +733,7 @@
           </div>
         </div>
 
-        <!-- ✅ قسم 4: النظام -->
+        <!-- قسم 4: النظام -->
         <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
           <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
             <i class="fa-solid fa-microchip text-cyan-400"></i>
@@ -735,45 +787,58 @@
           </div>
         </div>
 
-        <!-- ✅ قسم 5: الأدوات والإدارة -->
+        <!-- قسم 5: الأدوات والإدارة -->
         <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-2xl">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
-            <i class="fa-solid fa-toolbox text-amber-400"></i>
-            <span data-t="settingsSectionTools">الأدوات والإدارة</span>
-          </h3>
+            <h3 class="font-bold text-white text-sm flex items-center gap-2 border-b border-white/10 pb-3">
+                <i class="fa-solid fa-toolbox text-amber-400"></i>
+                <span data-t="settingsSectionTools">الأدوات والإدارة</span>
+            </h3>
 
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <h4 class="font-bold text-white text-sm flex items-center gap-2">
-                <i class="fa-solid fa-volume-xmark text-red-400"></i>
-                <span data-t="mutedAppsTitle">التطبيقات المكتومة حاليًا</span>
-                <span id="mutedAppsCount" class="text-[10px] text-gray-400 font-mono">(0)</span>
-              </h4>
-              <button onclick="refreshMutedApps()" class="icon-action-btn" tabindex="0"><i class="fa-solid fa-rotate-right text-sm"></i></button>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-volume-xmark text-red-400"></i>
+                        <span data-t="mutedAppsTitle">التطبيقات المكتومة حاليًا</span>
+                        <span id="mutedAppsCount" class="text-[10px] text-gray-400 font-mono">(0)</span>
+                    </h4>
+                    <button onclick="refreshMutedApps()" class="icon-action-btn" tabindex="0"><i class="fa-solid fa-rotate-right text-sm"></i></button>
+                </div>
+                <div id="mutedAppsList" class="space-y-2">
+                    <div class="text-center py-3 text-gray-500 text-xs" data-t="noMutedApps">لا توجد تطبيقات مكتومة.</div>
+                </div>
             </div>
-            <div id="mutedAppsList" class="space-y-2">
-              <div class="text-center py-3 text-gray-500 text-xs" data-t="noMutedApps">لا توجد تطبيقات مكتومة.</div>
-            </div>
-          </div>
 
-          <div class="border-t border-white/10 pt-4 space-y-3">
-            <h4 class="font-bold text-white text-sm flex items-center gap-2">
-              <i class="fa-solid fa-database text-cyan-400"></i>
-              <span data-t="backupTitle">النسخ الاحتياطي</span>
-            </h4>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="nativeAction('exportBackup')" class="backup-btn primary" tabindex="0"><i class="fa-solid fa-download"></i><span data-t="backupExportBtn">حفظ نسخة احتياطية</span></button>
-              <button onclick="nativeAction('importBackup')" class="backup-btn" tabindex="0"><i class="fa-solid fa-upload"></i><span data-t="backupImportBtn">استيراد نسخة</span></button>
+            <div class="border-t border-white/10 pt-4 space-y-3">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-database text-cyan-400"></i>
+                    <span data-t="backupTitle">النسخ الاحتياطي</span>
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="nativeAction('exportBackup')" class="backup-btn primary" tabindex="0"><i class="fa-solid fa-download"></i><span data-t="backupExportBtn">حفظ نسخة احتياطية</span></button>
+                    <button onclick="nativeAction('importBackup')" class="backup-btn" tabindex="0"><i class="fa-solid fa-upload"></i><span data-t="backupImportBtn">استيراد نسخة</span></button>
+                </div>
             </div>
-          </div>
 
-          <div class="border-t border-white/10 pt-4 space-y-3">
-            <h4 class="font-bold text-white text-sm flex items-center gap-2">
-              <i class="fa-solid fa-file-lines text-amber-400"></i>
-              <span data-t="logTitle">ملف السجل التشخيصي</span>
-            </h4>
-            <button onclick="nativeAction('openLogFile')" class="backup-btn" tabindex="0"><i class="fa-solid fa-folder-open"></i><span data-t="logOpenBtn">فتح ملف السجل</span></button>
-          </div>
+            <div class="border-t border-white/10 pt-4 space-y-3">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-pink-400"></i>
+                    <span data-t="boostRestoreTitle">استرجاع إعدادات Boost</span>
+                </h4>
+                <p class="text-[10px] text-gray-500 leading-relaxed" data-t="boostRestoreDesc">إذا لاحظت أن إعدادات نظامية تغيّرت بسبب Boost، اضغط الزر لاسترجاع القيم الأصلية فوراً.</p>
+                <button onclick="restoreBoostDefaults()" class="backup-btn" tabindex="0">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span data-t="boostRestoreBtn">استرجاع إعدادات النظام</span>
+                </button>
+            </div>
+
+
+            <div class="border-t border-white/10 pt-4 space-y-3">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-file-lines text-amber-400"></i>
+                    <span data-t="logTitle">ملف السجل التشخيصي</span>
+                </h4>
+                <button onclick="nativeAction('openLogFile')" class="backup-btn" tabindex="0"><i class="fa-solid fa-folder-open"></i><span data-t="logOpenBtn">فتح ملف السجل</span></button>
+            </div>
         </div>
       </section>
 

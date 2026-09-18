@@ -195,6 +195,10 @@ const I18N = {
     ctrlBtnLS: 'Left Stick', ctrlBtnRS: 'Right Stick', ctrlBtnGuide: 'Xbox (Guide)',
     shareInfoTitle: 'بخصوص زر Share في يد Xbox Series',
     shareInfoBody: 'زر Share غير مدعوم في XInput (واجهة ويندوز الرسمية). يمكنك ربطه عبر تطبيق "Xbox Accessories" الرسمي من مايكروسوفت على أي زر (مثل F13)، ثم تسجيله كاختصار لفتح الدائرة من الأعلى.',
+       boostRestoreTitle: 'استرجاع إعدادات Boost',
+       boostRestoreDesc: 'إذا لاحظت أن إعدادات نظامية تغيّرت بسبب Boost، اضغط الزر لاسترجاع القيم الأصلية فوراً.',
+       boostRestoreBtn: 'استرجاع إعدادات النظام',
+       boostRestoreConfirm: 'هل تريد استرجاع القيم الأصلية لإعدادات النظام التي عدّلها Boost؟',
     detailsBlackBoxTitle: 'مراقبة الأداء (Black Box)',
     detailsBlackBoxEnable: 'تفعيل مراقبة الأداء لهذه اللعبة',
     detailsBlackBoxEnableHint: 'يجمع FPS والحرارة والاستهلاك أثناء اللعب لعرض تقرير مفصل.',
@@ -217,6 +221,16 @@ const I18N = {
     adminRestartFailed: 'فشل إعادة التشغيل. جرّب يدويًا: Right-click → Run as Administrator.',
     adminNotRunning: 'المحرك متوقف. سيتم تشغيله كمسؤول.',
     blackBoxNeedsAdmin: 'لتفعيل FPS، يحتاج GameLauncher صلاحيات المسؤول. اضغط "إعادة التشغيل كمسؤول" في الإعدادات أو استمر بدون FPS.',
+    // ✅ Boost FPS
+    boostFpsTitle: 'Boost FPS',
+    boostFpsDesc: 'تحسينات تلقائية عند تشغيل اللعبة، تتراجع عند الإغلاق.',
+    boostDisableCore0: 'تعطيل Core 0',
+    boostHighPriority: 'رفع الأولوية إلى High',
+    boostStopStats: 'إيقاف الإحصائيات والـ Overlay',
+    boostTimerResolution: 'تحسين دقة المؤقت (Timer 1ms)',
+    boostSystemResponsiveness: 'SystemResponsiveness',
+    boostMmcss: 'MMCSS Game Priority',
+    boostFpsHint: 'قد تختلف نتائج Boost من لعبة لأخرى. بعض الخيارات تحتاج صلاحيات Admin.',
     perfReportTitle: 'تقرير الأداء',
     perfSessionsTitle: 'الجلسات السابقة',
     perfNoSessions: 'لا توجد جلسات محفوظة بعد. شغّل اللعبة مع تفعيل المراقبة لأول مرة.',
@@ -316,6 +330,10 @@ const I18N = {
     quickSlotNone: 'No shortcut',
     detailsGameLanguage: 'Game language inside the app',
     detailsGameLanguageHint: 'When you launch this game, keyboard layout will switch automatically and revert on exit.',
+       boostRestoreTitle: 'Restore Boost Settings',
+       boostRestoreDesc: 'If you notice system settings were changed by Boost, click to restore original values.',
+       boostRestoreBtn: 'Restore System Defaults',
+       boostRestoreConfirm: 'Restore the original system values modified by Boost?',
     langOff: 'No switch',
     langArabic: 'Arabic',
     langEnglish: 'English',
@@ -411,6 +429,16 @@ const I18N = {
     adminRestartFailed: 'Restart failed. Try manually: Right-click → Run as Administrator.',
     adminNotRunning: 'Engine stopped. Will launch as Administrator.',
     blackBoxNeedsAdmin: 'To enable FPS, GameLauncher needs Administrator rights. Click "Restart as Administrator" in Settings, or continue without FPS.',
+    // ✅ Boost FPS
+    boostFpsTitle: 'Boost FPS',
+    boostFpsDesc: 'Automatic optimizations on game launch, reverted on exit.',
+    boostDisableCore0: 'Disable Core 0',
+    boostHighPriority: 'Raise priority to High',
+    boostStopStats: 'Stop stats & Overlay',
+    boostTimerResolution: 'Improve timer resolution (1ms)',
+    boostSystemResponsiveness: 'SystemResponsiveness',
+    boostMmcss: 'MMCSS Game Priority',
+    boostFpsHint: 'Boost results may vary per game. Some options require Admin rights.',
     perfReportTitle: 'Performance Report',
     perfSessionsTitle: 'Previous Sessions',
     perfNoSessions: 'No saved sessions yet. Play the game with monitoring enabled first.',
@@ -824,6 +852,19 @@ function onStateUpdated() {
   }
 }
 function onSearchChange(value) { searchQuery = (value || '').toLowerCase().trim(); renderGamesList(); }
+
+function restoreBoostDefaults() {
+  showConfirmModal(
+    t('boostRestoreConfirm'),
+    () => nativeAction('restoreBoostDefaults'),
+    { okLabel: t('confirmReset'),
+      okColorClass: 'bg-amber-600/80 hover:bg-amber-600',
+      iconWrapClass: 'bg-amber-500/15 border border-amber-500/30',
+      iconClass: 'fa-rotate-left', iconColorClass: 'text-amber-300' });
+}
+
+
+
 function onSortChange(value) { sortMode = value || 'manual'; renderGamesList(); }
 function getSortedFilteredGames() {
   let list = state.games.slice();
@@ -871,6 +912,7 @@ function renderGamesList() {
     const runningIndicator = game.isRunning ? `<span class="running-dot"><span class="dot"></span><span>${escapeHtml(t('runningLabel'))}</span></span>` : '';
     const slotBadge = (game.quickSlot && game.quickSlot >= 1 && game.quickSlot <= 9)
       ? `<span class="slot-badge">${game.quickSlot}</span>` : '';
+    const boostBadge = game.boostFps ? `<span class="boost-badge"><i class="fa-solid fa-rocket"></i></span>` : '';
     const canOpenFolder = !game.isSteam && !game.isUwp;
     card.innerHTML = `
       <div class="flex items-center gap-3 overflow-hidden">
@@ -882,7 +924,7 @@ function renderGamesList() {
         <div class="overflow-hidden">
           <div class="flex items-center gap-2 flex-wrap">
             <h4 class="font-bold text-white text-sm truncate">${escapeHtml(game.name)}</h4>
-            ${slotBadge}${uwpBadge}${muteIndicator}${runningIndicator}
+            ${slotBadge}${boostBadge}${uwpBadge}${muteIndicator}${runningIndicator}
           </div>
           <p class="text-[11px] font-mono truncate ${game.missing ? 'text-amber-400' : 'text-gray-300'}">${escapeHtml(game.path)}</p>
         </div>
@@ -1004,12 +1046,13 @@ function renderDetailsSidebar() {
     const muteMini = game.muted ? `<span class="mute-badge"><i class="fa-solid fa-volume-xmark"></i></span>` : '';
     const runMini = game.isRunning ? `<span class="running-dot" style="padding:1px 5px;"><span class="dot" style="width:5px;height:5px;"></span></span>` : '';
     const slotMini = (game.quickSlot >= 1 && game.quickSlot <= 9) ? `<span class="slot-badge" style="width:16px;height:16px;font-size:9px;">${game.quickSlot}</span>` : '';
+    const boostMini = game.boostFps ? `<i class="fa-solid fa-rocket text-[9px]" style="color:#ec4899;"></i>` : '';
     item.innerHTML = `
       <img src="${game.icon}" class="w-9 h-9 rounded-lg object-contain bg-black/20 border border-white/10 shrink-0">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1.5 flex-wrap">
           <div class="text-xs font-bold text-white truncate">${escapeHtml(game.name)}</div>
-          ${slotMini}${uwp}${favStar}${muteMini}${runMini}
+          ${slotMini}${boostMini}${uwp}${favStar}${muteMini}${runMini}
         </div>
         <div class="text-[10px] text-gray-500 truncate font-mono">${escapeHtml(game.path)}</div>
       </div>
@@ -1089,12 +1132,47 @@ function onQuickSlotChange(value) {
   const slot = parseInt(value, 10) || 0;
   nativeAction('setGameQuickSlot', { index: game.index, slot: slot });
 }
-// ✅ جديد: تعيين لغة اللعبة
 function setGameLanguage(langValue) {
   const game = state.games.find(g => g.index === detailsGameIndex);
   if (!game) return;
   if (game.gameLanguage === langValue) return;
   nativeAction('setGameLanguage', { index: game.index, language: langValue });
+}
+// ✅ Boost FPS — دوال التبديل
+function toggleBoostFps() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostFps', { index: game.index, enabled: game.boostFps ? 0 : 1 });
+}
+function toggleBoostDisableCore0() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostDisableCore0', { index: game.index, enabled: game.boostDisableCore0 ? 0 : 1 });
+}
+function toggleBoostHighPriority() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostHighPriority', { index: game.index, enabled: game.boostHighPriority ? 0 : 1 });
+}
+function toggleBoostStopStats() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostStopStats', { index: game.index, enabled: game.boostStopStats ? 0 : 1 });
+}
+function toggleBoostTimerResolution() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostTimerResolution', { index: game.index, enabled: game.boostTimerResolution ? 0 : 1 });
+}
+function toggleBoostSystemResponsiveness() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostSystemResponsiveness', { index: game.index, enabled: game.boostSystemResponsiveness ? 0 : 1 });
+}
+function toggleBoostMmcss() {
+  const game = state.games.find(g => g.index === detailsGameIndex);
+  if (!game) return;
+  nativeAction('setGameBoostMmcss', { index: game.index, enabled: game.boostMmcss ? 0 : 1 });
 }
 function toggleControllerToggleMode() {
   nativeAction('setControllerToggleMode', { enabled: state.controllerToggleMode ? 0 : 1 });
@@ -1139,7 +1217,6 @@ function renderRadialBgPreview(game) {
     if (hideIconRow) hideIconRow.style.display = 'none';
   }
 }
-// ✅ جديد: تحديث شريط اللغة
 function renderLangSegments(game) {
   const container = document.getElementById('detailsLangSegments');
   if (!container) return;
@@ -1148,6 +1225,29 @@ function renderLangSegments(game) {
     const val = parseInt(btn.getAttribute('data-lang'), 10);
     btn.classList.toggle('active', val === cur);
   });
+}
+// ✅ Boost FPS — تحديث واجهة القسم
+function renderBoostFpsSection(game) {
+  const mainToggle = document.getElementById('detailsBoostFpsToggle');
+  if (!mainToggle) return;
+  mainToggle.classList.toggle('on', !!game.boostFps);
+  const opts = document.getElementById('boostFpsOptions');
+  if (opts) {
+    if (game.boostFps) opts.classList.remove('opacity-40', 'pointer-events-none');
+    else opts.classList.add('opacity-40', 'pointer-events-none');
+  }
+  const t1 = document.getElementById('boostDisableCore0Toggle');
+  if (t1) t1.classList.toggle('on', !!game.boostDisableCore0);
+  const t2 = document.getElementById('boostHighPriorityToggle');
+  if (t2) t2.classList.toggle('on', !!game.boostHighPriority);
+  const t3 = document.getElementById('boostStopStatsToggle');
+  if (t3) t3.classList.toggle('on', !!game.boostStopStats);
+  const t4 = document.getElementById('boostTimerResolutionToggle');
+  if (t4) t4.classList.toggle('on', !!game.boostTimerResolution);
+  const t5 = document.getElementById('boostSystemResponsivenessToggle');
+  if (t5) t5.classList.toggle('on', !!game.boostSystemResponsiveness);
+  const t6 = document.getElementById('boostMmcssToggle');
+  if (t6) t6.classList.toggle('on', !!game.boostMmcss);
 }
 function renderPrioritySelect(game) {
   const sel = document.getElementById('detailsPrioritySelect');
@@ -1735,6 +1835,7 @@ function renderGameDetails() {
   const slotSel = document.getElementById('detailsQuickSlotSelect');
   if (slotSel) slotSel.value = String(game.quickSlot || 0);
   renderLangSegments(game);
+  renderBoostFpsSection(game);  // ✅ Boost FPS
   renderRadialBgPreview(game);
   renderQuickAccessBar(game);
   renderPrioritySelect(game);

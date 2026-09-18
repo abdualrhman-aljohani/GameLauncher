@@ -19,6 +19,7 @@
 #include <shlobj.h>
 #include <xinput.h>
 #include <psapi.h>
+#include <mmsystem.h>
 #include <cmath>
 #include <vector>
 #include <map>
@@ -37,6 +38,7 @@ static const double PI_CONST = 3.14159265358979323846;
 #pragma comment(lib, "comdlg32.lib")
 #pragma comment(lib, "xinput.lib")
 #pragma comment(lib, "psapi.lib")
+#pragma comment(lib, "winmm.lib")
 
 using namespace Gdiplus;
 
@@ -118,6 +120,68 @@ static int                      g_ringBgCachedW = 0, g_ringBgCachedH = 0;
 static Bitmap*                  g_ringBgCachedBmp = nullptr;
 
 static std::vector<std::wstring> g_trayMutedExes;
+
+// ============================================================
+// ✅ Boost FPS — حالة النظام
+// ============================================================
+static volatile LONG g_timerResolutionRefCount = 0;
+static volatile LONG g_sysRespRefCount = 0;
+static volatile LONG g_mmcssRefCount = 0;
+
+// ---- Backup structure ----
+struct BoostBackup {
+    bool hasSystemResp = false;
+    DWORD originalSystemResp = 20;
+    bool hasMmcss = false;
+    DWORD mmcssGpuPriority = 8;
+    DWORD mmcssPriority = 6;
+    std::wstring mmcssSchedCategory = L"High";
+    std::wstring mmcssSfioPriority = L"High";
+};
+
+static std::wstring BoostBackupPath() {
+    return GetAppDataDir() + L"\\boost_backup.cfg";
+}
+
+static bool SaveBoostBackup(const BoostBackup& b) {
+    std::wstring target = BoostBackupPath();
+    std::wstring tmp = target + L".tmp";
+    std::wofstream f(tmp.c_str(), std::ios::trunc);
+    if (!f.is_open()) return false;
+    f << L"hasSystemResp=" << (b.hasSystemResp ? 1 : 0) << L"\n";
+    f << L"originalSystemResp=" << b.originalSystemResp << L"\n";
+    f << L"hasMmcss=" << (b.hasMmcss ? 1 : 0) << L"\n";
+    f << L"mmcssGpuPriority=" << b.mmcssGpuPriority << L"\n";
+    f << L"mmcssPriority=" << b.mmcssPriority << L"\n";
+    f << L"mmcssSchedCategory=" << b.mmcssSchedCategory << L"\n";
+    f << L"mmcssSfioPriority=" << b.mmcssSfioPriority << L"\n";
+    f.close();
+    return MoveFileExW(tmp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING) != 0;
+}
+
+static bool LoadBoostBackup(BoostBackup& b) {
+    std::wifstream f(BoostBackupPath().c_str());
+    if (!f.is_open()) return false;
+    std::wstring line;
+    while (std::getline(f, line)) {
+        size_t eq = line.find(L'=');
+        if (eq == std::wstring::npos) continue;
+        std::wstring key = line.substr(0, eq);
+        std::wstring val = line.substr(eq + 1);
+        if (key == L"hasSystemResp") b.hasSystemResp = (val == L"1");
+        else if (key == L"originalSystemResp") b.originalSystemResp = (DWORD)_wtoi(val.c_str());
+        else if (key == L"hasMmcss") b.hasMmcss = (val == L"1");
+        else if (key == L"mmcssGpuPriority") b.mmcssGpuPriority = (DWORD)_wtoi(val.c_str());
+        else if (key == L"mmcssPriority") b.mmcssPriority = (DWORD)_wtoi(val.c_str());
+        else if (key == L"mmcssSchedCategory") b.mmcssSchedCategory = val;
+        else if (key == L"mmcssSfioPriority") b.mmcssSfioPriority = val;
+    }
+    return true;
+}
+
+static void DeleteBoostBackup() {
+    DeleteFileW(BoostBackupPath().c_str());
+}
 
 typedef DWORD (WINAPI *XInputGetStateEx_t)(DWORD dwUserIndex, XINPUT_STATE* pState);
 static XInputGetStateEx_t g_XInputGetStateEx = nullptr;
@@ -206,6 +270,325 @@ static void AutoCleanupOnVersionChange() {
     {
         std::wofstream vf(versionFile.c_str(), std::ios::trunc);
         if (vf.is_open()) vf << currentVersion << L"\n";
+    }
+}
+
+// ============================================================
+// ✅ Boost FPS — تنفيذ التحسينات (مع حفظ + استرجاع)
+// ============================================================
+
+// SystemResponsiveness: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+static bool SetSystemResponsiveness(DWORD value) {
+    HKEY hKey = nullptr;
+    LONG r = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+        0, KEY_SET_VALUE | KEY_QUERY_VALUE, &hKey);
+    if (r != ERROR_SUCCESS) return false;
+
+    // ✅ احفظ القيمة الأصلية في الملف عند أول مرة
+    BoostBackup backup;
+    LoadBoostBackup(backup);
+    if (!backup.hasSystemResp) {
+        DWORD sz = sizeof(DWORD), type = 0;
+        DWORD cur = 20;
+        if (RegQueryValueExW(hKey, L"SystemResponsiveness", nullptr, &type,
+                             (LPBYTE)&cur, &sz) == ERROR_SUCCESS) {
+            backup.originalSystemResp = cur;
+        } else {
+            backup.originalSystemResp = 20;
+        }
+        backup.hasSystemResp = true;
+        SaveBoostBackup(backup);
+        WriteLog(L"[Boost] Saved original SystemResponsiveness=" +
+                 std::to_wstring(backup.originalSystemResp));
+    }
+
+    DWORD v = value;
+    r = RegSetValueExW(hKey, L"SystemResponsiveness", 0, REG_DWORD,
+                       (const BYTE*)&v, sizeof(v));
+    RegCloseKey(hKey);
+    return r == ERROR_SUCCESS;
+}
+
+static bool RestoreSystemResponsiveness() {
+    BoostBackup backup;
+    if (!LoadBoostBackup(backup) || !backup.hasSystemResp) return false;
+
+    HKEY hKey = nullptr;
+    LONG r = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+        0, KEY_SET_VALUE, &hKey);
+    if (r != ERROR_SUCCESS) return false;
+
+    DWORD v = backup.originalSystemResp;
+    r = RegSetValueExW(hKey, L"SystemResponsiveness", 0, REG_DWORD,
+                       (const BYTE*)&v, sizeof(v));
+    RegCloseKey(hKey);
+
+    if (r == ERROR_SUCCESS) {
+        backup.hasSystemResp = false;
+        SaveBoostBackup(backup);
+        WriteLog(L"[Boost] Restored SystemResponsiveness=" + std::to_wstring(v));
+    }
+    return r == ERROR_SUCCESS;
+}
+
+// MMCSS Game Task Priority
+static bool SetMmcssGameTaskPriority() {
+    HKEY hKey = nullptr;
+    LONG r = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        0, KEY_SET_VALUE | KEY_QUERY_VALUE, &hKey);
+    if (r != ERROR_SUCCESS) {
+        DWORD disp = 0;
+        r = RegCreateKeyExW(HKEY_LOCAL_MACHINE,
+            L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+            0, nullptr, 0, KEY_SET_VALUE | KEY_QUERY_VALUE, nullptr, &hKey, &disp);
+        if (r != ERROR_SUCCESS) return false;
+    }
+
+    // ✅ احفظ القيم الأصلية في الملف عند أول مرة
+    BoostBackup backup;
+    LoadBoostBackup(backup);
+    if (!backup.hasMmcss) {
+        DWORD type = 0, sz = sizeof(DWORD), cur = 0;
+        if (RegQueryValueExW(hKey, L"GPU Priority", nullptr, &type,
+                             (LPBYTE)&cur, &sz) == ERROR_SUCCESS && type == REG_DWORD)
+            backup.mmcssGpuPriority = cur;
+        sz = sizeof(DWORD);
+        if (RegQueryValueExW(hKey, L"Priority", nullptr, &type,
+                             (LPBYTE)&cur, &sz) == ERROR_SUCCESS && type == REG_DWORD)
+            backup.mmcssPriority = cur;
+
+        wchar_t buf[64]; sz = sizeof(buf);
+        if (RegQueryValueExW(hKey, L"Scheduling Category", nullptr, &type,
+                             (LPBYTE)buf, &sz) == ERROR_SUCCESS && type == REG_SZ)
+            backup.mmcssSchedCategory = buf;
+        sz = sizeof(buf);
+        if (RegQueryValueExW(hKey, L"SFIO Priority", nullptr, &type,
+                             (LPBYTE)buf, &sz) == ERROR_SUCCESS && type == REG_SZ)
+            backup.mmcssSfioPriority = buf;
+
+        backup.hasMmcss = true;
+        SaveBoostBackup(backup);
+        WriteLog(L"[Boost] Saved original MMCSS values");
+    }
+
+    DWORD gpuPriority = 8;
+    DWORD priority = 6;
+    const wchar_t* schedCat = L"High";
+    const wchar_t* sfioPriority = L"High";
+
+    bool ok = true;
+    if (RegSetValueExW(hKey, L"GPU Priority", 0, REG_DWORD,
+                       (const BYTE*)&gpuPriority, sizeof(gpuPriority)) != ERROR_SUCCESS) ok = false;
+    if (RegSetValueExW(hKey, L"Priority", 0, REG_DWORD,
+                       (const BYTE*)&priority, sizeof(priority)) != ERROR_SUCCESS) ok = false;
+    if (RegSetValueExW(hKey, L"Scheduling Category", 0, REG_SZ,
+                       (const BYTE*)schedCat,
+                       (DWORD)((wcslen(schedCat) + 1) * sizeof(wchar_t))) != ERROR_SUCCESS) ok = false;
+    if (RegSetValueExW(hKey, L"SFIO Priority", 0, REG_SZ,
+                       (const BYTE*)sfioPriority,
+                       (DWORD)((wcslen(sfioPriority) + 1) * sizeof(wchar_t))) != ERROR_SUCCESS) ok = false;
+
+    RegCloseKey(hKey);
+    return ok;
+}
+
+static bool RestoreMmcssValues() {
+    BoostBackup backup;
+    if (!LoadBoostBackup(backup) || !backup.hasMmcss) return false;
+
+    HKEY hKey = nullptr;
+    LONG r = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+        0, KEY_SET_VALUE, &hKey);
+    if (r != ERROR_SUCCESS) return false;
+
+    DWORD v1 = backup.mmcssGpuPriority;
+    DWORD v2 = backup.mmcssPriority;
+    RegSetValueExW(hKey, L"GPU Priority", 0, REG_DWORD, (const BYTE*)&v1, sizeof(v1));
+    RegSetValueExW(hKey, L"Priority", 0, REG_DWORD, (const BYTE*)&v2, sizeof(v2));
+    RegSetValueExW(hKey, L"Scheduling Category", 0, REG_SZ,
+                   (const BYTE*)backup.mmcssSchedCategory.c_str(),
+                   (DWORD)((backup.mmcssSchedCategory.size() + 1) * sizeof(wchar_t)));
+    RegSetValueExW(hKey, L"SFIO Priority", 0, REG_SZ,
+                   (const BYTE*)backup.mmcssSfioPriority.c_str(),
+                   (DWORD)((backup.mmcssSfioPriority.size() + 1) * sizeof(wchar_t)));
+    RegCloseKey(hKey);
+
+    backup.hasMmcss = false;
+    SaveBoostBackup(backup);
+    WriteLog(L"[Boost] MMCSS values restored to defaults");
+    return true;
+}
+
+// ✅ استرجاع شامل — يُستدعى يدوياً أو عند بدء تشغيل جديد
+static void RestoreAllBoostDefaults() {
+    // SystemResponsiveness
+    if (g_sysRespRefCount > 0) {
+        InterlockedExchange(&g_sysRespRefCount, 0);
+    }
+    RestoreSystemResponsiveness();
+
+    // MMCSS
+    if (g_mmcssRefCount > 0) {
+        InterlockedExchange(&g_mmcssRefCount, 0);
+    }
+    RestoreMmcssValues();
+
+    // Timer Resolution
+    LONG cur = InterlockedExchange(&g_timerResolutionRefCount, 0);
+    if (cur > 0) {
+        timeEndPeriod(1);
+        WriteLog(L"[Boost] Timer Resolution reverted (bulk)");
+    }
+
+    // امسح أي بقايا من ملف الـ backup
+    BoostBackup backup;
+    if (LoadBoostBackup(backup) && !backup.hasSystemResp && !backup.hasMmcss) {
+        DeleteBoostBackup();
+    }
+}
+
+// ✅ يُستدعى في بداية RunEngineApp — يسترجع أي تعديلات معلّقة من crash سابق
+static void CheckAndRestoreStaleBoost() {
+    BoostBackup backup;
+    if (!LoadBoostBackup(backup)) return;
+
+    if (backup.hasSystemResp || backup.hasMmcss) {
+        WriteLog(L"[Boost] Detected stale Boost tweaks — restoring on startup");
+        RestoreAllBoostDefaults();
+    } else {
+        // ملف فارغ — احذفه
+        DeleteBoostBackup();
+    }
+}
+
+// يستدعى عند تشغيل اللعبة
+static void ApplyBoostFps(HANDLE hProcess, const GameEntry& g) {
+    if (!g.boostFps) return;
+    WriteLog(L"[Boost] Applying for: " + g.name);
+
+    // 1) تعطيل Core 0
+    if (g.boostDisableCore0 && hProcess && !g.applyAffinity) {
+        SYSTEM_INFO si = {};
+        GetSystemInfo(&si);
+        DWORD_PTR mask = 0;
+        DWORD n = si.dwNumberOfProcessors;
+        if (n > 64) n = 64;
+        for (DWORD i = 1; i < n; i++) {
+            mask |= ((DWORD_PTR)1 << i);
+        }
+        if (mask && SetProcessAffinityMask(hProcess, mask)) {
+            wchar_t buf[64];
+            swprintf_s(buf, 64, L"[Boost] Core 0 disabled, mask=0x%llX", (unsigned long long)mask);
+            WriteLog(buf);
+        } else {
+            WriteLog(L"[Boost] Core 0 disable FAILED");
+        }
+    }
+
+    // 2) رفع الأولوية إلى High (فقط لو الحالية Normal)
+    if (g.boostHighPriority && hProcess) {
+        if (g.processPriority == ProcessPriority::Normal) {
+            if (SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS)) {
+                WriteLog(L"[Boost] Priority set to High");
+            } else {
+                WriteLog(L"[Boost] Priority set FAILED");
+            }
+        } else {
+            WriteLog(L"[Boost] Custom priority already set — skipping");
+        }
+    }
+
+    // 3) Timer Resolution (reference counted)
+    if (g.boostTimerResolution) {
+        LONG prev = InterlockedIncrement(&g_timerResolutionRefCount);
+        if (prev == 1) {
+            if (timeBeginPeriod(1) == TIMERR_NOERROR) {
+                WriteLog(L"[Boost] Timer Resolution set to 1ms");
+            } else {
+                InterlockedDecrement(&g_timerResolutionRefCount);
+                WriteLog(L"[Boost] Timer Resolution FAILED");
+            }
+        }
+    }
+
+    // 4) SystemResponsiveness (Admin only، reference counted)
+    if (g.boostSystemResponsiveness) {
+        if (IsProcessElevated()) {
+            LONG prev = InterlockedIncrement(&g_sysRespRefCount);
+            if (prev == 1) {
+                if (SetSystemResponsiveness(10)) {
+                    WriteLog(L"[Boost] SystemResponsiveness set to 10");
+                } else {
+                    InterlockedDecrement(&g_sysRespRefCount);
+                    WriteLog(L"[Boost] SystemResponsiveness FAILED");
+                }
+            }
+        } else {
+            WriteLog(L"[Boost] SystemResponsiveness skipped (not Admin)");
+        }
+    }
+
+    // 5) MMCSS (Admin only، reference counted — نظامي على مستوى Windows)
+    if (g.boostMmcss) {
+        if (IsProcessElevated()) {
+            LONG prev = InterlockedIncrement(&g_mmcssRefCount);
+            if (prev == 1) {
+                if (SetMmcssGameTaskPriority()) {
+                    WriteLog(L"[Boost] MMCSS Game task priority applied");
+                } else {
+                    InterlockedDecrement(&g_mmcssRefCount);
+                    WriteLog(L"[Boost] MMCSS FAILED");
+                }
+            }
+        } else {
+            WriteLog(L"[Boost] MMCSS skipped (not Admin)");
+        }
+    }
+}
+
+// ✅ كائن مؤقت لتوصيل حالة الـ Boost من RunningGame
+struct RunningGame;
+
+// يستدعى عند إغلاق اللعبة — نرجّع Timer Resolution + SystemResponsiveness + MMCSS
+static void RevertBoostFps(bool boostFps, bool boostTimer, bool boostSysResp, bool boostMmcss) {
+    if (!boostFps) return;
+
+    // Timer Resolution
+    if (boostTimer) {
+        LONG cur = InterlockedCompareExchange(&g_timerResolutionRefCount, 0, 0);
+        if (cur > 0) {
+            LONG prev = InterlockedDecrement(&g_timerResolutionRefCount);
+            if (prev == 0) {
+                timeEndPeriod(1);
+                WriteLog(L"[Boost] Timer Resolution reverted");
+            }
+        }
+    }
+
+    // SystemResponsiveness (reference counted)
+    if (boostSysResp) {
+        LONG cur = InterlockedCompareExchange(&g_sysRespRefCount, 0, 0);
+        if (cur > 0) {
+            LONG prev = InterlockedDecrement(&g_sysRespRefCount);
+            if (prev == 0) {
+                RestoreSystemResponsiveness();
+            }
+        }
+    }
+
+    // MMCSS (reference counted)
+    if (boostMmcss) {
+        LONG cur = InterlockedCompareExchange(&g_mmcssRefCount, 0, 0);
+        if (cur > 0) {
+            LONG prev = InterlockedDecrement(&g_mmcssRefCount);
+            if (prev == 0) {
+                RestoreMmcssValues();
+            }
+        }
     }
 }
 
@@ -388,6 +771,10 @@ struct RunningGame {
     std::wstring displayName;
     ULONGLONG startTick;
     ULONGLONG totalSeconds;
+    bool boostFps = false;
+    bool boostTimerResolution = false;
+    bool boostSystemResponsiveness = false;
+    bool boostMmcss = false;
 };
 static std::vector<RunningGame> g_runningGames;
 
@@ -399,7 +786,7 @@ static bool   g_langForcedNow    = false;
 static HANDLE g_langWatchProcess = nullptr;
 static DWORD  g_langWatchPid     = 0;
 static HKL    g_langSavedLayout  = nullptr;
-static HKL    g_langWatchTargetLayout = nullptr;  // ✅ اللغة المطلوبة للعبة
+static HKL    g_langWatchTargetLayout = nullptr;
 static ULONGLONG g_lastPlayTimeSave = 0;
 
 static DWORD NowUnix() { return (DWORD)time(nullptr); }
@@ -441,9 +828,12 @@ static void SaveManualMuteUris() {
 static void RebuildVisibleIndices() {
     g_visibleGameIndices.clear();
     for (size_t i = 0; i < g_games.size(); i++) {
-        if (g_games[i].showInRadial) g_visibleGameIndices.push_back((int)i);
+        if (!g_games[i].showInRadial) continue;
+        if (!PathExistsOnDisk(g_games[i].exePath)) continue;
+        g_visibleGameIndices.push_back((int)i);
     }
 }
+
 static void ComputeOrbitDistance() {
     int n = (int)g_visibleGameIndices.size();
     int extra = (n > 6) ? (n - 6) : 0;
@@ -744,6 +1134,12 @@ static void PollRunningGames() {
         else if (now - it->startTick > 300000ULL) exited = true;
         if (exited) {
             if (it->hProcess) CloseHandle(it->hProcess);
+
+            // ✅ Boost FPS — استرجاع كامل
+            RevertBoostFps(it->boostFps, it->boostTimerResolution,
+                          it->boostSystemResponsiveness, it->boostMmcss);
+
+            // Black Box — أوقف المراقبة
             {
                 auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
                 if (pm.IsMonitoring() &&
@@ -752,6 +1148,7 @@ static void PollRunningGames() {
                     WriteLog(L"  [BlackBox] Monitoring stopped (game exited)");
                 }
             }
+
             it = g_runningGames.erase(it);
             muteChanged = true; listChanged = true; forceSave = true;
             continue;
@@ -785,6 +1182,18 @@ static void PollRunningGames() {
     }
 }
 static void FlushPlayTimeOnExit() {
+    // ✅ Boost FPS — استرجاع كامل لكل لعبة شغالة
+    for (auto& rg : g_runningGames) {
+        RevertBoostFps(rg.boostFps, rg.boostTimerResolution,
+                      rg.boostSystemResponsiveness, rg.boostMmcss);
+    }
+
+    // ✅ احتياطي: أي refCounts باقية → رجّعها
+    if (g_sysRespRefCount > 0 || g_mmcssRefCount > 0 || g_timerResolutionRefCount > 0) {
+        WriteLog(L"[Boost] Leftover refcounts detected — forcing full restore");
+        RestoreAllBoostDefaults();
+    }
+
     {
         auto& pm = PerfBlackBox::PerformanceMonitor::Instance();
         if (pm.IsMonitoring()) {
@@ -836,7 +1245,7 @@ static DWORD WINAPI ControllerThreadProc(LPVOID) {
     DWORD lastButtons = 0;
     while (InterlockedCompareExchange(&g_controllerThreadStop, 0, 0) == 0) {
         if (!g_controllerSettings.enabled) {
-            Sleep(1000);  // ✅ كان 200
+            Sleep(1000);
             lastButtons = 0;
             continue;
         }
@@ -919,16 +1328,18 @@ static void LaunchGame(const GameEntry& g) {
     bool isSteamGame = (g.exePath.find(L"steam://") == 0);
     bool isProtocolUri = IsUriLike(g.exePath) && !isSteamGame;
 
-    // ✅ اللغة المطلوبة داخل اللعبة
     HKL targetHkl = nullptr;
-    if (g.gameLanguage == 1)      targetHkl = LoadKeyboardLayoutW(L"00000401", KLF_ACTIVATE); // عربي
-    else if (g.gameLanguage == 2) targetHkl = LoadKeyboardLayoutW(L"00000409", KLF_ACTIVATE); // إنجليزي
+    if (g.gameLanguage == 1)      targetHkl = LoadKeyboardLayoutW(L"00000401", KLF_ACTIVATE);
+    else if (g.gameLanguage == 2) targetHkl = LoadKeyboardLayoutW(L"00000409", KLF_ACTIVATE);
     bool wantLayoutWatch = (targetHkl != nullptr) && !IsUwpPath(g.exePath);
 
     WriteLog(L"Launching: " + g.name + L" (" + g.exePath + L")");
     HANDLE hProcess = nullptr; DWORD pid = 0;
     LaunchPath(g.exePath, g.runAsAdmin, g.launchArgs, &hProcess, &pid);
-    if (hProcess && !IsUwpPath(g.exePath)) ApplyProcessTuning(hProcess, g);
+    if (hProcess && !IsUwpPath(g.exePath)) {
+        ApplyProcessTuning(hProcess, g);
+        ApplyBoostFps(hProcess, g);
+    }
     for (auto& gg : g_games) {
         if (_wcsicmp(gg.exePath.c_str(), g.exePath.c_str()) == 0) {
             gg.playCount += 1;
@@ -944,6 +1355,10 @@ static void LaunchGame(const GameEntry& g) {
     rg.displayName = g.name;
     rg.startTick = GetTickCount64();
     rg.totalSeconds = 0;
+    rg.boostFps = g.boostFps;
+    rg.boostTimerResolution = g.boostFps && g.boostTimerResolution;
+    rg.boostSystemResponsiveness = g.boostFps && g.boostSystemResponsiveness && IsProcessElevated();
+    rg.boostMmcss = g.boostFps && g.boostMmcss && IsProcessElevated();
     if (isSteamGame || isProtocolUri) {
         if (hProcess) CloseHandle(hProcess);
         rg.hProcess = nullptr;
@@ -955,9 +1370,12 @@ static void LaunchGame(const GameEntry& g) {
     g_runningGames.push_back(rg);
     InterlockedExchange(&g_gameRunningCount, (LONG)g_runningGames.size());
     WriteRunningGamesFile();
-    SetTimer(g_hiddenWnd, PLAY_TIME_TIMER_ID, 5000, nullptr);  // ✅ كان 3000
+    SetTimer(g_hiddenWnd, PLAY_TIME_TIMER_ID, 5000, nullptr);
 
-    if (g.performanceMonitor) {
+    if (g.boostFps && g.boostStopStats) {
+        if (g_overlayWnd) HideOverlay();
+        WriteLog(L"[Boost] Stats + Overlay suppressed");
+    } else if (g.performanceMonitor) {
         PerfBlackBox::PerformanceMonitor::Instance().StartSession(
             g.exePath, g.name, g.performanceCpuTemp, rg.pid);
         WriteLog(L"  [BlackBox] Monitoring started for: " + g.name +
@@ -979,7 +1397,7 @@ static void LaunchGame(const GameEntry& g) {
         }
         LaunchPath(c.path, c.runAsAdmin, c.launchArgs);
     }
-    if (g_overlaySettings.enabled && g_overlaySettings.showOnGameLaunch) {
+    if (g_overlaySettings.enabled && g_overlaySettings.showOnGameLaunch && !g.boostFps) {
         ShowOverlay();
     }
 }
@@ -1257,8 +1675,6 @@ static void StyleHalo(Graphics& gfx, POINT c, int r, COLORREF color, bool hover)
     gfx.DrawLine(&tick, (REAL)c.x, (REAL)(c.y - r - 8), (REAL)c.x, (REAL)(c.y - r - 2));
     gfx.DrawLine(&tick, (REAL)c.x, (REAL)(c.y + r + 2), (REAL)c.x, (REAL)(c.y + r + 8));
 }
-
-// ✅ جديد: Ripple — 3 حلقات متداخلة
 static void StyleRipple(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     DrawSoftShadow(gfx, c, r);
@@ -1270,8 +1686,6 @@ static void StyleRipple(Graphics& gfx, POINT c, int r, COLORREF color, bool hove
         gfx.DrawEllipse(&p, c.x - rr, c.y - rr, rr * 2, rr * 2);
     }
 }
-
-// ✅ جديد: Crystal — شكل بلوري (سداسي + خطوط داخلية)
 static void StyleCrystal(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     DrawSoftShadow(gfx, c, r);
@@ -1284,14 +1698,11 @@ static void StyleCrystal(Graphics& gfx, POINT c, int r, COLORREF color, bool hov
     Pen pen(Color(255, R, G, B), hover ? 3.5f : 2.5f);
     pen.SetLineJoin(LineJoinRound);
     gfx.DrawPolygon(&pen, pts, 6);
-    // خطوط داخلية
     Pen inner(Color(140, R, G, B), 1.2f);
     gfx.DrawLine(&inner, pts[0].X, pts[0].Y, pts[3].X, pts[3].Y);
     gfx.DrawLine(&inner, pts[1].X, pts[1].Y, pts[4].X, pts[4].Y);
     gfx.DrawLine(&inner, pts[2].X, pts[2].Y, pts[5].X, pts[5].Y);
 }
-
-// ✅ جديد: Plasma — طبقات متدرجة قطبية
 static void StylePlasma(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     BYTE r2 = (BYTE)min(255, R + 60);
@@ -1310,8 +1721,6 @@ static void StylePlasma(Graphics& gfx, POINT c, int r, COLORREF color, bool hove
     SolidBrush dot(Color(hover ? 220 : 140, r2, g2, b2));
     gfx.FillEllipse(&dot, (REAL)(c.x - 3), (REAL)(c.y - 3), (REAL)6, (REAL)6);
 }
-
-// ✅ جديد: Orbit — نقاط صغيرة تدور حول حلقة رئيسية
 static void StyleOrbit(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     DrawSoftShadow(gfx, c, r);
@@ -1326,13 +1735,10 @@ static void StyleOrbit(Graphics& gfx, POINT c, int r, COLORREF color, bool hover
         SolidBrush dot(Color(255, R, G, B));
         gfx.FillEllipse(&dot, px - 3.0f, py - 3.0f, 6.0f, 6.0f);
     }
-    // قوس صغير داخلي
     RectF innerR((REAL)(c.x - r + 5), (REAL)(c.y - r + 5), (REAL)((r - 5) * 2), (REAL)((r - 5) * 2));
     Pen arc(Color(140, R, G, B), 1.5f);
     gfx.DrawArc(&arc, innerR, 30.0f, 120.0f);
 }
-
-// ✅ جديد: Pixel — 8 مربعات صغيرة على المحيط
 static void StylePixel(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     DrawSoftShadow(gfx, c, r);
@@ -1345,12 +1751,9 @@ static void StylePixel(Graphics& gfx, POINT c, int r, COLORREF color, bool hover
         SolidBrush box(Color(255, R, G, B));
         gfx.FillRectangle(&box, px - boxSize / 2, py - boxSize / 2, boxSize, boxSize);
     }
-    // إطار خفيف بالخلف
     Pen faint(Color(60, R, G, B), 1.0f);
     gfx.DrawEllipse(&faint, c.x - r, c.y - r, r * 2, r * 2);
 }
-
-// ✅ جديد: Circuit — حلقة + عقد + خطوط
 static void StyleCircuit(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     DrawSoftShadow(gfx, c, r);
@@ -1363,24 +1766,19 @@ static void StyleCircuit(Graphics& gfx, POINT c, int r, COLORREF color, bool hov
         REAL py = (REAL)c.y + (REAL)r * (REAL)sin(ang);
         SolidBrush node(Color(255, R, G, B));
         gfx.FillEllipse(&node, px - 3.0f, py - 3.0f, 6.0f, 6.0f);
-        // خط صغير للداخل
         REAL inPx = (REAL)c.x + (REAL)(r - 8) * (REAL)cos(ang);
         REAL inPy = (REAL)c.y + (REAL)(r - 8) * (REAL)sin(ang);
         Pen line(Color(160, R, G, B), 1.2f);
         gfx.DrawLine(&line, px, py, inPx, inPy);
     }
-    // نقطة مركزية
     SolidBrush center(Color(hover ? 255 : 180, R, G, B));
     gfx.FillEllipse(&center, (REAL)(c.x - 2), (REAL)(c.y - 2), (REAL)4, (REAL)4);
 }
-
-// ✅ جديد: Flame — أقواس متموّجة للأعلى
 static void StyleFlame(Graphics& gfx, POINT c, int r, COLORREF color, bool hover) {
     int R = GetRValue(color), G = GetGValue(color), B = GetBValue(color);
     BYTE r2 = (BYTE)min(255, R + 100);
     BYTE g2 = (BYTE)min(255, G + 40);
     DrawSoftShadow(gfx, c, r);
-    // قاعدة النار
     RectF rect((REAL)(c.x - r), (REAL)(c.y - r), (REAL)(r * 2), (REAL)(r * 2));
     for (int i = 0; i < 4; i++) {
         int alpha = 220 - i * 45;
@@ -1388,7 +1786,6 @@ static void StyleFlame(Graphics& gfx, POINT c, int r, COLORREF color, bool hover
         p.SetStartCap(LineCapRound);
         gfx.DrawArc(&p, rect, -60.0f - i * 15.0f, 120.0f + i * 30.0f);
     }
-    // توهّج علوي
     for (int i = 2; i >= 1; i--) {
         Pen glow(Color((BYTE)(40 * i), r2, g2, B), (REAL)(i * 3));
         gfx.DrawArc(&glow, rect, -90.0f, 90.0f);
@@ -1494,7 +1891,6 @@ static void DrawHoverHalo(Graphics& gfx, POINT center, int r, COLORREF color) {
 static void DrawCircleIcon(Graphics& gfx, POINT center, int radius,
                             const GameEntry& game, HICON icon, bool hover,
                             RadialStyle style, bool isMuted) {
-    // ✅ وضع "بدون توهج" — أيقونة صافية بدون إطار ولا هالة
     if (g_radialNoGlow) {
         int r = hover ? radius + 6 : radius;
         bool hasCustomBg = !game.radialBgPath.empty();
@@ -1805,7 +2201,7 @@ static void ShowRadialPopup() {
     RefreshMuteCache();
     BuildIconCache();
     g_radialTransparency = LoadRadialTransparency();
-    g_radialNoGlow = LoadRadialNoGlow();  // ✅ إصلاح
+    g_radialNoGlow = LoadRadialNoGlow();
 
     POINT cursor;
     GetCursorPos(&cursor);
@@ -2070,7 +2466,6 @@ static void RepaintOverlay() {
     if (g_overlayWnd) PaintOverlay();
 }
 
-// ✅ محسّنة: تجنّب إعادة الرسم إذا كل القيم ثابتة
 static void UpdateOverlayContent() {
     if (!g_overlayWnd) return;
     UpdateCpuMeasure();
@@ -2375,6 +2770,14 @@ static LRESULT CALLBACK HiddenProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_APP_RELOAD_MUTE_HOTKEY: ReloadMuteHotkeyNow(hwnd); return 0;
     case WM_APP_RELOAD_CONTROLLER: ReloadControllerNow(hwnd); return 0;
     case WM_APP_RELOAD_OVERLAY: ReloadOverlayNow(); return 0;
+
+    // ✅ زر "استرجاع إعدادات النظام"
+    case WM_APP_RESTORE_BOOST_DEFAULTS: {
+        RestoreAllBoostDefaults();
+        WriteLog(L"[Boost] Manual restore triggered from panel");
+        return 0;
+    }
+
     case WM_APP_RESTART_AS_ADMIN: {
         wchar_t exePath[MAX_PATH];
         if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH)) return 0;
@@ -2472,6 +2875,10 @@ int RunEngineApp(HINSTANCE hInst) {
     GdiplusStartup(&g_gdiplusToken, &gdiInput, nullptr);
 
     StartFreshLog();
+
+    // ✅ استرجاع أي تعديلات Boost معلّقة من crash سابق
+    CheckAndRestoreStaleBoost();
+
     {
         BOOL isElevated = FALSE;
         PSID adminGroup = nullptr;

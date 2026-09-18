@@ -66,6 +66,15 @@ struct GameEntry {
 
     // ✅ لغة اللعبة: 0 = بدون تبديل، 1 = عربي، 2 = إنجليزي
     int gameLanguage = 0;
+
+    // ✅ Boost FPS — تحسينات تلقائية عند التشغيل
+    bool boostFps = false;                       // المفتاح الرئيسي
+    bool boostDisableCore0 = true;               // تعطيل Core 0
+    bool boostHighPriority = true;               // رفع الأولوية إلى High
+    bool boostStopStats = true;                  // إيقاف الإحصائيات والـ Overlay
+    bool boostTimerResolution = false;           // Timer Resolution 1ms
+    bool boostSystemResponsiveness = false;      // SystemResponsiveness (Admin)
+    bool boostMmcss = false;                     // MMCSS Game Priority (Admin)
 };
 
 struct HotkeySettings {
@@ -105,6 +114,7 @@ static const UINT WM_APP_RELOAD_MUTE_HOTKEY = WM_APP + 201;
 static const UINT WM_APP_RELOAD_CONTROLLER = WM_APP + 202;
 static const UINT WM_APP_RELOAD_OVERLAY = WM_APP + 203;
 static const UINT WM_APP_RESTART_AS_ADMIN = WM_APP + 204;
+static const UINT WM_APP_RESTORE_BOOST_DEFAULTS = WM_APP + 205;
 
 static const wchar_t* const MUTE_REQUEST_EVENT_NAME = L"GameLauncher_MuteRequest_Event_v1";
 
@@ -263,3 +273,6 @@ void SavePerformanceGlobalEnabled(bool enabled);
 
 // ✅ اسم اللغة داخل اللعبة (0=بدون، 1=AR، 2=EN)
 std::wstring LangCodeToLayoutName(int gameLanguage);
+
+// ✅ Boost FPS — حالة نظامية (Admin)
+bool IsProcessElevated();

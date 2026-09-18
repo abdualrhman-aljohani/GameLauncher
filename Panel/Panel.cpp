@@ -754,7 +754,6 @@ static std::wstring BuildStateJson() {
     j << L"\"hotkey\":\"" << JsonEscape(HotkeyToString(g_hotkey)) << L"\",";
     j << L"\"engineRunning\":" << (IsEngineRunning() ? L"true" : L"false") << L",";
     j << L"\"autoStart\":" << (IsAutoStartEnabled() ? L"true" : L"false") << L",";
-    j << L"\"autoLayoutSwitch\":" << (LoadAutoLayoutSwitch() ? L"true" : L"false") << L",";
     j << L"\"radialStyle\":" << (int)LoadRadialStyle() << L",";
     j << L"\"radialTransparency\":" << LoadRadialTransparency() << L",";
     j << L"\"radialNoGlow\":" << (LoadRadialNoGlow() ? L"true" : L"false") << L",";
@@ -822,6 +821,13 @@ static std::wstring BuildStateJson() {
           << L",\"affinityMask\":" << g.affinityMask
           << L",\"performanceMonitor\":" << (g.performanceMonitor ? L"true" : L"false")
           << L",\"performanceCpuTemp\":" << (g.performanceCpuTemp ? L"true" : L"false")
+          << L",\"boostFps\":" << (g.boostFps ? L"true" : L"false")
+          << L",\"boostDisableCore0\":" << (g.boostDisableCore0 ? L"true" : L"false")
+          << L",\"boostHighPriority\":" << (g.boostHighPriority ? L"true" : L"false")
+          << L",\"boostStopStats\":" << (g.boostStopStats ? L"true" : L"false")
+          << L",\"boostTimerResolution\":" << (g.boostTimerResolution ? L"true" : L"false")
+          << L",\"boostSystemResponsiveness\":" << (g.boostSystemResponsiveness ? L"true" : L"false")
+          << L",\"boostMmcss\":" << (g.boostMmcss ? L"true" : L"false")
           << L",\"perfSessionCount\":0"
           << L",\"companions\":[";
         for (size_t k = 0; k < g.companions.size(); k++) {
@@ -916,7 +922,7 @@ static bool ExportBackupToFile(const std::wstring& path) {
     std::wstring tmp = path + L".tmp";
     std::wofstream f(tmp.c_str(), std::ios::trunc);
     if (!f.is_open()) return false;
-    f << L"{\n  \"version\": 5,\n  \"exportedAt\": " << (unsigned long)time(nullptr) << L",\n";
+    f << L"{\n  \"version\": 6,\n  \"exportedAt\": " << (unsigned long)time(nullptr) << L",\n";
     f << L"  \"games\": [\n";
     for (size_t i = 0; i < g_games.size(); i++) {
         auto& g = g_games[i];
@@ -942,6 +948,13 @@ static bool ExportBackupToFile(const std::wstring& path) {
         f << L"      \"affinityMask\": " << g.affinityMask << L",\n";
         f << L"      \"performanceMonitor\": " << (g.performanceMonitor ? L"true" : L"false") << L",\n";
         f << L"      \"performanceCpuTemp\": " << (g.performanceCpuTemp ? L"true" : L"false") << L",\n";
+        f << L"      \"boostFps\": " << (g.boostFps ? L"true" : L"false") << L",\n";
+        f << L"      \"boostDisableCore0\": " << (g.boostDisableCore0 ? L"true" : L"false") << L",\n";
+        f << L"      \"boostHighPriority\": " << (g.boostHighPriority ? L"true" : L"false") << L",\n";
+        f << L"      \"boostStopStats\": " << (g.boostStopStats ? L"true" : L"false") << L",\n";
+        f << L"      \"boostTimerResolution\": " << (g.boostTimerResolution ? L"true" : L"false") << L",\n";
+        f << L"      \"boostSystemResponsiveness\": " << (g.boostSystemResponsiveness ? L"true" : L"false") << L",\n";
+        f << L"      \"boostMmcss\": " << (g.boostMmcss ? L"true" : L"false") << L",\n";
         f << L"      \"companions\": [\n";
         for (size_t k = 0; k < g.companions.size(); k++) {
             auto& c = g.companions[k];
@@ -1026,6 +1039,13 @@ static bool ImportBackupFromFile(const std::wstring& path) {
         g.affinityMask = (unsigned long long)JsonGetLongLong(obj, L"affinityMask", 0);
         g.performanceMonitor = JsonGetBool(obj, L"performanceMonitor", false);
         g.performanceCpuTemp = JsonGetBool(obj, L"performanceCpuTemp", false);
+        g.boostFps = JsonGetBool(obj, L"boostFps", false);
+        g.boostDisableCore0 = JsonGetBool(obj, L"boostDisableCore0", true);
+        g.boostHighPriority = JsonGetBool(obj, L"boostHighPriority", true);
+        g.boostStopStats = JsonGetBool(obj, L"boostStopStats", true);
+        g.boostTimerResolution = JsonGetBool(obj, L"boostTimerResolution", false);
+        g.boostSystemResponsiveness = JsonGetBool(obj, L"boostSystemResponsiveness", false);
+        g.boostMmcss = JsonGetBool(obj, L"boostMmcss", false);
 
         size_t cpos = obj.find(L"\"companions\"");
         if (cpos != std::wstring::npos) {
@@ -1352,10 +1372,6 @@ static void HandleWebMessage(const std::wstring& json) {
         SetAutoStartEnabled(JsonGetNumber(json, L"enabled", 0) != 0);
         PushStateToJs();
     }
-    else if (action == L"setAutoLayoutSwitch") {
-        SaveAutoLayoutSwitch(JsonGetNumber(json, L"enabled", 0) != 0);
-        PushStateToJs();
-    }
     else if (action == L"changeHotkey") {
         UINT mods = (UINT)JsonGetNumber(json, L"modifiers", 0);
         UINT vk = (UINT)JsonGetNumber(json, L"vk", 0);
@@ -1416,13 +1432,74 @@ static void HandleWebMessage(const std::wstring& json) {
             SaveGames(g_games); PushStateToJs();
         }
     }
-    // ✅ جديد: تعيين لغة اللعبة (0=بدون، 1=عربي، 2=إنجليزي)
     else if (action == L"setGameLanguage") {
         int idx = (int)JsonGetNumber(json, L"index");
         int lang = (int)JsonGetNumber(json, L"language", 0);
         if (lang < 0 || lang > 2) lang = 0;
         if (idx >= 0 && idx < (int)g_games.size()) {
             g_games[idx].gameLanguage = lang;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    // ✅ Boost FPS — handlers جديدة
+    else if (action == L"setGameBoostFps") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].boostFps = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostDisableCore0") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].boostDisableCore0 = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostHighPriority") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].boostHighPriority = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostStopStats") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].boostStopStats = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostTimerResolution") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            g_games[idx].boostTimerResolution = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostSystemResponsiveness") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            if (!IsEngineElevated()) {
+                PushStatus(g_lang == Lang::EN
+                    ? L"SystemResponsiveness requires Administrator rights."
+                    : L"SystemResponsiveness يحتاج صلاحيات Admin.", L"warn");
+                return;
+            }
+            g_games[idx].boostSystemResponsiveness = JsonGetNumber(json, L"enabled", 0) != 0;
+            SaveGames(g_games); PushStateToJs();
+        }
+    }
+    else if (action == L"setGameBoostMmcss") {
+        int idx = (int)JsonGetNumber(json, L"index");
+        if (idx >= 0 && idx < (int)g_games.size()) {
+            if (!IsEngineElevated()) {
+                PushStatus(g_lang == Lang::EN
+                    ? L"MMCSS Game priority requires Administrator rights."
+                    : L"MMCSS Game Priority يحتاج صلاحيات Admin.", L"warn");
+                return;
+            }
+            g_games[idx].boostMmcss = JsonGetNumber(json, L"enabled", 0) != 0;
             SaveGames(g_games); PushStateToJs();
         }
     }
@@ -1713,7 +1790,8 @@ static void HandleWebMessage(const std::wstring& json) {
             PushStatus(g_lang == Lang::EN
                 ? L"Restarting GameLauncher as Administrator..."
                 : L"جاري إعادة تشغيل GameLauncher كمسؤول...", L"info");
-        } else {
+        }
+        else {
             wchar_t exePath[MAX_PATH];
             if (GetModuleFileNameW(nullptr, exePath, MAX_PATH)) {
                 SHELLEXECUTEINFOW sei = { sizeof(sei) };
@@ -1726,13 +1804,15 @@ static void HandleWebMessage(const std::wstring& json) {
                     PushStatus(g_lang == Lang::EN
                         ? L"Engine launching as Administrator..."
                         : L"جاري تشغيل المحرك كمسؤول...", L"info");
-                } else {
+                }
+                else {
                     DWORD err = GetLastError();
                     if (err == ERROR_CANCELLED) {
                         PushStatus(g_lang == Lang::EN
                             ? L"UAC prompt was cancelled."
                             : L"تم إلغاء نافذة الصلاحيات.", L"warn");
-                    } else {
+                    }
+                    else {
                         PushStatus(g_lang == Lang::EN
                             ? L"Failed to restart as Administrator."
                             : L"فشل إعادة التشغيل كمسؤول.", L"error");
@@ -1740,7 +1820,22 @@ static void HandleWebMessage(const std::wstring& json) {
                 }
             }
         }
-    }
+        }
+    else if (action == L"restoreBoostDefaults") {
+            HWND h = FindWindowExW(HWND_MESSAGE, nullptr, HIDDEN_WINDOW_CLASS_NAME, nullptr);
+            if (h) {
+                PostMessageW(h, WM_APP_RESTORE_BOOST_DEFAULTS, 0, 0);
+                PushStatus(g_lang == Lang::EN
+                    ? L"Restoring system defaults..."
+                    : L"جاري استرجاع إعدادات النظام...", L"info");
+            }
+            else {
+                PushStatus(g_lang == Lang::EN
+                    ? L"Engine not running — nothing to restore."
+                    : L"المحرك متوقف — لا شيء لاسترجاعه.", L"warn");
+            }
+            }
+
     else if (action == L"getPerformanceSessions") {
         int idx = (int)JsonGetNumber(json, L"index");
         if (idx >= 0 && idx < (int)g_games.size()) {

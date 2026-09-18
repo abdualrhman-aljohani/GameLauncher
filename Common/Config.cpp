@@ -235,11 +235,18 @@ void LoadGames(std::vector<GameEntry>& games) {
         }
         if (fields.size() >= 22 && !fields[21].empty()) g.performanceMonitor = (fields[21] != L"0");
         if (fields.size() >= 23 && !fields[22].empty()) g.performanceCpuTemp = (fields[22] != L"0");
-        // ✅ gameLanguage (0=بدون، 1=AR، 2=EN)
         if (fields.size() >= 24 && !fields[23].empty()) {
             int gl = _wtoi(fields[23].c_str());
             if (gl >= 0 && gl <= 2) g.gameLanguage = gl;
         }
+        // ✅ Boost FPS — fields 25-31 (indices 24-30)
+        if (fields.size() >= 25 && !fields[24].empty()) g.boostFps = (fields[24] != L"0");
+        if (fields.size() >= 26 && !fields[25].empty()) g.boostDisableCore0 = (fields[25] != L"0");
+        if (fields.size() >= 27 && !fields[26].empty()) g.boostHighPriority = (fields[26] != L"0");
+        if (fields.size() >= 28 && !fields[27].empty()) g.boostStopStats = (fields[27] != L"0");
+        if (fields.size() >= 29 && !fields[28].empty()) g.boostTimerResolution = (fields[28] != L"0");
+        if (fields.size() >= 30 && !fields[29].empty()) g.boostSystemResponsiveness = (fields[29] != L"0");
+        if (fields.size() >= 31 && !fields[30].empty()) g.boostMmcss = (fields[30] != L"0");
 
         games.push_back(g);
     }
@@ -280,7 +287,14 @@ void SaveGames(const std::vector<GameEntry>& games) {
               << g.quickSlot << FIELD_SEP
               << (g.performanceMonitor ? 1 : 0) << FIELD_SEP
               << (g.performanceCpuTemp ? 1 : 0) << FIELD_SEP
-              << g.gameLanguage << L"\n";
+              << g.gameLanguage << FIELD_SEP
+              << (g.boostFps ? 1 : 0) << FIELD_SEP
+              << (g.boostDisableCore0 ? 1 : 0) << FIELD_SEP
+              << (g.boostHighPriority ? 1 : 0) << FIELD_SEP
+              << (g.boostStopStats ? 1 : 0) << FIELD_SEP
+              << (g.boostTimerResolution ? 1 : 0) << FIELD_SEP
+              << (g.boostSystemResponsiveness ? 1 : 0) << FIELD_SEP
+              << (g.boostMmcss ? 1 : 0) << L"\n";
         }
         f.flush();
     }
@@ -557,6 +571,19 @@ bool IsEngineRunning() {
     HANDLE h = OpenMutexW(SYNCHRONIZE, FALSE, SINGLE_INSTANCE_MUTEX_NAME);
     if (h) { CloseHandle(h); return true; }
     return false;
+}
+
+// ✅ هل العملية الحالية بصلاحيات Admin؟
+bool IsProcessElevated() {
+    BOOL isElevated = FALSE;
+    PSID adminGroup = nullptr;
+    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                 DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)) {
+        CheckTokenMembership(nullptr, adminGroup, &isElevated);
+        FreeSid(adminGroup);
+    }
+    return isElevated != FALSE;
 }
 
 bool IsUwpPath(const std::wstring& path) {
