@@ -1,12 +1,16 @@
 # 🎮 GameLauncher
 
 <div align="center">
+<div align="center">
+
 [![Download](https://img.shields.io/badge/Download-Latest_Release-success?style=flat&logo=github)](https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest)
 ![Version](https://img.shields.io/badge/version-1.7.0-a855f7)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
 ![Win32](https://img.shields.io/badge/Win32-native-00A4EF)
 ![License](https://img.shields.io/badge/license-PolyForm%20NC%201.0.0-f59e0b)
+
+</div>
 
 **A native Win32 game launcher — elegant radial menu + professional performance monitoring + smart audio mute.**
 
