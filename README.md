@@ -18,7 +18,7 @@
   </a>
 </p>
 
-([CHANGELOG.md](CHANGELOG.md) · [Changelog]) · ([README.ar.md](README.ar.md) · [العربية])
+[Changelog](CHANGELOG.md) • [العربية](README.ar.md)
 
 </div>
 
