@@ -4,15 +4,21 @@
 
 # GameLauncher
 
-**A lightweight native Win32 game launcher — an elegant radial menu, a modern control panel, performance monitoring and smart audio mute.**
+**A lightweight native Win32 game launcher – an elegant radial menu, a modern control panel, performance monitoring and smart audio mute.**
 
-![Version](https://img.shields.io/badge/version-1.8.0-a855f7)
-![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)
-![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
-![Win32](https://img.shields.io/badge/Win32-native-00A4EF)
-![License](https://img.shields.io/badge/license-PolyForm%20NC%201.0.0-f59e0b)
+[![Version](https://img.shields.io/badge/version-1.8.0-a855f7)](https://github.com/abdualrhman-aljohani/GameLauncher/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4)](https://github.com/abdualrhman-aljohani/GameLauncher)
+[![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)](https://github.com/abdualrhman-aljohani/GameLauncher)
+[![Win32](https://img.shields.io/badge/Win32-native-00A4EF)](https://github.com/abdualrhman-aljohani/GameLauncher)
+[![License](https://img.shields.io/badge/license-PolyForm%20NC%201.0.0-f59e0b)](https://github.com/abdualrhman-aljohani/GameLauncher/blob/main/LICENSE)
 
-[العربية](README.ar.md) · [Changelog](CHANGELOG.md)
+<p align="center">
+  <a href="https://github.com/abdualrhman-aljohani/GameLauncher/releases/latest/download/GameLauncher.exe">
+    <img src="https://img.shields.io/badge/📥%20Download%20Latest%20Release-GameLauncher.exe-2ea44f?style=for-the-badge&logo=windows" alt="Download GameLauncher">
+  </a>
+</p>
+
+([CHANGELOG.md](CHANGELOG.md) · [Changelog]) · ([README.ar.md](README.ar.md) · [العربية])
 
 </div>
 
