@@ -1,0 +1,34 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - uses: NuGet/setup-nuget@v2
+      - name: Restore
+        run: nuget restore GameLauncher.sln
+      - name: Build (Release x64)
+        run: msbuild GameLauncher.sln /m /p:Configuration=Release /p:Platform=x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameLauncher-x64
+          path: bin/Release/GameLauncher.exe
+
+  tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Unit tests (JSON + store parsers)
+        shell: cmd
+        working-directory: tests
+        run: |
+          cl /nologo /utf-8 /std:c++17 /EHsc /I..\Common test_json.cpp && test_json.exe
+          cl /nologo /utf-8 /std:c++17 /EHsc /I..\Common test_import.cpp && test_import.exe

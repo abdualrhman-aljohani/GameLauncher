@@ -1,0 +1,41 @@
+name: release
+
+# يعمل عند رفع tag مثل v1.8.0 :  git tag v1.8.0 && git push origin v1.8.0
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - uses: NuGet/setup-nuget@v2
+      - name: Restore
+        run: nuget restore GameLauncher.sln
+      - name: Build (Release x64)
+        run: msbuild GameLauncher.sln /m /p:Configuration=Release /p:Platform=x64
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build installer
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\GameLauncher.iss'
+      - name: Portable zip + checksums
+        shell: pwsh
+        run: |
+          Compress-Archive -Path bin\Release\GameLauncher.exe, LICENSE.txt -DestinationPath "dist\GameLauncher-${{ github.ref_name }}-portable.zip"
+          Get-ChildItem dist\* -Include *.exe,*.zip | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
+          } | Out-File dist\SHA256SUMS.txt -Encoding ascii
+      # لإضافة التوقيع الرقمي لاحقاً: أضف خطوة تستدعي tools\sign-release.ps1 قبل "Build installer" (للـ exe)
+      # وبعدها (للمثبّت)، وخزّن بيانات الشهادة في GitHub Secrets.
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          generate_release_notes: true

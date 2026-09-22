@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.aps
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+Win32/
+
+# NuGet (يُستعاد تلقائياً من packages.config)
+packages/
+
+# ملفات مؤقتة
+*.tmp
+*.log
+
+# أصول الواجهة المحلية وناتج المثبّت (تُولَّد)
+ui_assets/
+dist/
